@@ -1,0 +1,7 @@
+# Apache 2.4+ syntax
+Require all granted
+
+# Prevent PHP execution for security
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>

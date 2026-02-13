@@ -1,0 +1,14 @@
+# Ignore uploads
+mcu-ticketing/public/uploads/*
+mcu-ticketing/uploads/*
+
+# Keep .htaccess in uploads but ignore files
+!mcu-ticketing/public/uploads/.htaccess
+!mcu-ticketing/uploads/.htaccess
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore XAMPP/PHP specific
+php_errors.log
