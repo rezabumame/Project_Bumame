@@ -90,7 +90,7 @@
 
                     <div class="mt-5 border-top pt-3">
                         <small class="text-muted">
-                            Created at: <?php echo isset($tm['created_at']) ? date('d M Y H:i', strtotime($tm['created_at'])) : '-'; ?>
+                            Created at: <?php echo isset($tm['created_at']) ? DateHelper::formatIndonesianDate($tm['created_at'], true) : '-'; ?>
                         </small>
                     </div>
                 </div>

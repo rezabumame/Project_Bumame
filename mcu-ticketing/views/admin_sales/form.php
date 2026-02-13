@@ -85,17 +85,17 @@ if ($hf_value) {
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <h6 class="fw-bold text-bumame mb-1"><i class="fas fa-file-excel me-2"></i>Import Data from Excel/CSV</h6>
-                        <p class="text-muted small mb-0">Upload a file to auto-fill the project details below. (Single Project)</p>
+                        <h6 class="fw-bold text-bumame mb-1"><i class="fas fa-file-excel me-2"></i>Import Data from Excel</h6>
+                        <p class="text-muted small mb-0">Upload an Excel file to auto-fill the project details below. (Single Project)</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="index.php?page=download_project_template" class="btn btn-outline-primary btn-sm rounded-pill">
+                        <button type="button" onclick="downloadProjectSingleTemplate()" class="btn btn-outline-primary btn-sm rounded-pill">
                             <i class="fas fa-download me-1"></i>Template
-                        </a>
+                        </button>
                         <button type="button" class="btn btn-primary btn-sm rounded-pill" onclick="document.getElementById('import_file').click()">
                             <i class="fas fa-upload me-1"></i>Upload File
                         </button>
-                        <input type="file" id="import_file" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleImport(this)">
+                        <input type="file" id="import_file" accept=".xlsx, .xls" style="display: none;" onchange="handleImport(this)">
                     </div>
                 </div>
             </div>
@@ -103,6 +103,29 @@ if ($hf_value) {
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
         <script>
+        function downloadProjectSingleTemplate() {
+            const rows = [
+                ['Project ID', 'Project Name', 'Company Names (Comma Separated)', 'Sales Person ID', 'Project Type (on_site/walk_in)', 
+                'Clinic Location (Required for Walk-In)', 'Jenis Pemeriksaan', 'Total Peserta', 'Tanggal MCU (YYYY-MM-DD, separated by comma if multiple)', 
+                'Alamat', 'Notes', 'Lunch (Ya/Tidak)', 'Snack (Ya/Tidak)', 'SPH Link (GDrive)', 'Referral No SPH', 
+                'Lunch Budget', 'Snack Budget', 'Lunch Items (Item:Qty|Item:Qty)', 'Snack Items (Item:Qty|Item:Qty)'],
+                ['PRJ-001', 'Annual MCU PT Example', 'PT Example Indonesia, PT Example Branch', '1', 'on_site', 
+                '', 'Paket Silver', '100', '2026-02-14', 'Jl. Sudirman No. 1, Jakarta', 'VIP handling required', 
+                'Ya', 'Ya', 'https://drive.google.com/file/d/example/view', 'REF-123', '50000', '25000', 
+                'Nasi Padang:50|Ayam Bakar:50', 'Risoles:100|Puding:100']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Project Template");
+            ws['!cols'] = [
+                {wch: 15}, {wch: 30}, {wch: 40}, {wch: 15}, {wch: 20},
+                {wch: 30}, {wch: 25}, {wch: 15}, {wch: 30}, {wch: 40},
+                {wch: 30}, {wch: 15}, {wch: 15}, {wch: 40}, {wch: 20},
+                {wch: 15}, {wch: 15}, {wch: 40}, {wch: 40}
+            ];
+            XLSX.writeFile(wb, `template_single_project_${new Date().getTime()}.xlsx`);
+        }
+
         function handleImport(input) {
             const file = input.files[0];
             if (!file) return;
@@ -127,6 +150,9 @@ if ($hf_value) {
                     
                     // Helper to safely get value
                     const getVal = (idx) => (dataRow[idx] !== undefined ? String(dataRow[idx]).trim() : '');
+
+                    console.log('DEBUG - Import Row:', dataRow);
+                    console.log('DEBUG - Date Value (index 8):', getVal(8));
 
                     if(getVal(0)) $('input[name="project_id"]').val(getVal(0));
                     if(getVal(1)) $('input[name="nama_project"]').val(getVal(1));
@@ -221,11 +247,11 @@ if ($hf_value) {
                         return [year, month, day].join('-');
                     }
 
-                    if(getVal(6)) {
+                    if(getVal(8)) {
                          // Initialize flatpickr if needed or just set value
                          const dateInput = document.getElementById('tanggal_mcu');
                          if(dateInput && dateInput._flatpickr) {
-                             let dateStr = getVal(6).trim();
+                             let dateStr = getVal(8).trim();
                              
                              // Handle Excel Serial Date
                              if (!isNaN(dateStr) && parseFloat(dateStr) > 25569) {
@@ -234,66 +260,57 @@ if ($hf_value) {
                              }
 
                              if(dateStr.length < 3) {
-                                 Swal.fire({
-                                     icon: 'warning',
-                                     title: 'Tanggal Tidak Valid',
-                                     text: 'Format tanggal di file CSV tidak dikenali atau terlalu pendek. Pastikan menggunakan format YYYY-MM-DD atau Excel Date.',
-                                 });
-                                 return;
-                             }
-
-                             // Validate Holidays and Weekends
-                             let datesToSet = [];
-                             if (dateStr.includes(',')) {
-                                 datesToSet = dateStr.split(',').map(d => d.trim());
+                                 console.log('Skipping invalid/short date string:', dateStr);
                              } else {
-                                 datesToSet = [dateStr];
-                             }
-                             
-                             const invalidDates = [];
-                             const holidays = window.projectHolidays || [];
-                             
-                             datesToSet.forEach(d => {
-                                 const checkDate = new Date(d);
-                                 if (!isNaN(checkDate.getTime())) {
-                                      const day = checkDate.getDay();
-                                      const y = checkDate.getFullYear();
-                                      const m = String(checkDate.getMonth() + 1).padStart(2, '0');
-                                      const da = String(checkDate.getDate()).padStart(2, '0');
-                                      const isoDate = `${y}-${m}-${da}`;
-                                      
-                                      if (day === 0 || day === 6) {
-                                          invalidDates.push(`${d} (Weekend)`);
-                                      } else if (holidays.includes(isoDate)) {
-                                          invalidDates.push(`${d} (Holiday)`);
-                                      }
+                                 // Validate Holidays and Weekends
+                                 let datesToSet = [];
+                                 if (dateStr.includes(',')) {
+                                     datesToSet = dateStr.split(',').map(d => d.trim());
+                                 } else {
+                                     datesToSet = [dateStr];
                                  }
-                             });
-
-                             if (invalidDates.length > 0) {
-                                 Swal.fire({
-                                     icon: 'warning',
-                                     title: 'Tanggal Tidak Tersedia',
-                                     html: 'Beberapa tanggal tidak dapat dipilih karena merupakan hari libur atau akhir pekan:<br><br><b>' + invalidDates.join('<br>') + '</b><br><br>Tanggal tersebut akan dilewati otomatis.',
-                                 });
-                             }
-                             
-                             try {
-                                 dateInput._flatpickr.setDate(datesToSet);
                                  
-                                 // Verify if date was actually set
-                                 if (dateInput._flatpickr.selectedDates.length === 0) {
-                                     throw new Error("Date parsing failed");
-                                 }
-                             } catch (e) {
-                                 Swal.fire({
-                                     icon: 'warning',
-                                     title: 'Gagal Membaca Tanggal',
-                                     text: 'Sistem tidak dapat membaca format tanggal: "' + dateStr + '". Mohon gunakan format YYYY-MM-DD.',
+                                 const invalidDates = [];
+                                 const holidays = window.projectHolidays || [];
+                                 
+                                 datesToSet.forEach(d => {
+                                     const checkDate = new Date(d);
+                                     if (!isNaN(checkDate.getTime())) {
+                                          const day = checkDate.getDay();
+                                          const y = checkDate.getFullYear();
+                                          const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+                                          const da = String(checkDate.getDate()).padStart(2, '0');
+                                          const isoDate = `${y}-${m}-${da}`;
+                                          
+                                          if (day === 0 || day === 6) {
+                                              invalidDates.push(`${d} (Weekend)`);
+                                          } else if (holidays.includes(isoDate)) {
+                                              invalidDates.push(`${d} (Holiday)`);
+                                          }
+                                     }
                                  });
+
+                                 if (invalidDates.length > 0) {
+                                     Swal.fire({
+                                         icon: 'warning',
+                                         title: 'Tanggal Tidak Tersedia',
+                                         html: 'Beberapa tanggal tidak dapat dipilih karena merupakan hari libur atau akhir pekan:<br><br><b>' + invalidDates.join('<br>') + '</b><br><br>Tanggal tersebut akan dilewati otomatis.',
+                                     });
+                                 }
+                                 
+                                 try {
+                                     dateInput._flatpickr.setDate(datesToSet);
+                                     
+                                     // Verify if date was actually set
+                                     if (dateInput._flatpickr.selectedDates.length === 0) {
+                                         throw new Error("Date parsing failed");
+                                     }
+                                 } catch (e) {
+                                     console.error("Flatpickr setDate failed:", e);
+                                 }
                              }
                          } else if (dateInput) {
-                             dateInput.value = getVal(8); // Was 6, now 8 (shifted by +2)
+                             dateInput.value = getVal(8);
                          }
                     }
                     
@@ -304,9 +321,9 @@ if ($hf_value) {
                     const setRadio = (name, val) => {
                         val = val.toLowerCase();
                         if(val === 'ya' || val === 'yes' || val === 'y') {
-                            $(`input[name="${name}"][value="Ya"]`).prop('checked', true);
+                            $(`input[name="${name}"][value="Ya"]`).prop('checked', true).trigger('change');
                         } else {
-                            $(`input[name="${name}"][value="Tidak"]`).prop('checked', true);
+                            $(`input[name="${name}"][value="Tidak"]`).prop('checked', true).trigger('change');
                         }
                         // Trigger toggle to show/hide notes/budget
                         if (typeof window.toggleConsumptionNotes === 'function') {
@@ -383,11 +400,16 @@ if ($hf_value) {
                     if(getVal(17)) setConsumptionItems('lunch', getVal(17));
                     // Snack Items
                     if(getVal(18)) setConsumptionItems('snack', getVal(18));
-                    
+
+                    // Final check for Lark buttons visibility
+                    if (typeof window.checkLarkRequirement === 'function') {
+                        window.checkLarkRequirement();
+                    }
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Data Imported',
-                        text: 'Form has been populated from the file.',
+                        text: 'Form has been populated from the Excel file.',
                         timer: 2000,
                         showConfirmButton: false
                     });
@@ -396,11 +418,7 @@ if ($hf_value) {
                 }
             };
 
-            if (file.name.endsWith('.csv')) {
-                reader.readAsText(file);
-            } else {
-                reader.readAsBinaryString(file);
-            }
+            reader.readAsBinaryString(file);
             
             // Reset input
             input.value = '';

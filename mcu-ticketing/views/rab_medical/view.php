@@ -1,5 +1,6 @@
 <?php include '../views/layouts/header.php'; ?>
 <?php include '../views/layouts/sidebar.php'; ?>
+<?php require_once __DIR__ . '/../../helpers/DateHelper.php'; ?>
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
@@ -155,7 +156,7 @@
                             <?php foreach($rab['dates'] as $date): ?>
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <strong><?php echo date('d M Y', strtotime($date['date'])); ?></strong>
+                                    <strong><?php echo DateHelper::formatIndonesianDate($date['date']); ?></strong>
                                     <br><small class="text-muted"><?php echo date('l', strtotime($date['date'])); ?></small>
                                 </td>
                                 <td class="text-center py-3">
@@ -200,7 +201,7 @@
                             <div class="timeline-point position-absolute top-0 start-0 translate-middle bg-secondary rounded-circle" style="width: 12px; height: 12px; margin-left: -1px;"></div>
                             <h6 class="mb-1"><i class="fas fa-plus-circle me-2 text-secondary"></i>Created</h6>
                             <small class="text-muted d-block">by <?php echo htmlspecialchars($rab['creator_name']); ?></small>
-                            <small class="text-muted"><?php echo date('d M Y H:i', strtotime($rab['created_at'])); ?></small>
+                            <small class="text-muted"><?php echo DateHelper::formatIndonesianDate($rab['created_at'], true); ?></small>
                         </div>
                         
                         <?php if($rab['status'] != 'draft'): ?>
@@ -230,7 +231,7 @@
                         <div class="timeline-item pb-3 border-start border-2 ps-4 position-relative">
                              <div class="timeline-point position-absolute top-0 start-0 translate-middle bg-success rounded-circle" style="width: 12px; height: 12px; margin-left: -1px;"></div>
                              <h6 class="mb-1 text-success"><i class="fas fa-check-circle me-2"></i>Manager Approved</h6>
-                             <small class="text-muted d-block"><?php echo date('d M Y H:i', strtotime($rab['approved_manager_at'])); ?></small>
+                             <small class="text-muted d-block"><?php echo DateHelper::formatIndonesianDate($rab['approved_manager_at'], true); ?></small>
                         </div>
                         <?php endif; ?>
                         
@@ -238,7 +239,7 @@
                         <div class="timeline-item pb-3 border-start border-2 ps-4 position-relative">
                              <div class="timeline-point position-absolute top-0 start-0 translate-middle bg-success rounded-circle" style="width: 12px; height: 12px; margin-left: -1px;"></div>
                              <h6 class="mb-1 text-success"><i class="fas fa-check-double me-2"></i>Head Approved</h6>
-                             <small class="text-muted d-block"><?php echo date('d M Y H:i', strtotime($rab['approved_head_at'])); ?></small>
+                             <small class="text-muted d-block"><?php echo DateHelper::formatIndonesianDate($rab['approved_head_at'], true); ?></small>
                         </div>
                         <?php endif; ?>
                     </div>

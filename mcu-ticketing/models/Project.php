@@ -736,15 +736,8 @@ class Project {
         $project = $this->getProjectById($project_id);
         if (!$project) return false;
 
-        $dates = json_decode($project['tanggal_mcu'], true);
-        if (!is_array($dates)) {
-            // Handle legacy single date or empty
-            if (!empty($project['tanggal_mcu'])) {
-                $dates = [$project['tanggal_mcu']];
-            } else {
-                return false;
-            }
-        }
+        $dates = DateHelper::parseDateArray($project['tanggal_mcu']);
+        if (empty($dates)) return false;
         
         // 2. Get all BA statuses
         $ba_statuses = $this->getBeritaAcara($project_id);

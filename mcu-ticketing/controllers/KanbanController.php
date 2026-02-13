@@ -280,7 +280,7 @@ class KanbanController extends BaseController {
                      $project['cost_codes'] = $cost_codes_stmt->fetchAll(PDO::FETCH_ASSOC);
 
                      // Process Dates for Berita Acara
-                     $dates = json_decode($project['tanggal_mcu'], true);
+                     $dates = DateHelper::parseDateArray($project['tanggal_mcu']);
                      $ba_status = $this->project->getBeritaAcara($_GET['id']);
                      
                      $project['dates'] = [];
@@ -299,9 +299,20 @@ class KanbanController extends BaseController {
 
                      // Fetch history
                      $project['history'] = $this->project->getHistory($_GET['id']);
+                     if (!empty($project['history'])) {
+                         foreach ($project['history'] as &$log) {
+                             $log['formatted_at'] = DateHelper::formatIndonesianDate($log['changed_at'], true);
+                         }
+                     }
 
                      // Fetch Technical Meeting
                      $project['technical_meeting'] = $this->project->getTechnicalMeeting($_GET['id']);
+                     if ($project['technical_meeting']) {
+                         $project['technical_meeting']['tm_date_formatted'] = DateHelper::formatIndonesianDate($project['technical_meeting']['tm_date']);
+                         if (!empty($project['technical_meeting']['setting_alat_date'])) {
+                             $project['technical_meeting']['setting_alat_date_formatted'] = DateHelper::formatIndonesianDate($project['technical_meeting']['setting_alat_date'], true);
+                         }
+                     }
 
                      // Fetch Koordinator Hasil (Medical Result Assignees)
                      $medicalResultModel = $this->loadModel('MedicalResult');
@@ -321,10 +332,20 @@ class KanbanController extends BaseController {
                      // Fetch Staff Assignments
                      $manpowerModel = $this->loadModel('ProjectManPower');
                      $project['staff_assignments'] = $manpowerModel->getAssignments($_GET['id']);
+                     if (!empty($project['staff_assignments'])) {
+                         foreach ($project['staff_assignments'] as &$sa) {
+                             $sa['formatted_date'] = DateHelper::formatIndonesianDate($sa['date']);
+                         }
+                     }
 
                      // Fetch DW Realizations
                      $realizationModel = $this->loadModel('MedicalResultRealization');
                      $project['realizations'] = $realizationModel->getByProjectId($_GET['id']);
+                     if (!empty($project['realizations'])) {
+                         foreach ($project['realizations'] as &$r) {
+                             $r['formatted_date'] = DateHelper::formatIndonesianDate($r['date']);
+                         }
+                     }
 
                      $this->jsonResponse($project);
                  } else {

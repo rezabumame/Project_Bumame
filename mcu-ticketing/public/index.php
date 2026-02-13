@@ -59,8 +59,7 @@ $router->add('upload_sph', 'ProjectController', 'uploadSph');
 $router->add('upload_berita_acara', 'ProjectController', 'upload_berita_acara');
 $router->add('get_ba_status_ajax', 'ProjectController', 'get_ba_status_ajax');
 $router->add('cancel_berita_acara', 'ProjectController', 'cancel_berita_acara');
-$router->add('download_project_template', 'ProjectController', 'downloadProjectTemplate');
-$router->add('import_projects_csv', 'ProjectController', 'importProjectsCsv');
+$router->add('import_projects_excel_json', 'ProjectController', 'importProjectsExcelJson');
 $router->add('download_ba', 'ProjectController', 'download_ba');
 $router->add('download_sph', 'ProjectController', 'download_sph');
 $router->add('generate_vendor_memo', 'ProjectController', 'generate_vendor_memo');
@@ -79,10 +78,12 @@ $router->add('rabs_update', 'RabController', 'update');
 $router->add('rabs_get_project_dates', 'RabController', 'get_project_dates');
 $router->add('rabs_list', 'RabController', 'index');
 $router->add('rabs_show', 'RabController', 'show');
+$router->add('rabs_auto_approve_submit', 'RabController', 'auto_approve_and_submit_finance');
 $router->add('rabs_approve', 'RabController', 'approve');
 $router->add('rabs_submit_finance', 'RabController', 'submit_to_finance');
 $router->add('rabs_advance_paid', 'RabController', 'advance_paid');
 $router->add('rabs_export_pdf', 'RabController', 'export_pdf');
+$router->add('rabs_export_csv', 'RabController', 'export_csv');
 $router->add('rabs_update_profit', 'RabController', 'update_profit');
 
 // RAB Realization
@@ -96,6 +97,7 @@ $router->add('realization_submit', 'RabRealizationController', 'submit_realizati
 $router->add('realization_approve', 'RabRealizationController', 'approve_realization');
 $router->add('realization_reject', 'RabRealizationController', 'reject_realization');
 $router->add('realization_export_lpum', 'RabRealizationController', 'export_lpum');
+$router->add('realization_export_csv', 'RabRealizationController', 'export_csv');
 $router->add('realization_upload_settlement', 'RabRealizationController', 'upload_settlement');
 
 // RAB Medical Result
@@ -125,16 +127,20 @@ $router->add('invoice_requests_view', 'InvoiceRequestController', 'show');
 $router->add('invoice_requests_print', 'InvoiceRequestController', 'print');
 $router->add('invoice_requests_submit', 'InvoiceRequestController', 'submit');
 $router->add('invoice_requests_approve', 'InvoiceRequestController', 'approve');
+$router->add('invoice_requests_export_csv', 'InvoiceRequestController', 'export_csv');
 $router->add('invoice_requests_edit', 'InvoiceRequestController', 'edit');
 $router->add('invoice_requests_update_action', 'InvoiceRequestController', 'update_action');
 $router->add('invoice_requests_delete', 'InvoiceRequestController', 'delete');
 
 // Invoice Processing (Finance)
 $router->add('invoice_processing_index', 'InvoiceProcessingController', 'index');
+$router->add('invoice_processing_export_csv', 'InvoiceProcessingController', 'export_csv');
 $router->add('invoice_processing_view', 'InvoiceProcessingController', 'detail');
 $router->add('invoice_processing_edit', 'InvoiceProcessingController', 'edit');
 $router->add('invoice_processing_update', 'InvoiceProcessingController', 'update');
 $router->add('invoice_processing_pay', 'InvoiceProcessingController', 'pay');
+$router->add('invoice_processing_get_sent_json', 'InvoiceProcessingController', 'get_sent_json');
+$router->add('invoice_processing_bulk_update_json', 'InvoiceProcessingController', 'bulk_update_payment_json');
 
 // Superadmin
 $router->add('superadmin_users', 'SuperadminController', 'manageUsers');

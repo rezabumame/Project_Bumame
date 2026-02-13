@@ -19,11 +19,86 @@
         </div>
     </div>
 
+    <?php if (in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
+    <div class="card border-0 shadow-sm rounded-lg mb-4 bg-light">
+        <div class="card-body p-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h6 class="mb-1 fw-bold"><i class="fas fa-file-import me-2"></i>Bulk Update Payment</h6>
+                    <p class="small text-muted mb-0">Update status invoice (SENT -> PAID) secara massal menggunakan file Excel.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex justify-content-md-end gap-2 mt-2 mt-md-0">
+                        <button type="button" onclick="downloadExcelTemplate()" class="btn btn-outline-info btn-sm rounded-pill px-3">
+                            <i class="fas fa-download me-1"></i> Download Template
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+                            <i class="fas fa-upload me-1"></i> Upload Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div class="modal fade" id="bulkUploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <form id="bulkUploadForm">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fas fa-upload me-2"></i>Upload File Excel</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Pilih File Excel (.xlsx, .xls)</label>
+                            <input type="file" id="bulk_file" name="bulk_file" class="form-control" accept=".xlsx, .xls" required>
+                            <div class="form-text mt-2 small">
+                                <i class="fas fa-info-circle me-1 text-primary"></i> Pastikan format file sesuai dengan template (No Invoice & Tanggal Pembayaran).
+                            </div>
+                        </div>
+                        <div id="uploadStatus" class="mt-3" style="display: none;">
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                            </div>
+                            <p class="small text-center text-muted mb-0">Memproses file...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" id="btnSubmitBulk" class="btn btn-primary px-4 rounded-pill fw-bold">Mulai Proses Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="card border-0 shadow-sm rounded-lg mb-4">
         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">
                 <i class="fas fa-file-invoice-dollar me-2"></i>Daftar Invoice (Finance)
             </h6>
+            <?php if (in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
+            <div class="d-flex gap-2 align-items-center">
+                <form action="index.php" method="GET" class="d-flex gap-2 align-items-center mb-0">
+                    <input type="hidden" name="page" value="invoice_processing_index">
+                    <div class="input-group input-group-sm" style="width: 150px;">
+                        <input type="date" name="start_date" class="form-control" value="<?php echo $_GET['start_date'] ?? ''; ?>" title="Start Date">
+                    </div>
+                    <div class="input-group input-group-sm" style="width: 150px;">
+                        <input type="date" name="end_date" class="form-control" value="<?php echo $_GET['end_date'] ?? ''; ?>" title="End Date">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold shadow-sm">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="index.php?page=invoice_processing_export_csv&start_date=<?php echo urlencode($_GET['start_date'] ?? ''); ?>&end_date=<?php echo urlencode($_GET['end_date'] ?? ''); ?>" class="btn btn-sm btn-success fw-bold shadow-sm" title="Export CSV">
+                        <i class="fas fa-file-csv"></i> Export
+                    </a>
+                </form>
+            </div>
+            <?php endif; ?>
         </div>
         <div class="card-body p-0">
             <?php if (isset($_SESSION['success'])): ?>
@@ -47,8 +122,8 @@
                             <th class="py-3">Company / Client</th>
                             <th class="py-3">Total Amount</th>
                             <th class="py-3 text-center">Status</th>
-                            <th class="py-3">Ref Request</th>
-                            <th class="py-3">Tanggal</th>
+                            <th class="py-3">Tanggal Invoice</th>
+                            <th class="py-3">Tanggal Bayar</th>
                             <th class="pe-4 py-3 text-end">Aksi</th>
                         </tr>
                     </thead>
@@ -96,13 +171,17 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="small text-dark fw-bold"><?php echo htmlspecialchars($row['request_number']); ?></div>
-                                    <div class="small text-muted">Date: <?php echo date('d/m/Y', strtotime($row['request_date'])); ?></div>
+                                    <div class="small text-dark fw-bold"><?php echo $row['invoice_date'] ? date('d/m/Y', strtotime($row['invoice_date'])) : '-'; ?></div>
+                                    <div class="small text-muted">Ref: <?php echo htmlspecialchars($row['request_number']); ?></div>
                                 </td>
                                 <td>
-                                    <div class="small text-muted" title="Created At">
-                                        <i class="far fa-clock me-1"></i> <?php echo date('d M Y H:i', strtotime($row['created_at'])); ?>
-                                    </div>
+                                    <?php if ($row['payment_date']): ?>
+                                        <div class="small text-success fw-bold">
+                                            <i class="fas fa-calendar-check me-1"></i><?php echo date('d/m/Y', strtotime($row['payment_date'])); ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted small">-</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="pe-4 text-end">
                                 <?php if (!in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
@@ -196,6 +275,7 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     $(document).ready(function() {
         $('#datatablesSimple').DataTable({
@@ -216,7 +296,129 @@
             modal.find('#payment_invoice_id').val(id);
             modal.find('#payment_invoice_number').val(number);
         });
+
+        // Handle Bulk Upload Form
+        $('#bulkUploadForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('bulk_file');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const submitBtn = $('#btnSubmitBulk');
+            const statusDiv = $('#uploadStatus');
+            
+            submitBtn.prop('disabled', true);
+            statusDiv.show();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                //jsonData[0] is header
+                // Expected columns: No Invoice, Tanggal Pembayaran
+                const payload = [];
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row.length >= 2) {
+                        let paymentDate = row[1];
+                        
+                        // Handle Excel Date Number
+                        if (typeof paymentDate === 'number') {
+                            // SheetJS date conversion
+                            const date = new Date((paymentDate - 25569) * 86400 * 1000);
+                            if (!isNaN(date.getTime())) {
+                                paymentDate = date.toISOString().split('T')[0];
+                            }
+                        }
+
+                        payload.push({
+                            invoice_number: row[0],
+                            payment_date: paymentDate
+                        });
+                    }
+                }
+
+                if (payload.length === 0) {
+                    Swal.fire('Error', 'File kosong atau format tidak sesuai.', 'error');
+                    submitBtn.prop('disabled', false);
+                    statusDiv.hide();
+                    return;
+                }
+
+                // Send to server
+                $.ajax({
+                    url: 'index.php?page=invoice_processing_bulk_update_json',
+                    method: 'POST',
+                    data: JSON.stringify({data: payload}),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        const res = JSON.parse(response);
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: res.message,
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire('Gagal', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Terjadi kesalahan saat mengirim data.', 'error');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false);
+                        statusDiv.hide();
+                    }
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
     });
+
+    function downloadExcelTemplate() {
+        // Fetch current SENT invoices for template
+        $.ajax({
+            url: 'index.php?page=invoice_processing_get_sent_json',
+            method: 'GET',
+            success: function(response) {
+                const res = JSON.parse(response);
+                if (res.status === 'success') {
+                    const invoices = res.data;
+                    const rows = [
+                        ['No Invoice', 'Tanggal Pembayaran (YYYY-MM-DD)', 'Client']
+                    ];
+                    
+                    invoices.forEach(inv => {
+                        rows.push([inv.invoice_number, '', inv.client_company]);
+                    });
+
+                    const ws = XLSX.utils.aoa_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Bulk Payment Template");
+
+                    // Set column widths
+                    ws['!cols'] = [
+                        {wch: 25}, // No Invoice
+                        {wch: 30}, // Tanggal Pembayaran
+                        {wch: 40}, // Client
+                    ];
+
+                    XLSX.writeFile(wb, `template_bulk_payment_${new Date().getTime()}.xlsx`);
+                } else {
+                    Swal.fire('Error', 'Gagal mengambil data invoice.', 'error');
+                }
+            }
+        });
+    }
 </script>
 
 <?php include '../views/layouts/footer.php'; ?>

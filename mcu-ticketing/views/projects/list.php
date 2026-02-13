@@ -134,7 +134,7 @@ if (!class_exists('DateHelper')) {
                                     <td>
                                         <div class="d-flex align-items-center justify-content-center text-muted small">
                                             <div>
-                                                <?php echo DateHelper::formatSmartDate($row['tanggal_mcu']); ?>
+                                                <?php echo DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']); ?>
                                             </div>
                                         </div>
                                     </td>

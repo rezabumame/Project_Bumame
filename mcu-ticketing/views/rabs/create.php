@@ -824,11 +824,11 @@ $(document).ready(function() {
                     
                     if(dates.length > 0) {
                         html += '<div class="d-flex flex-wrap gap-2 justify-content-center">';
-                        dates.forEach(function(date) {
+                        dates.forEach(function(dateObj) {
                             html += `
-                                <input type="checkbox" class="btn-check project-date-check" name="dates[]" value="${date}" id="date_${date}" checked autocomplete="off">
-                                <label class="btn btn-outline-primary fw-bold rounded-pill px-4" for="date_${date}">
-                                    <i class="fas fa-calendar-day me-2"></i>${formatDateIndo(date)}
+                                <input type="checkbox" class="btn-check project-date-check" name="dates[]" value="${dateObj.raw}" id="date_${dateObj.raw}" checked autocomplete="off">
+                                <label class="btn btn-outline-primary fw-bold rounded-pill px-4" for="date_${dateObj.raw}">
+                                    <i class="fas fa-calendar-day me-2"></i>${dateObj.formatted}
                                 </label>
                             `;
                         });
@@ -1003,8 +1003,13 @@ $(document).ready(function() {
 
     // Helper: Format Date
     function formatDateIndo(dateStr) {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateStr).toLocaleDateString('id-ID', options);
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        const day = d.getDate().toString().padStart(2, '0');
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        return `${day} ${month} ${year}`;
     }
 
     // Helper: Update Total Days

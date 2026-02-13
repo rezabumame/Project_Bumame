@@ -840,7 +840,7 @@
                 info.jsEvent.preventDefault(); // don't let the browser navigate
 
                 document.getElementById('modalTitle').textContent = info.event.title;
-                document.getElementById('modalDate').textContent = info.event.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('modalDate').textContent = info.event.extendedProps.formatted_date || info.event.start.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                 
                 var status = info.event.extendedProps.status;
                 var statusEl = document.getElementById('modalStatus');

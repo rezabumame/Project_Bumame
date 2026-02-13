@@ -47,7 +47,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <?php echo !empty($tm['setting_alat_date']) ? date('d M Y', strtotime($tm['setting_alat_date'])) : '-'; ?>
+                                            <?php echo !empty($tm['setting_alat_date']) ? DateHelper::formatIndonesianDate($tm['setting_alat_date']) : '-'; ?>
                                         </td>
                                         <td>
                                             <?php 

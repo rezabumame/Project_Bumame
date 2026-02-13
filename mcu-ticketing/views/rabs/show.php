@@ -127,10 +127,41 @@
                     </a>
                 <?php endif; ?>
 
+                <?php 
+                // Detection for Consumption Petugas
+                $has_consumption_petugas = false;
+                foreach ($items as $item) {
+                    if ($item['category'] == 'consumption' && (stripos($item['item_name'], 'Makan') !== false || stripos($item['item_name'], 'Snack') !== false || stripos($item['item_name'], 'Petugas') !== false)) {
+                        $has_consumption_petugas = true;
+                        break;
+                    }
+                }
+                ?>
+
                 <?php if ($rab['status'] == 'approved' && ($_SESSION['role'] == 'korlap' || $_SESSION['role'] == 'admin_ops')): ?>
-                    <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#submitFinanceModal">
+                    <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#submitFinanceModal" id="submitFinanceBtn" 
+                        <?php echo ($has_consumption_petugas && $_SESSION['role'] == 'korlap') ? 'disabled title="Please click Open Lark first"' : ''; ?>>
                         <i class="fas fa-paper-plane me-2"></i>Submit to Finance
                     </button>
+                <?php endif; ?>
+
+                <?php 
+                // Special Button for Korlap when consumption is needed
+                if ($has_consumption_petugas && $_SESSION['role'] == 'korlap'): ?>
+                    <?php if (in_array($rab['status'], ['draft', 'rejected', 'need_approval_manager', 'need_approval_head', 'need_approval_ceo', 'approved'])): ?>
+                        <button type="button" class="btn btn-info text-white" onclick="showLarkTemplate()">
+                            <i class="fas fa-file-alt me-2"></i>Template Lark
+                        </button>
+                        <a href="<?php echo $lark_link; ?>" target="_blank" class="btn btn-success" onclick="markLarkClicked()">
+                            <i class="fas fa-external-link-alt me-2"></i>Open Lark
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if (in_array($rab['status'], ['draft', 'rejected', 'need_approval_manager', 'need_approval_head', 'need_approval_ceo'])): ?>
+                        <button type="button" class="btn btn-primary" id="autoApproveSubmitBtn" onclick="autoApproveAndSubmit()" disabled title="Please click Open Lark first">
+                            <i class="fas fa-magic me-2"></i>Submit to Finance (Auto Approve)
+                        </button>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <?php if ($rab['status'] == 'submitted_to_finance' && $_SESSION['role'] == 'finance'): ?>
@@ -224,6 +255,12 @@
                                         <div class="col-sm-8 fw-bold"><?php echo htmlspecialchars($rab['nama_project']); ?></div>
                                     </div>
                                     <div class="mb-3 row">
+                                        <label class="col-sm-4 text-muted">Sales</label>
+                                        <div class="col-sm-8 fw-bold text-primary">
+                                            <i class="fas fa-user-tie me-2"></i><?php echo htmlspecialchars($project_info['sales_name'] ?? '-'); ?>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 row">
                                         <label class="col-sm-4 text-muted">Lokasi MCU</label>
                                         <div class="col-sm-8">
                                             <i class="fas fa-map-marker-alt text-danger me-2"></i>
@@ -262,7 +299,7 @@
                                                         <strong class="text-success small text-uppercase">Bukti Advance Bayar</strong>
                                                     </div>
                                                     <div class="small text-muted mb-2">
-                                                        <i class="fas fa-clock me-1"></i> <?php echo !empty($rab['finance_paid_at']) ? date('d M Y', strtotime($rab['finance_paid_at'])) : '-'; ?>
+                                                        <i class="fas fa-clock me-1"></i> <?php echo !empty($rab['finance_paid_at']) ? DateHelper::formatIndonesianDate($rab['finance_paid_at']) : '-'; ?>
                                                     </div>
                                                     <a href="<?php echo htmlspecialchars($rab['transfer_proof_path']); ?>" target="_blank" class="btn btn-sm btn-success w-100">
                                                         <i class="fas fa-receipt me-1"></i> Lihat Bukti Advance
@@ -987,7 +1024,96 @@
   </div>
 </div>
 
+<!-- Lark Template Modal -->
+<?php include '../views/admin_sales/lark_template_modal.php'; ?>
+
+<!-- Hidden Form for Auto Approve -->
+<form id="autoApproveForm" action="index.php?page=rabs_auto_approve_submit" method="POST" style="display:none;">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+    <input type="hidden" name="id" value="<?php echo $rab['id']; ?>">
+</form>
+
 <script>
+    function markLarkClicked() {
+        const autoBtn = document.getElementById('autoApproveSubmitBtn');
+        if (autoBtn) {
+            autoBtn.disabled = false;
+            autoBtn.removeAttribute('title');
+        }
+        
+        const financeBtn = document.getElementById('submitFinanceBtn');
+        if (financeBtn) {
+            financeBtn.disabled = false;
+            financeBtn.removeAttribute('title');
+        }
+    }
+
+    function autoApproveAndSubmit() {
+        if (confirm('Apakah Anda yakin ingin menyetujui RAB ini secara otomatis dan mengirimkannya ke Finance?\n\nProses ini akan melewati semua tahap persetujuan (Manager, Head, CEO) secara instan.')) {
+            document.getElementById('autoApproveForm').submit();
+        }
+    }
+
+    function showLarkTemplate() {
+        // Prepare data for generateLarkTemplate() in lark_template_modal.php
+        
+        // Clean existing hidden inputs if any
+        $('input[name="nama_project"], input[name="sales_name"], input[name="tanggal_mcu"], input[name="lunch"], input[name="snack"], input[name="lunch_item_name[]"], input[name="lunch_item_qty[]"], input[name="snack_item_name[]"], input[name="snack_item_qty[]"]').remove();
+
+        // Parse dates from JSON to comma-separated string for formatLarkDate
+        let selectedDates = '<?php echo $rab['selected_dates']; ?>';
+        let cleanDates = '';
+        try {
+            let parsed = JSON.parse(selectedDates);
+            if (Array.isArray(parsed)) {
+                cleanDates = parsed.join(', ');
+            } else {
+                cleanDates = selectedDates;
+            }
+        } catch (e) {
+            cleanDates = selectedDates;
+        }
+        
+        $('<input>').attr({type: 'hidden', name: 'nama_project', value: '<?php echo addslashes($rab['nama_project']); ?>'}).appendTo('body');
+        $('<input>').attr({type: 'hidden', name: 'sales_name', value: '<?php echo addslashes($project_info['sales_name'] ?? '-'); ?>'}).appendTo('body');
+        $('<input>').attr({type: 'hidden', name: 'tanggal_mcu', value: cleanDates}).appendTo('body');
+        
+        // Handle lunch/snack items (Only Petugas items)
+        let hasLunch = false;
+        let hasSnack = false;
+        
+        <?php foreach($items as $item): ?>
+            <?php 
+                $itemName = $item['item_name'];
+                $isPetugas = stripos($itemName, 'Petugas') !== false;
+                $isMakan = stripos($itemName, 'Makan') !== false;
+                $isSnack = stripos($itemName, 'Snack') !== false || stripos($itemName, 'Air Mineral') !== false;
+            ?>
+            <?php if ($item['category'] == 'consumption' && $isPetugas): ?>
+                <?php if ($isMakan): ?>
+                    hasLunch = true;
+                    $('<input>').attr({type: 'hidden', name: 'lunch_item_name[]', value: '<?php echo addslashes($itemName); ?>'}).appendTo('body');
+                    $('<input>').attr({type: 'hidden', name: 'lunch_item_qty[]', value: '<?php echo $item['qty']; ?>'}).appendTo('body');
+                <?php elseif ($isSnack): ?>
+                    hasSnack = true;
+                    $('<input>').attr({type: 'hidden', name: 'snack_item_name[]', value: '<?php echo addslashes($itemName); ?>'}).appendTo('body');
+                    $('<input>').attr({type: 'hidden', name: 'snack_item_qty[]', value: '<?php echo $item['qty']; ?>'}).appendTo('body');
+                <?php endif; ?>
+            <?php endif; ?>
+        <?php endforeach; ?>
+        
+        $('<input>').attr({type: 'radio', name: 'lunch', value: 'Ya', checked: hasLunch}).hide().appendTo('body');
+        $('<input>').attr({type: 'radio', name: 'snack', value: 'Ya', checked: hasSnack}).hide().appendTo('body');
+
+        if (typeof generateLarkTemplate === 'function') {
+            const template = generateLarkTemplate();
+            $('#larkTemplateText').val(template);
+            $('#larkTemplateModal').modal('show');
+        } else {
+            alert('Lark template generator not found.');
+        }
+    }
+
     // Initialize Tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

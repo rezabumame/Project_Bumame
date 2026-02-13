@@ -1,5 +1,6 @@
 <?php include '../views/layouts/header.php'; ?>
 <?php include '../views/layouts/sidebar.php'; ?>
+<?php require_once __DIR__ . '/../../helpers/DateHelper.php'; ?>
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center page-header-container">
@@ -64,7 +65,7 @@
                                 <?php else: ?>
                                     <?php foreach($realizations as $r): ?>
                                     <tr>
-                                        <td class="fw-bold"><?php echo $r['date']; ?></td>
+                                        <td class="fw-bold"><?php echo DateHelper::formatIndonesianDate($r['date']); ?></td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-circle bg-secondary text-white me-2">
@@ -141,11 +142,10 @@
                         <select class="form-select" name="date" required>
                             <?php 
                             // Use project dates + maybe RAB dates
-                            $dates = json_decode($project['tanggal_mcu'], true) ?? [];
-                            if (!is_array($dates)) $dates = [$project['tanggal_mcu']];
+                            $dates = DateHelper::parseDateArray($project['tanggal_mcu']);
                             foreach($dates as $date): 
                             ?>
-                                <option value="<?php echo $date; ?>"><?php echo $date; ?></option>
+                                <option value="<?php echo $date; ?>"><?php echo DateHelper::formatIndonesianDate($date); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

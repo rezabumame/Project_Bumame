@@ -295,10 +295,11 @@ class Rab {
     }
     
     public function getFilteredRabs($role, $user_id, $filters = [], $limit = null, $offset = null) {
-        $query = "SELECT r.*, p.nama_project, u.full_name as creator_name 
+        $query = "SELECT r.*, p.nama_project, u.full_name as creator_name, sp.sales_name 
                   FROM " . $this->table_name . " r
                   LEFT JOIN projects p ON r.project_id = p.project_id
-                  LEFT JOIN users u ON r.created_by = u.user_id";
+                  LEFT JOIN users u ON r.created_by = u.user_id
+                  LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id";
 
         $conditions = [];
         $params = [];

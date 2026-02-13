@@ -578,33 +578,6 @@ class ProjectController extends BaseController {
                 return;
             }
 
-            // CSV Processing
-            $participants_data = [];
-            if (isset($_FILES['participants_csv']) && $_FILES['participants_csv']['error'] == 0) {
-                $csv_file = $_FILES['participants_csv']['tmp_name'];
-                if (($handle = fopen($csv_file, "r")) !== FALSE) {
-                    $first_row = fgetcsv($handle, 1000, ",");
-                    if ($first_row && (stripos($first_row[0], 'nama') !== false || stripos($first_row[0], 'name') !== false)) {
-                        // Header
-                    } else {
-                         rewind($handle);
-                    }
-
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if (count($data) >= 5) {
-                            $participants_data[] = [
-                                'nama' => $data[0],
-                                'nik' => $data[1],
-                                'gender' => $data[2],
-                                'dob' => $data[3],
-                                'department' => $data[4]
-                            ];
-                        }
-                    }
-                    fclose($handle);
-                }
-            }
-
             $this->project->project_id = $_POST['project_id'];
             $this->project->nama_project = $_POST['nama_project'];
             $companies = isset($_POST['company_names']) ? $_POST['company_names'] : [];
@@ -659,8 +632,8 @@ class ProjectController extends BaseController {
             $this->project->header_footer = $_POST['header_footer'];
             $this->project->total_peserta = $_POST['total_peserta'];
             
-            $dates = explode(', ', $_POST['tanggal_mcu']);
-            $this->project->tanggal_mcu = json_encode($dates); 
+            $dates = array_filter(array_map('trim', explode(',', $_POST['tanggal_mcu'])));
+            $this->project->tanggal_mcu = json_encode(array_values($dates)); 
             
             $this->project->alamat = $_POST['alamat'];
             $this->project->sph_file = $sph_file;
@@ -913,8 +886,8 @@ class ProjectController extends BaseController {
             $this->project->header_footer = $_POST['header_footer'];
             $this->project->total_peserta = $_POST['total_peserta'];
             
-            $dates = explode(', ', $_POST['tanggal_mcu']);
-            $this->project->tanggal_mcu = json_encode($dates); 
+            $dates = array_filter(array_map('trim', explode(',', $_POST['tanggal_mcu'])));
+            $this->project->tanggal_mcu = json_encode(array_values($dates)); 
             
             $this->project->alamat = $_POST['alamat'];
             $this->project->sph_number = isset($_POST['sph_number']) ? trim($_POST['sph_number']) : '';
@@ -1315,66 +1288,6 @@ class ProjectController extends BaseController {
         }
     }
 
-    public function downloadProjectTemplate() {
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="project_import_template.csv"');
-        $output = fopen('php://output', 'w');
-        
-        // Headers matching the import logic
-        fputcsv($output, [
-            'Project ID', 
-            'Project Name', 
-            'Company Names (Comma Separated)', 
-            'Sales Person ID', 
-            'Project Type (on_site/walk_in)',
-            'Clinic Location (Required for Walk-In)',
-            'Jenis Pemeriksaan', 
-            'Total Peserta', 
-            'Tanggal MCU (e.g. 2023-10-25, 2023-10-26)', 
-            'Alamat', 
-            'Notes', 
-            'Lunch (Ya/Tidak)', 
-            'Snack (Ya/Tidak)',
-            'SPH Link (GDrive)',
-            'Referral No SPH',
-            'Lunch Budget',
-            'Snack Budget',
-            'Lunch Items (Item:Qty|Item:Qty)',
-            'Snack Items (Item:Qty|Item:Qty)'
-        ]);
-        
-        // Sample Data Row
-        fputcsv($output, [
-            'PRJ-001', 
-            'Annual MCU PT Example', 
-            'PT Example Indonesia, PT Example Branch', 
-            '1', // Sales Person ID example
-            'on_site', // Project Type
-            '', // Clinic Location (empty for on_site)
-            'Paket Silver', 
-            '100', 
-            date('Y-m-d'), 
-            'Jl. Sudirman No. 1, Jakarta', 
-            'VIP handling required', 
-            'Ya', 
-            'Ya',
-            'https://drive.google.com/file/d/example/view',
-            'REF-123',
-            '50000',
-            '25000',
-            'Nasi Padang:50|Ayam Bakar:50',
-            'Risoles:100|Puding:100'
-        ]);
-        
-        fclose($output);
-        exit;
-    }
-
-    public function importProjectsCsv() {
-        // Placeholder for CSV import functionality
-        echo "Feature not implemented yet.";
-    }
-
     public function get_ba_status_ajax() {
         if (!isset($_SESSION['role'])) {
              echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
@@ -1394,10 +1307,7 @@ class ProjectController extends BaseController {
             exit;
         }
         
-        $dates = json_decode($project['tanggal_mcu'], true);
-        if (!is_array($dates)) {
-            $dates = [$project['tanggal_mcu']];
-        }
+        $dates = DateHelper::parseDateArray($project['tanggal_mcu']);
         sort($dates);
         
         // Get BA Records

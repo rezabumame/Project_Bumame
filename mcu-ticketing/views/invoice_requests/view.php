@@ -90,7 +90,7 @@
                                                 <?php if ($hasRecords): ?>
                                                     <div class="d-flex flex-wrap gap-2">
                                                         <?php foreach ($records as $rec): ?>
-                                                            <?php $d = date('d M Y', strtotime($rec['tanggal_mcu'])); ?>
+                                                            <?php $d = DateHelper::formatIndonesianDate($rec['tanggal_mcu']); ?>
                                                             <?php if ($rec['status'] === 'uploaded' && !empty($rec['file_path'])): ?>
                                                                 <a href="index.php?page=download_ba&project_id=<?php echo $proj['project_id']; ?>&date=<?php echo htmlspecialchars($rec['tanggal_mcu']); ?>" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                     BA - <?php echo $d; ?>
@@ -105,7 +105,7 @@
                                                 <?php elseif (!empty($schedule)): ?>
                                                     <div class="d-flex flex-wrap gap-2">
                                                         <?php foreach ($schedule as $sd): ?>
-                                                            <?php $d = date('d M Y', strtotime($sd)); ?>
+                                                            <?php $d = DateHelper::formatIndonesianDate($sd); ?>
                                                             <span class="badge bg-warning text-dark">BA - <?php echo $d; ?> (Pending)</span>
                                                         <?php endforeach; ?>
                                                     </div>

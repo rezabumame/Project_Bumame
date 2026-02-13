@@ -32,17 +32,22 @@
     function formatLarkDate(dateStr) {
         if (!dateStr || dateStr === '-') return '-';
         
-        // If it's already formatted (contains letters and space), return as is
-        if (/[a-zA-Z]/.test(dateStr) && dateStr.includes(' ')) return dateStr;
+        // Clean potential JSON residues
+        dateStr = dateStr.replace(/[\[\]"]/g, '');
+        
+        // If it's already formatted (contains month names in Indonesian/English), return as is
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const hasMonthName = months.some(m => dateStr.toLowerCase().includes(m.toLowerCase()));
+        if (hasMonthName && dateStr.includes(' ')) return dateStr;
         
         // Handle multiple dates (comma separated)
         let dates = dateStr.split(',').map(d => d.trim()).filter(d => d);
         if (dates.length === 0) return '-';
         
-        // Sort dates
-        dates.sort();
+        // Sort dates chronologically
+        dates.sort((a, b) => new Date(a) - new Date(b));
         
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         
         let groups = [];
         if (dates.length > 0) {
@@ -71,18 +76,26 @@
         let outputParts = [];
         let firstDate = new Date(dates[0]);
         let firstYear = firstDate.getFullYear();
-        let sameYear = dates.every(d => new Date(d).getFullYear() === firstYear);
+        let sameYear = dates.every(d => {
+            let dt = new Date(d);
+            return !isNaN(dt.getTime()) && dt.getFullYear() === firstYear;
+        });
         
         groups.forEach(group => {
             let start = new Date(group[0]);
             let end = new Date(group[group.length - 1]);
             
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                outputParts.push(group[0]); // Fallback to raw if invalid
+                return;
+            }
+
             let startD = start.getDate();
-            let startM = months[start.getMonth()];
+            let startM = shortMonths[start.getMonth()];
             let startY = start.getFullYear();
             
             let endD = end.getDate();
-            let endM = months[end.getMonth()];
+            let endM = shortMonths[end.getMonth()];
             let endY = end.getFullYear();
             
             if (group.length === 1) {
@@ -109,7 +122,7 @@
         });
         
         let finalString = outputParts.join(', ');
-        if (sameYear) {
+        if (sameYear && !isNaN(firstYear)) {
             finalString += ' ' + firstYear;
         }
         return finalString;
@@ -261,31 +274,35 @@
         $('#submitProjectBtn').prop('disabled', false).css('opacity', '1');
     }
 
+    window.checkLarkRequirement = () => {
+        const lunchEnabled = $('input[name="lunch"]:checked').val() === 'Ya';
+        const snackEnabled = $('input[name="snack"]:checked').val() === 'Ya';
+        const isConsumptionRequested = lunchEnabled || snackEnabled;
+
+        // Handle visibility of Lark container
+        if (isConsumptionRequested) {
+            $('#larkLinkContainer').removeClass('d-none');
+            $('#vendorLarkContainer').removeClass('d-none'); // Also for list view
+        } else {
+            $('#larkLinkContainer').addClass('d-none');
+            $('#vendorLarkContainer').addClass('d-none'); // Also for list view
+        }
+        
+        if (isConsumptionRequested && !larkClicked) {
+            $('#submitProjectBtn').prop('disabled', true).css('opacity', '0.6').attr('title', 'Please click Open Lark first');
+            $('.btn-save-vendor').prop('disabled', true).css('opacity', '0.6');
+        } else {
+            $('#submitProjectBtn').prop('disabled', false).css('opacity', '1').removeAttr('title');
+            $('.btn-save-vendor').prop('disabled', false).css('opacity', '1');
+        }
+    };
+
     $(document).ready(function() {
-        const checkLarkRequirement = () => {
-            const lunchEnabled = $('input[name="lunch"]:checked').val() === 'Ya';
-            const snackEnabled = $('input[name="snack"]:checked').val() === 'Ya';
-            const isConsumptionRequested = lunchEnabled || snackEnabled;
-
-            // Handle visibility of Lark container
-            if (isConsumptionRequested) {
-                $('#larkLinkContainer').removeClass('d-none');
-            } else {
-                $('#larkLinkContainer').addClass('d-none');
-            }
-            
-            if (isConsumptionRequested && !larkClicked) {
-                $('#submitProjectBtn').prop('disabled', true).css('opacity', '0.6').attr('title', 'Please click Open Lark first');
-            } else {
-                $('#submitProjectBtn').prop('disabled', false).css('opacity', '1').removeAttr('title');
-            }
-        };
-
         // Check on change of lunch/snack
-        $('input[name="lunch"], input[name="snack"]').on('change', checkLarkRequirement);
+        $('input[name="lunch"], input[name="snack"]').on('change', window.checkLarkRequirement);
         
         // Initial check
-        checkLarkRequirement();
+        window.checkLarkRequirement();
 
         // Also intercept form submit just in case
         $('form').on('submit', function(e) {

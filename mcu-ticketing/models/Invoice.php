@@ -121,11 +121,25 @@ class Invoice {
         }
     }
 
-    public function getAll($role, $page = null, $limit = null) {
+    public function getAll($role, $page = null, $limit = null, $filters = []) {
         $query = "SELECT i.*, ir.request_number, ir.request_date, ir.client_company 
                   FROM " . $this->table_name . " i
                   JOIN " . $this->table_requests . " ir ON i.invoice_request_id = ir.id";
         
+        $where_clauses = [];
+        $params = [];
+
+        // Date Range Filter
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $where_clauses[] = "i.invoice_date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
+        }
+
+        if (!empty($where_clauses)) {
+            $query .= " WHERE " . implode(" AND ", $where_clauses);
+        }
+
         $query .= " ORDER BY i.created_at DESC";
 
         if ($limit !== null && $page !== null) {
@@ -134,6 +148,10 @@ class Invoice {
         }
 
         $stmt = $this->conn->prepare($query);
+
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
 
         if ($limit !== null && $page !== null) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
@@ -144,9 +162,26 @@ class Invoice {
         return $stmt;
     }
 
-    public function countAll() {
-        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+    public function countAll($filters = []) {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " i";
+        
+        $where_clauses = [];
+        $params = [];
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $where_clauses[] = "i.invoice_date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
+        }
+
+        if (!empty($where_clauses)) {
+            $query .= " WHERE " . implode(" AND ", $where_clauses);
+        }
+
         $stmt = $this->conn->prepare($query);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['total'];
@@ -273,7 +308,26 @@ class Invoice {
         return false;
     }
 
-    private function updateProjectStatusFromInvoice($invoice_id, $new_status, $user_id = null) {
+    public function getSentInvoices() {
+        $query = "SELECT i.invoice_number, ir.client_company 
+                  FROM " . $this->table_name . " i
+                  JOIN " . $this->table_requests . " ir ON i.invoice_request_id = ir.id
+                  WHERE i.status = 'SENT' AND i.invoice_number IS NOT NULL AND i.invoice_number != ''
+                  ORDER BY i.invoice_number ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getByInvoiceNumber($invoice_number) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE invoice_number = :inv_num LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":inv_num", $invoice_number);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateProjectStatusFromInvoice($invoice_id, $new_status, $user_id = null) {
         // Logic:
         // If ISSUED/SENT -> Project INVOICED
         // If PAID -> Check if ALL invoices for this project are PAID -> Project COMPLETED

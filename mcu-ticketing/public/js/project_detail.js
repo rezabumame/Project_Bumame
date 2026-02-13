@@ -3,27 +3,35 @@ function formatJenisPemeriksaan(text) {
     return text; // Fallback
 }
 
-function showUploadModal(projectId, date) {
+function showUploadModal(projectId, date, formattedDate) {
     document.getElementById('upload_ba_project_id').value = projectId;
     document.getElementById('upload_ba_date').value = date;
 
     // Format date for display
-    const d = new Date(date);
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('upload_ba_date_display').value = d.toLocaleDateString('id-ID', options);
+    if (formattedDate) {
+        document.getElementById('upload_ba_date_display').value = formattedDate;
+    } else {
+        const d = new Date(date);
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('upload_ba_date_display').value = d.toLocaleDateString('id-ID', options);
+    }
 
     var myModal = new bootstrap.Modal(document.getElementById('uploadBaModal'));
     myModal.show();
 }
 
-function showCancelModal(projectId, date) {
+function showCancelModal(projectId, date, formattedDate) {
     document.getElementById('cancel_ba_project_id').value = projectId;
     document.getElementById('cancel_ba_date').value = date;
 
     // Format date for display
-    const d = new Date(date);
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('cancel_ba_date_display').value = d.toLocaleDateString('id-ID', options);
+    if (formattedDate) {
+        document.getElementById('cancel_ba_date_display').value = formattedDate;
+    } else {
+        const d = new Date(date);
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('cancel_ba_date_display').value = d.toLocaleDateString('id-ID', options);
+    }
 
     var myModal = new bootstrap.Modal(document.getElementById('cancelBaModal'));
     myModal.show();
@@ -216,16 +224,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Date of MCU</div>
                                         <div class="col-sm-8">
                                             <span class="badge bg-light text-dark border"><i class="far fa-calendar-alt me-2"></i>
-                                            ${(() => {
-                        try {
-                            const dates = JSON.parse(p.tanggal_mcu);
-                            if (Array.isArray(dates) && dates.length > 0) {
-                                return dates.map(d => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })).join(', ');
-                            } else {
-                                return p.tanggal_mcu;
-                            }
-                        } catch (e) { return p.tanggal_mcu; }
-                    })()}
+                                                ${p.tanggal_mcu_formatted || p.tanggal_mcu}
                                             </span>
                                         </div>
                                     </div>
@@ -433,7 +432,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                         else if (status_lower.indexOf('completed') !== -1) { badgeClass = 'primary'; icon = 'fa-flag-checkered'; }
                         else { badgeClass = 'info'; icon = 'fa-info-circle'; }
 
-                        const formattedDate = new Date(log.changed_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        const formattedDate = log.formatted_at || log.changed_at;
                         const formattedStatus = log.status_to.replace(/_/g, ' ').toUpperCase();
 
                         const isPrimary = badgeClass === 'primary';
@@ -477,8 +476,8 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                 let tmHtml = '';
                 if (p.technical_meeting) {
                     const tm = p.technical_meeting;
-                    const tmDate = new Date(tm.tm_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                    const settingDate = tm.setting_alat_date ? new Date(tm.setting_alat_date).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                    const tmDate = tm.tm_date_formatted || tm.tm_date;
+                    const settingDate = tm.setting_alat_date_formatted || tm.setting_alat_date || '-';
 
                     let tmDocs = '';
                     if (tm.tm_file_path) {
@@ -829,8 +828,8 @@ function loadBaData(projectId) {
                             statusBadge = '<span class="badge bg-secondary">Pending</span>';
                             if (role === 'korlap') {
                                 actionButtons = `
-                                    <button class="btn btn-sm btn-primary" style="background-color: #204EAB; border-color: #204EAB;" onclick="triggerDirectUpload('${projectId}', '${item.date}')"><i class="fas fa-upload me-1"></i>Upload</button>
-                                    <button class="btn btn-sm btn-danger ms-1" onclick="showCancelModal('${projectId}', '${item.date}')"><i class="fas fa-times me-1"></i>Cancel</button>
+                                    <button class="btn btn-sm btn-primary" style="background-color: #204EAB; border-color: #204EAB;" onclick="triggerDirectUpload('${projectId}', '${item.date}', '${item.formatted_date}')"><i class="fas fa-upload me-1"></i>Upload</button>
+                                    <button class="btn btn-sm btn-danger ms-1" onclick="showCancelModal('${projectId}', '${item.date}', '${item.formatted_date}')"><i class="fas fa-times me-1"></i>Cancel</button>
                                 `;
                             } else {
                                 actionButtons = '<span class="text-muted small">Need Upload BA</span>';
@@ -869,7 +868,7 @@ function loadBaData(projectId) {
     });
 }
 
-function triggerDirectUpload(projectId, date) {
+function triggerDirectUpload(projectId, date, formattedDate) {
     // Populate the modal fields
     var projectIdField = document.getElementById('upload_ba_project_id');
     var dateField = document.getElementById('upload_ba_date');
@@ -877,7 +876,7 @@ function triggerDirectUpload(projectId, date) {
 
     if (projectIdField) projectIdField.value = projectId;
     if (dateField) dateField.value = date;
-    if (dateDisplayField) dateDisplayField.value = date;
+    if (dateDisplayField) dateDisplayField.value = formattedDate || date;
 
     // Show the modal
     var modalEl = document.getElementById('uploadBaModal');
@@ -1385,8 +1384,7 @@ function renderStaffAssignments(items) {
     `;
 
     items.forEach(item => {
-        const d = new Date(item.date);
-        const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        const dateStr = item.formatted_date || item.date;
 
         html += `
             <tr>
@@ -1424,8 +1422,7 @@ function renderDWRealizations(items) {
     `;
 
     items.forEach(item => {
-        const d = new Date(item.date);
-        const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        const dateStr = item.formatted_date || item.date;
 
         html += `
             <tr>

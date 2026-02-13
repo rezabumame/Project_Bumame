@@ -19,8 +19,54 @@ class InvoiceRequestController extends BaseController {
     }
 
     public function index() {
-        $requests = $this->invoiceRequest->getAll($_SESSION['role'], $_SESSION['user_id']);
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+        $requests = $this->invoiceRequest->getAll($_SESSION['role'], $_SESSION['user_id'], $filters);
         include '../views/invoice_requests/index.php';
+    }
+
+    public function export_csv() {
+        $this->checkRole(['finance', 'superadmin']);
+        
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+
+        $requests = $this->invoiceRequest->getAll($_SESSION['role'], $_SESSION['user_id'], $filters);
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="export_invoice_request_' . date('Ymd_His') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['No Request', 'Tanggal', 'Sales', 'Client', 'Partner Type', 'Event Type', 'Total Amount', 'Status']);
+
+        foreach ($requests as $r) {
+            // Fetch detailed request to get items for total amount calculation
+            $detailedRequest = $this->invoiceRequest->getById($r['id']);
+            $total_amount = 0;
+            if ($detailedRequest && isset($detailedRequest['items'])) {
+                foreach ($detailedRequest['items'] as $item) {
+                    $total_amount += $item['price'] * $item['qty'];
+                }
+            }
+
+            fputcsv($output, [
+                $r['request_number'] ?? '-',
+                $r['request_date'],
+                $r['sales_name'] ?? '-',
+                $r['client_company'],
+                $r['partner_type'],
+                $r['event_type'],
+                $total_amount,
+                strtoupper($r['status'])
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 
     public function create() {

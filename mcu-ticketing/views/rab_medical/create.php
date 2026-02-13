@@ -350,6 +350,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     inputDate.setAttribute('min', today);
 
+    // Format dates using PHP helper if possible, or JS for dynamic dates
+    const indonesianMonths = <?php echo json_encode([
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]); ?>;
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const d = new Date(dateString);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = indonesianMonths[d.getMonth()];
+        const year = d.getFullYear();
+        return `${day} ${month} ${year}`;
+    }
+
     let dateData = {};
 
     // Add Date Handler
@@ -450,11 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
             emptyState.style.display = 'block';
         }
     };
-
-    function formatDate(dateString) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('id-ID', options);
-    }
 
     // Form validation
     form.addEventListener('submit', function(e) {

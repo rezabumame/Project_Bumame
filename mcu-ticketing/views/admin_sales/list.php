@@ -79,7 +79,7 @@
         </div>
         <div>
             <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importModal">
-                <i class="fas fa-file-csv me-1"></i> Import CSV
+                <i class="fas fa-file-excel me-1"></i> Import Excel
             </button>
             <a href="index.php?page=projects_create" class="btn btn-primary"><i class="fas fa-plus"></i> New Project</a>
         </div>
@@ -164,29 +164,35 @@
 <!-- Project Detail Modal -->
 <?php include '../views/partials/project_detail_modal.php'; ?>
 
-<!-- Import CSV Modal -->
+<!-- Import Excel Modal -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Import Projects from CSV</h5>
+                <h5 class="modal-title">Import Projects from Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="index.php?page=import_projects_csv" method="POST" enctype="multipart/form-data">
+            <form id="importExcelForm">
                 <div class="modal-body">
                     <div class="alert alert-info small">
                         Use the template to import projects. Duplicate Project IDs will be skipped.
                         <br>
-                        <a href="index.php?page=download_project_template" class="alert-link">Download Template</a>
+                        <button type="button" onclick="downloadProjectExcelTemplate()" class="btn btn-link p-0 alert-link">Download Template</button>
                     </div>
                     <div class="mb-3">
-                        <label for="project_csv" class="form-label">Select CSV File</label>
-                        <input class="form-control" type="file" id="project_csv" name="project_csv" accept=".csv" required>
+                        <label for="project_excel" class="form-label">Select Excel File (.xlsx, .xls)</label>
+                        <input class="form-control" type="file" id="project_excel" name="project_excel" accept=".xlsx, .xls" required>
+                    </div>
+                    <div id="importStatus" class="mt-3" style="display: none;">
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
+                        <p class="small text-center text-muted mb-0">Processing file...</p>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-success">Import</button>
+                    <button type="submit" id="btnSubmitImport" class="btn btn-success">Import</button>
                 </div>
             </form>
         </div>
@@ -218,12 +224,141 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     $(document).ready(function() {
         $('#dataTable').DataTable({
             "order": [[ 5, "desc" ]]
         });
+
+        // Handle Project Import Excel
+        $('#importExcelForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('project_excel');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const submitBtn = $('#btnSubmitImport');
+            const statusDiv = $('#importStatus');
+            
+            submitBtn.prop('disabled', true);
+            statusDiv.show();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData.length === 0) {
+                    Swal.fire('Error', 'File kosong atau format tidak sesuai.', 'error');
+                    submitBtn.prop('disabled', false);
+                    statusDiv.hide();
+                    return;
+                }
+
+                // Send to server
+                $.ajax({
+                    url: 'index.php?page=import_projects_excel_json',
+                    method: 'POST',
+                    data: JSON.stringify({data: jsonData}),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        try {
+                            const res = JSON.parse(response);
+                            if (res.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: res.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire('Gagal', res.message, 'error');
+                            }
+                        } catch (e) {
+                            console.error('Parse error:', response);
+                            Swal.fire('Error', 'Gagal memproses respon server.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error', 'Terjadi kesalahan saat mengirim data.', 'error');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false);
+                        statusDiv.hide();
+                    }
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
     });
+
+    function downloadProjectExcelTemplate() {
+        const rows = [
+            [
+                'Project ID', 
+                'Project Name', 
+                'Company Names (Comma Separated)', 
+                'Sales Person ID', 
+                'Project Type (on_site/walk_in)',
+                'Clinic Location (Required for Walk-In)',
+                'Jenis Pemeriksaan', 
+                'Total Peserta', 
+                'Tanggal MCU (YYYY-MM-DD, separated by comma if multiple)', 
+                'Alamat', 
+                'Notes', 
+                'Lunch (Ya/Tidak)', 
+                'Snack (Ya/Tidak)',
+                'SPH Link (GDrive)',
+                'Referral No SPH',
+                'Lunch Budget',
+                'Snack Budget',
+                'Lunch Items (Item:Qty|Item:Qty)',
+                'Snack Items (Item:Qty|Item:Qty)'
+            ],
+            [
+                'PRJ-001', 
+                'Annual MCU PT Example', 
+                'PT Example Indonesia, PT Example Branch', 
+                '1', 
+                'on_site', 
+                '', 
+                'Paket Silver', 
+                '100', 
+                '2026-02-14', 
+                'Jl. Sudirman No. 1, Jakarta', 
+                'VIP handling required', 
+                'Ya', 
+                'Ya',
+                'https://drive.google.com/file/d/example/view',
+                'REF-123',
+                '50000',
+                '25000',
+                'Nasi Padang:50|Ayam Bakar:50',
+                'Risoles:100|Puding:100'
+            ]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Project Template");
+
+        // Set column widths
+        ws['!cols'] = [
+            {wch: 15}, {wch: 30}, {wch: 40}, {wch: 15}, {wch: 20},
+            {wch: 30}, {wch: 25}, {wch: 15}, {wch: 30}, {wch: 40},
+            {wch: 30}, {wch: 15}, {wch: 15}, {wch: 40}, {wch: 20},
+            {wch: 15}, {wch: 15}, {wch: 40}, {wch: 40}
+        ];
+
+        XLSX.writeFile(wb, `template_project_import_${new Date().getTime()}.xlsx`);
+    }
 
     function openSphModal(projectId) {
         document.getElementById('sph_project_id').value = projectId;

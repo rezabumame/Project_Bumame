@@ -106,7 +106,7 @@ class InvoiceRequest {
         return $prefix . str_pad($next, 3, '0', STR_PAD_LEFT);
     }
 
-    public function getAll($role, $user_id) {
+    public function getAll($role, $user_id, $filters = [], $limit = null, $offset = null) {
         $query = "SELECT ir.*, 
                   (SELECT GROUP_CONCAT(DISTINCT sp.sales_name SEPARATOR ', ')
                    FROM invoice_request_projects irp
@@ -114,6 +114,16 @@ class InvoiceRequest {
                    JOIN sales_persons sp ON p.sales_person_id = sp.id
                    WHERE irp.invoice_request_id = ir.id
                   ) as sales_name,
+                  (SELECT GROUP_CONCAT(DISTINCT p.project_id SEPARATOR ', ')
+                   FROM invoice_request_projects irp
+                   JOIN projects p ON irp.project_id = p.project_id
+                   WHERE irp.invoice_request_id = ir.id
+                  ) as project_ids,
+                  (SELECT GROUP_CONCAT(DISTINCT p.sph_number SEPARATOR ', ')
+                   FROM invoice_request_projects irp
+                   JOIN projects p ON irp.project_id = p.project_id
+                   WHERE irp.invoice_request_id = ir.id
+                  ) as sph_numbers,
                   u.full_name as creator_name,
                   us.full_name as approver_sales_name,
                   us.jabatan as approver_sales_jabatan,
@@ -132,15 +142,24 @@ class InvoiceRequest {
 ";
         
         $where_clauses = [];
+        $params = [];
         
         // 1. Sales only sees their own
         if ($role == 'sales') {
             $where_clauses[] = "ir.pic_sales_id = :uid";
+            $params[':uid'] = $user_id;
         }
         
         // 2. Hide Drafts for everyone except Admin Sales & Superadmin
         if ($role !== 'admin_sales' && $role !== 'superadmin') {
             $where_clauses[] = "ir.status != 'DRAFT'";
+        }
+
+        // Date Range Filter
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $where_clauses[] = "ir.request_date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
         }
         
         if (!empty($where_clauses)) {
@@ -148,14 +167,58 @@ class InvoiceRequest {
         }
         
         $query .= " ORDER BY ir.created_at DESC";
+
+        if ($limit !== null && $offset !== null) {
+            $query .= " LIMIT :limit OFFSET :offset";
+        }
+
         $stmt = $this->conn->prepare($query);
         
-        if ($role == 'sales') {
-            $stmt->bindParam(":uid", $user_id);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+
+        if ($limit !== null && $offset !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         }
         
         $stmt->execute();
         return $stmt;
+    }
+
+    public function countAll($role, $user_id, $filters = []) {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " ir";
+        
+        $where_clauses = [];
+        $params = [];
+        
+        if ($role == 'sales') {
+            $where_clauses[] = "ir.pic_sales_id = :uid";
+            $params[':uid'] = $user_id;
+        }
+        
+        if ($role !== 'admin_sales' && $role !== 'superadmin') {
+            $where_clauses[] = "ir.status != 'DRAFT'";
+        }
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $where_clauses[] = "ir.request_date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
+        }
+        
+        if (!empty($where_clauses)) {
+            $query .= " WHERE " . implode(" AND ", $where_clauses);
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
     }
 
     public function getById($id) {

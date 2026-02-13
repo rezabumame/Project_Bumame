@@ -39,7 +39,7 @@
                                         <td><?php echo $r['nama_project']; ?></td>
                                         <td><?php echo $r['requester_name']; ?></td>
                                         <td class="fw-bold text-primary"><?php echo DateHelper::formatSmartDateIndonesian($r['tanggal_mcu']); ?></td>
-                                        <td><?php echo date('d M Y H:i', strtotime($r['created_at'])); ?></td>
+                                        <td><?php echo DateHelper::formatIndonesianDate($r['created_at'], true); ?></td>
                                         <td>
                                             <?php if ($r['status'] == 'SPLIT_SYSTEM' && !empty($r['warehouse_statuses'])): ?>
                                                 <div class="d-flex flex-column gap-1">

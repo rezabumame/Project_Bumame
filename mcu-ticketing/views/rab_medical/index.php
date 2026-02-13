@@ -246,7 +246,7 @@
                                                 <span class="text-muted small">NO</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="small text-nowrap"><?php echo date('d M Y', strtotime($r['created_at'])); ?></td>
+                                        <td class="small text-nowrap"><?php echo DateHelper::formatIndonesianDate($r['created_at']); ?></td>
                                         <td class="text-end pe-4">
                                             <a href="index.php?page=rab_medical_view&id=<?php echo $r['id']; ?>" class="btn btn-sm btn-outline-primary text-nowrap">
                                                 View Details
@@ -291,7 +291,7 @@
                             <i class="fas fa-chevron-left"></i>
                         </a>
                         <span class="form-control text-center fw-bold">
-                            <?php echo date('F Y', strtotime("$year-$month-01")); ?>
+                            <?php echo DateHelper::formatMonthYearIndonesian($month, $year); ?>
                         </span>
                         <a href="index.php?page=rab_medical_index&view=calendar&month=<?php echo $month == 12 ? 1 : $month + 1; ?>&year=<?php echo $month == 12 ? $year + 1 : $year; ?>&project_id=<?php echo $filters['project_id']; ?>&user_id=<?php echo $filters['user_id']; ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-chevron-right"></i>
@@ -459,9 +459,7 @@
         const dayData = workloadData.filter(d => d.date === date);
         const modal = new bootstrap.Modal(document.getElementById('detailModal'));
         
-        document.getElementById('modalDateDisplay').innerText = new Date(date).toLocaleDateString('id-ID', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
+        document.getElementById('modalDateDisplay').innerText = formatDate(date);
 
         const uniqueProjects = [...new Set(dayData.map(d => d.project_id))];
         const uniqueDwIds = [...new Set(dayData.map(d => d.dw_user_id))];

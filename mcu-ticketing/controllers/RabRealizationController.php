@@ -501,10 +501,15 @@ class RabRealizationController extends BaseController {
             $limit = 20;
             $offset = ($page - 1) * $limit;
 
-            $stmtHistory = $this->realization->getAll(null, $role, $user_id, $limit, $offset);
+            $filters = [
+                'start_date' => $_GET['start_date'] ?? '',
+                'end_date' => $_GET['end_date'] ?? ''
+            ];
+
+            $stmtHistory = $this->realization->getAll(null, $role, $user_id, $limit, $offset, $filters);
             $history = $stmtHistory->fetchAll(PDO::FETCH_ASSOC);
             
-            $total_history_rows = $this->realization->countAll(null, $role, $user_id);
+            $total_history_rows = $this->realization->countAll(null, $role, $user_id, $filters);
             $total_history_pages = ceil($total_history_rows / $limit);
 
             // Get Correct Totals for displayed RABs
@@ -554,6 +559,62 @@ class RabRealizationController extends BaseController {
                 'total_rows' => $total_history_rows
             ]);
         }
+
+    public function export_csv() {
+        $this->checkRole(['finance', 'superadmin']);
+        
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+
+        // Fetch all realizations with filters
+        $stmt = $this->realization->getAll(null, $_SESSION['role'], $_SESSION['user_id'], null, null, $filters);
+        $realizations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="export_realisasi_' . date('Ymd_His') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Tanggal Realisasi', 'No RAB', 'Project', 'Kategori', 'Item', 'Qty', 'Amount', 'Total', 'Status']);
+
+        foreach ($realizations as $r) {
+            // Fetch items for each realization
+            $items = $this->realization->getItems($r['id']);
+            
+            if (empty($items)) {
+                // Export header only if no items (shouldn't happen usually)
+                fputcsv($output, [
+                    $r['date'],
+                    $r['rab_number'] ?? '-',
+                    $r['nama_project'] ?? '-',
+                    '-',
+                    '-',
+                    0,
+                    0,
+                    $r['total_amount'],
+                    strtoupper($r['status'])
+                ]);
+            } else {
+                foreach ($items as $item) {
+                    fputcsv($output, [
+                        $r['date'],
+                        $r['rab_number'] ?? '-',
+                        $r['nama_project'] ?? '-',
+                        strtoupper($item['category']),
+                        $item['item_name'],
+                        $item['qty'],
+                        $item['price'],
+                        $item['subtotal'],
+                        strtoupper($r['status'])
+                    ]);
+                }
+            }
+        }
+
+        fclose($output);
+        exit;
+    }
 
     public function comparison() {
         if (!isset($_GET['rab_id'])) {

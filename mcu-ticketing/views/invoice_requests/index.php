@@ -7,11 +7,35 @@
             <h1 class="page-header-title">Invoice Requests</h1>
             <p class="page-header-subtitle">Daftar Pengajuan Invoice</p>
         </div>
-        <?php if ($_SESSION['role'] == 'admin_sales' || $_SESSION['role'] == 'superadmin'): ?>
-            <a href="index.php?page=invoice_requests_create" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                <i class="fas fa-plus me-2"></i>Buat Request Baru
-            </a>
-        <?php endif; ?>
+        <div class="d-flex gap-2">
+            <?php if (in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
+            <form action="index.php" method="GET" class="d-flex gap-2">
+                <input type="hidden" name="page" value="invoice_requests_index">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-calendar-alt text-muted"></i>
+                    </span>
+                    <input type="date" name="start_date" class="form-control border-start-0" value="<?php echo $_GET['start_date'] ?? ''; ?>" placeholder="Start Date">
+                </div>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-calendar-alt text-muted"></i>
+                    </span>
+                    <input type="date" name="end_date" class="form-control border-start-0" value="<?php echo $_GET['end_date'] ?? ''; ?>" placeholder="End Date">
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm">Filter</button>
+                <a href="index.php?page=invoice_requests_export_csv&start_date=<?php echo urlencode($_GET['start_date'] ?? ''); ?>&end_date=<?php echo urlencode($_GET['end_date'] ?? ''); ?>" class="btn btn-sm btn-success fw-bold px-3 shadow-sm" title="Export CSV">
+                    <i class="fas fa-file-csv me-1"></i> Export
+                </a>
+            </form>
+            <?php endif; ?>
+            
+            <?php if ($_SESSION['role'] == 'admin_sales' || $_SESSION['role'] == 'superadmin'): ?>
+                <a href="index.php?page=invoice_requests_create" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-plus me-2"></i>Buat Request Baru
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div class="card mb-4 shadow-sm">
@@ -33,6 +57,8 @@
                         <tr>
                             <th class="text-center" width="5%">No</th>
                             <th>No Request</th>
+                            <th>ID Project</th>
+                            <th>Reff No SPH</th>
                             <th>Tanggal</th>
                             <th>Tipe</th>
                             <th>Sales / PIC</th>
@@ -46,6 +72,8 @@
                             <tr>
                                 <td class="text-center"><?php echo $no++; ?></td>
                                 <td class="fw-bold text-primary"><?php echo htmlspecialchars($row['request_number']); ?></td>
+                                <td class="small"><?php echo htmlspecialchars($row['project_ids'] ?? '-'); ?></td>
+                                <td class="small"><?php echo htmlspecialchars($row['sph_numbers'] ?? '-'); ?></td>
                                 <td><?php echo DateHelper::formatSmartDateIndonesian($row['request_date']); ?></td>
                                 <td>
                                     <span class="badge bg-light text-dark border">

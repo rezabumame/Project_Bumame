@@ -55,19 +55,13 @@
         </div>
         <div id="col-need-approval" class="kanban-items" data-status="<?php echo (in_array($_SESSION['role'], ['manager_ops', 'admin_ops', 'admin_sales', 'superadmin', 'sales', 'manager_sales', 'sales_support_supervisor', 'sales_performance_manager', 'surat_hasil'])) ? 'need_approval_manager' : 'need_approval_manager'; ?>">
             <?php foreach($need_approval as $p): 
-                $dates = json_decode($p['tanggal_mcu'], true);
+                $dates = DateHelper::parseDateArray($p['tanggal_mcu']);
                 $is_urgent = false;
                 
                 // Urgent / SLA Logic
                 if (in_array($_SESSION['role'], ['manager_ops', 'head_ops', 'admin_ops', 'superadmin'])) {
                     // 1. Existing H-1 Logic
-                    $target_date = null;
-                    if (is_array($dates) && !empty($dates)) {
-                        sort($dates);
-                        $target_date = $dates[0];
-                    } elseif (!empty($p['tanggal_mcu']) && !is_array($dates)) {
-                        $target_date = $p['tanggal_mcu'];
-                    }
+                    $target_date = !empty($dates) ? $dates[0] : null;
 
                     if ($target_date) {
                         $working_days = DateHelper::countWorkingDays(date('Y-m-d'), $target_date, $holidays ?? []);
@@ -106,11 +100,9 @@
                             <span class="badge bg-danger animate__animated animate__pulse animate__infinite urgent-badge">URGENT</span>
                         <?php endif; ?>
                         <small class="text-muted fw-bold" style="font-size: 0.7rem;"><i class="far fa-clock me-1"></i><?php 
-                            if (!empty($dates) && is_array($dates)) {
+                            if (!empty($dates)) {
                                 echo date('d M', strtotime($dates[0]));
-                                if(count($dates) > 1) echo ' (' . count($dates) . ' days)';
-                            } elseif (!empty($p['tanggal_mcu']) && !is_array(json_decode($p['tanggal_mcu'], true))) {
-                                echo date('d M', strtotime($p['tanggal_mcu']));
+                                if(count($dates) > 1) echo ' (' . count($dates) . ' hari)';
                             } else {
                                 echo date('d M', strtotime($p['created_at']));
                             }
@@ -162,18 +154,12 @@
         </div>
         <div id="col-need-head" class="kanban-items" data-status="need_approval_head">
             <?php foreach($next_approval as $p): 
-                $dates = json_decode($p['tanggal_mcu'], true);
+                $dates = DateHelper::parseDateArray($p['tanggal_mcu']);
                 $is_urgent = false;
                 
                 // Urgent / SLA Logic
                 // 1. Existing H-1 Logic
-                $target_date = null;
-                if (is_array($dates) && !empty($dates)) {
-                    sort($dates);
-                    $target_date = $dates[0];
-                } elseif (!empty($p['tanggal_mcu']) && !is_array($dates)) {
-                    $target_date = $p['tanggal_mcu'];
-                }
+                $target_date = !empty($dates) ? $dates[0] : null;
 
                 if ($target_date) {
                     $working_days = DateHelper::countWorkingDays(date('Y-m-d'), $target_date, $holidays ?? []);
@@ -206,11 +192,9 @@
                             <span class="badge bg-danger animate__animated animate__pulse animate__infinite urgent-badge">URGENT</span>
                         <?php endif; ?>
                         <small class="text-muted fw-bold" style="font-size: 0.7rem;"><i class="far fa-clock me-1"></i><?php 
-                            if (!empty($dates) && is_array($dates)) {
+                            if (!empty($dates)) {
                                 echo date('d M', strtotime($dates[0]));
-                                if(count($dates) > 1) echo ' (' . count($dates) . ' days)';
-                            } elseif (!empty($p['tanggal_mcu']) && !is_array(json_decode($p['tanggal_mcu'], true))) {
-                                echo date('d M', strtotime($p['tanggal_mcu']));
+                                if(count($dates) > 1) echo ' (' . count($dates) . ' hari)';
                             } else {
                                 echo date('d M', strtotime($p['created_at']));
                             }
@@ -273,13 +257,10 @@
                             <span class="badge bg-light text-muted border shadow-sm">#<?php echo $p['project_id']; ?></span>
                         </div>
                         <small class="text-muted fw-bold" style="font-size: 0.7rem;"><i class="far fa-clock me-1"></i><?php 
-                            $dates = json_decode($p['tanggal_mcu'], true);
-                            if (!empty($dates) && is_array($dates)) {
-                                sort($dates);
+                            $dates = DateHelper::parseDateArray($p['tanggal_mcu']);
+                            if (!empty($dates)) {
                                 echo date('d M', strtotime($dates[0]));
-                                if(count($dates) > 1) echo ' (' . count($dates) . ' days)';
-                            } elseif (!empty($p['tanggal_mcu']) && !is_array(json_decode($p['tanggal_mcu'], true))) {
-                                echo date('d M', strtotime($p['tanggal_mcu']));
+                                if(count($dates) > 1) echo ' (' . count($dates) . ' hari)';
                             } else {
                                 echo date('d M', strtotime($p['created_at']));
                             }
@@ -356,13 +337,10 @@
                     <div class="kanban-meta-row text-muted small">
                         <i class="far fa-clock"></i>
                         <span><?php 
-                            $dates = json_decode($p['tanggal_mcu'], true);
-                            if (!empty($dates) && is_array($dates)) {
-                                sort($dates);
+                            $dates = DateHelper::parseDateArray($p['tanggal_mcu']);
+                            if (!empty($dates)) {
                                 echo date('d M', strtotime($dates[0]));
-                                if(count($dates) > 1) echo ' (' . count($dates) . ' days)';
-                            } elseif (!empty($p['tanggal_mcu']) && !is_array(json_decode($p['tanggal_mcu'], true))) {
-                                echo date('d M', strtotime($p['tanggal_mcu']));
+                                if(count($dates) > 1) echo ' (' . count($dates) . ' hari)';
                             } else {
                                 echo date('d M', strtotime($p['created_at']));
                             }
@@ -419,13 +397,10 @@
                     <div class="kanban-meta-row text-muted small">
                         <i class="far fa-clock"></i>
                         <span><?php 
-                            $dates = json_decode($p['tanggal_mcu'], true);
-                            if (!empty($dates) && is_array($dates)) {
-                                sort($dates);
+                            $dates = DateHelper::parseDateArray($p['tanggal_mcu']);
+                            if (!empty($dates)) {
                                 echo date('d M', strtotime($dates[0]));
-                                if(count($dates) > 1) echo ' (' . count($dates) . ' days)';
-                            } elseif (!empty($p['tanggal_mcu']) && !is_array(json_decode($p['tanggal_mcu'], true))) {
-                                echo date('d M', strtotime($p['tanggal_mcu']));
+                                if(count($dates) > 1) echo ' (' . count($dates) . ' hari)';
                             } else {
                                 echo date('d M', strtotime($p['created_at']));
                             }

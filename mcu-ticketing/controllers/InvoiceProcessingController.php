@@ -14,13 +14,51 @@ class InvoiceProcessingController extends BaseController {
         $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
         $limit = 10;
         
-        $invoices = $this->invoice->getAll($_SESSION['role'], $page, $limit);
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+
+        $invoices = $this->invoice->getAll($_SESSION['role'], $page, $limit, $filters);
         
         // Count for pagination
-        $total_rows = $this->invoice->countAll();
+        $total_rows = $this->invoice->countAll($filters);
         $total_pages = ceil($total_rows / $limit);
         
         include '../views/invoices/index.php';
+    }
+
+    public function export_csv() {
+        $this->checkRole(['finance', 'superadmin']);
+        
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+
+        // Fetch all invoices with filters
+        $invoices = $this->invoice->getAll($_SESSION['role'], null, null, $filters);
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="export_invoice_' . date('Ymd_His') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['No Invoice', 'No Request', 'Tanggal Invoice', 'Client', 'Total Amount', 'Status', 'Tanggal Bayar']);
+
+        foreach ($invoices as $inv) {
+            fputcsv($output, [
+                $inv['invoice_number'] ?? '-',
+                $inv['request_number'] ?? '-',
+                $inv['invoice_date'] ?? '-',
+                $inv['client_company'],
+                $inv['total_amount'],
+                strtoupper($inv['status']),
+                $inv['payment_date'] ?? '-'
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 
     public function detail() {
@@ -203,6 +241,90 @@ class InvoiceProcessingController extends BaseController {
             $_SESSION['error'] = "Gagal memperbarui invoice.";
             header('Location: index.php?page=invoice_processing_edit&id=' . $id);
         }
+    }
+
+    public function get_sent_json() {
+        if (!in_array($_SESSION['role'], ['finance', 'superadmin'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $invoices = $this->invoice->getSentInvoices();
+        echo json_encode(['status' => 'success', 'data' => $invoices]);
+        exit;
+    }
+
+    public function bulk_update_payment_json() {
+        if (!in_array($_SESSION['role'], ['finance', 'superadmin'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (!isset($data['data']) || !is_array($data['data'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid data format']);
+            exit;
+        }
+
+        $success_count = 0;
+        $error_count = 0;
+        $errors = [];
+        $user_id = $_SESSION['user_id'];
+
+        foreach ($data['data'] as $item) {
+            $invoice_number = trim($item['invoice_number'] ?? '');
+            $payment_date = trim($item['payment_date'] ?? '');
+
+            if (empty($invoice_number) || empty($payment_date)) {
+                continue;
+            }
+
+            // Basic date validation
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $payment_date)) {
+                // Try to handle ISO date format if it comes as YYYY-MM-DDTHH:mm:ss.sssZ
+                if (strpos($payment_date, 'T') !== false) {
+                    $payment_date = explode('T', $payment_date)[0];
+                }
+                
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $payment_date)) {
+                    $errors[] = "Invoice $invoice_number: Format tanggal salah ($payment_date). Harus YYYY-MM-DD.";
+                    $error_count++;
+                    continue;
+                }
+            }
+
+            $invoice = $this->invoice->getByInvoiceNumber($invoice_number);
+            if ($invoice) {
+                if ($invoice['status'] == 'SENT' || $_SESSION['role'] == 'superadmin') {
+                    if ($this->invoice->markAsPaid($invoice['id'], $payment_date, "Bulk payment update via Excel", $user_id)) {
+                        $success_count++;
+                    } else {
+                        $errors[] = "Invoice $invoice_number: Gagal update ke database.";
+                        $error_count++;
+                    }
+                } else {
+                    $errors[] = "Invoice $invoice_number: Status bukan SENT (Status saat ini: " . $invoice['status'] . ").";
+                    $error_count++;
+                }
+            } else {
+                $errors[] = "Invoice $invoice_number: Tidak ditemukan.";
+                $error_count++;
+            }
+        }
+
+        $message = "$success_count invoice berhasil diupdate menjadi PAID.";
+        if ($error_count > 0) {
+            $message .= "\n\nErrors:\n" . implode("\n", $errors);
+        }
+
+        if ($success_count > 0 || $error_count > 0) {
+            echo json_encode(['status' => 'success', 'message' => $message]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Tidak ada data yang diproses.']);
+        }
+        exit;
     }
 }
 ?>

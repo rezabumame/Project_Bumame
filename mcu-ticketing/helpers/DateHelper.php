@@ -1,5 +1,22 @@
 <?php
 class DateHelper {
+    public static function parseDateArray($dateString) {
+        if (empty($dateString)) return [];
+        if (is_array($dateString)) return $dateString;
+        
+        $dates = json_decode($dateString, true);
+        if (is_array($dates)) return $dates;
+        
+        if (is_string($dateString)) {
+            if (strpos($dateString, ',') !== false) {
+                return array_filter(array_map('trim', explode(',', $dateString)));
+            }
+            return [$dateString];
+        }
+        
+        return [];
+    }
+
     public static function formatSmartDate($dateString) {
         if (empty($dateString)) return '-';
         
@@ -7,8 +24,16 @@ class DateHelper {
         
         if (!is_array($dates)) {
             // Try to handle single date or plain string
-            if (is_string($dateString) && strtotime($dateString)) {
-                return date('d M Y', strtotime($dateString));
+            if (is_string($dateString)) {
+                // If it's a comma-separated string, convert to array first
+                if (strpos($dateString, ',') !== false) {
+                    $dates = array_filter(array_map('trim', explode(',', $dateString)));
+                    return self::formatSmartDate(json_encode(array_values($dates)));
+                }
+                
+                if (strtotime($dateString)) {
+                    return date('d M Y', strtotime($dateString));
+                }
             }
             return is_string($dateString) ? $dateString : '-';
         }
@@ -85,8 +110,16 @@ class DateHelper {
         $dates = is_array($dateString) ? $dateString : json_decode($dateString, true);
         
         if (!is_array($dates)) {
-            if (is_string($dateString) && strtotime($dateString)) {
-                return self::formatIndonesianDate($dateString);
+            if (is_string($dateString)) {
+                // If it's a comma-separated string, convert to array first
+                if (strpos($dateString, ',') !== false) {
+                    $dates = array_filter(array_map('trim', explode(',', $dateString)));
+                    return self::formatSmartDateIndonesian(json_encode(array_values($dates)));
+                }
+                
+                if (strtotime($dateString)) {
+                    return self::formatIndonesianDate($dateString);
+                }
             }
             return is_string($dateString) ? $dateString : '-';
         }
@@ -173,8 +206,11 @@ class DateHelper {
         return $finalString;
     }
 
-    public static function formatIndonesianDate($dateString) {
-        if (empty($dateString)) return '-';
+    public static function formatIndonesianDate($dateString, $showTime = false) {
+        if (empty($dateString) || $dateString == '0000-00-00' || $dateString == '0000-00-00 00:00:00') return '-';
+        
+        $time = strtotime($dateString);
+        if (!$time) return '-';
         
         $months = [
             '01' => 'Januari',
@@ -191,11 +227,27 @@ class DateHelper {
             '12' => 'Desember'
         ];
         
-        $date = date('d', strtotime($dateString));
-        $month = date('m', strtotime($dateString));
-        $year = date('Y', strtotime($dateString));
+        $date = date('d', $time);
+        $month = date('m', $time);
+        $year = date('Y', $time);
         
-        return $date . ' ' . $months[$month] . ' ' . $year;
+        $formatted = $date . ' ' . $months[$month] . ' ' . $year;
+        
+        if ($showTime) {
+            $formatted .= ' ' . date('H:i', $time);
+        }
+        
+        return $formatted;
+    }
+
+    public static function formatMonthYearIndonesian($month, $year) {
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $month = (int)$month;
+        return (isset($months[$month]) ? $months[$month] : '') . ' ' . $year;
     }
 
     public static function getShortMonthIndonesian($dateString) {

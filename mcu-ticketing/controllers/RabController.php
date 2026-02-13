@@ -131,6 +131,9 @@ class RabController extends BaseController {
         // Generate CSRF Token for approval forms
         $csrf_token = $this->generateCsrfToken();
 
+        // Get Lark Link from System Configuration
+        $lark_link = $this->setting->get('lark_link') ?? 'https://www.larksuite.com';
+
         include '../views/rabs/show.php';
     }
 
@@ -252,6 +255,10 @@ class RabController extends BaseController {
     }
 
     public function get_project_dates() {
+        if (!class_exists('DateHelper')) {
+            include_once __DIR__ . '/../helpers/DateHelper.php';
+        }
+
         if (!isset($_GET['project_id'])) {
             echo json_encode(['dates' => [], 'total_participants' => 0, 'total_days' => 0]);
             return;
@@ -275,15 +282,7 @@ class RabController extends BaseController {
         
         $dates = [];
         if ($row && !empty($row['tanggal_mcu'])) {
-            $raw = $row['tanggal_mcu'];
-            if (strpos($raw, '[') === 0) {
-                $decoded = json_decode($raw, true);
-                if (is_array($decoded)) {
-                    $dates = $decoded;
-                }
-            } else {
-                $dates = array_map('trim', explode(',', $raw));
-            }
+            $dates = DateHelper::parseDateArray($row['tanggal_mcu']);
         }
         
         $total_participants = $row['total_peserta'] ?? 0;
@@ -321,8 +320,16 @@ class RabController extends BaseController {
             $vendor_allocations[] = $v;
         }
 
+        $formatted_dates = [];
+        foreach ($valid_available_dates as $d) {
+            $formatted_dates[] = [
+                'raw' => $d,
+                'formatted' => DateHelper::formatIndonesianDate($d)
+            ];
+        }
+
         echo json_encode([
-            'dates' => array_values($valid_available_dates),
+            'dates' => $formatted_dates,
             'total_participants' => $total_participants,
             'total_days' => $total_days,
             'sph_file' => $row['sph_file'] ?? null,
@@ -897,6 +904,61 @@ class RabController extends BaseController {
         }
     }
 
+    public function auto_approve_and_submit_finance() {
+        $this->checkRole(['korlap', 'admin_ops', 'superadmin']);
+        if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
+        
+        $id = $_POST['id'];
+        $rabData = $this->verifyRabAccessLocal($id);
+        if (!$rabData) die("RAB not found or Access Denied.");
+
+        // CSRF Protection
+        if (!$this->validateCsrfToken()) {
+            die("Invalid CSRF token. Possible CSRF attack detected!");
+        }
+
+        // 1. Auto Approve (Force status to approved)
+        // We set approvers to system or current user for audit trail
+        $this->rab->id = $id;
+        $data = [
+            'status' => 'approved',
+            'approved_by_manager' => $_SESSION['user_id'],
+            'approved_date_manager' => date('Y-m-d H:i:s'),
+            'approved_by_head' => $_SESSION['user_id'],
+            'approved_date_head' => date('Y-m-d H:i:s'),
+            'manager_name' => $_SESSION['full_name'] . " (Auto)",
+            'head_name' => $_SESSION['full_name'] . " (Auto)"
+        ];
+        
+        // If grand total >= 20jt, also auto-approve by CEO
+        if ($rabData['grand_total'] >= 20000000) {
+            $data['approved_by_ceo'] = $_SESSION['user_id'];
+            $data['approved_date_ceo'] = date('Y-m-d H:i:s');
+            $data['ceo_name'] = $_SESSION['full_name'] . " (Auto)";
+        }
+
+        if ($this->rab->updateApproval($data)) {
+            $this->project->logAction($rabData['project_id'], 'RAB Auto-Approved (Consumption)', $_SESSION['user_id'], "RAB Number: " . $rabData['rab_number']);
+            
+            // 2. Submit to Finance
+            if ($this->rab->submitToFinance($_SESSION['user_id'])) {
+                $this->project->logAction(
+                    $rabData['project_id'], 
+                    'Submit to Finance', 
+                    $_SESSION['user_id'], 
+                    "RAB Number: " . $rabData['rab_number'] . ". Status: Auto-Approved -> Submitted to Finance"
+                );
+                
+                $msg = "RAB berhasil diapprove otomatis dan disubmit ke Finance.";
+                $this->redirect('rabs_show', ['id' => $id, 'msg' => $msg]);
+            } else {
+                echo "Error submitting to finance after auto-approval.";
+            }
+        } else {
+            echo "Error during auto-approval.";
+        }
+    }
+
     public function advance_paid() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
         
@@ -1334,6 +1396,44 @@ class RabController extends BaseController {
         }
         
         include '../views/rabs/pdf.php';
+    }
+
+    public function export_csv() {
+        $this->checkRole(['finance', 'superadmin']);
+        
+        $role = $_SESSION['role'];
+        $user_id = $_SESSION['user_id'];
+        
+        $filters = [
+            'search' => $_GET['search'] ?? '',
+            'status' => $_GET['status'] ?? 'all',
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
+        ];
+
+        $stmt = $this->rab->getFilteredRabs($role, $user_id, $filters);
+        $rabs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="export_rab_' . date('Ymd_His') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['No RAB', 'Project', 'Creator', 'Sales', 'Total Grand', 'Status', 'Tanggal Dibuat']);
+
+        foreach ($rabs as $r) {
+            fputcsv($output, [
+                $r['rab_number'],
+                $r['nama_project'],
+                $r['creator_name'],
+                $r['sales_name'],
+                $r['grand_total'],
+                strtoupper($r['status']),
+                $r['created_at']
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 }
 ?>

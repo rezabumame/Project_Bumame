@@ -270,7 +270,14 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Filter</button>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Filter</button>
+                        <?php if (in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
+                        <a href="index.php?page=rabs_export_csv&search=<?php echo urlencode($filters['search']); ?>&status=<?php echo urlencode($filters['status']); ?>&start_date=<?php echo urlencode($filters['start_date']); ?>&end_date=<?php echo urlencode($filters['end_date']); ?>" class="btn btn-success fw-bold" title="Export CSV">
+                            <i class="fas fa-file-csv"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </form>
         </div>
@@ -285,6 +292,7 @@
                         <tr>
                             <th>No RAB</th>
                             <th>Project</th>
+                            <th>Sales</th>
                             <th>Created By</th>
                             <th>Cash Advance</th>
                             <th>Total Amount</th>
@@ -317,6 +325,12 @@
                                     <div class="fw-bold text-gray-800"><?php echo htmlspecialchars($rab['nama_project']); ?></div>
                                 </td>
                                 <td>
+                                    <div class="small fw-bold text-primary">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        <?php echo htmlspecialchars($rab['sales_name'] ?? '-'); ?>
+                                    </div>
+                                </td>
+                                <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-sm rounded-circle bg-light text-primary me-2 fw-bold">
                                             <?php echo strtoupper(substr($rab['creator_name'], 0, 1)); ?>
@@ -332,13 +346,27 @@
                                     </span>
                                 </td>
                                 <td class="text-muted small">
-                                    <?php echo date('d M Y', strtotime($rab['created_at'])); ?><br>
-                                    <?php echo date('H:i', strtotime($rab['created_at'])); ?>
+                                    <?php echo DateHelper::formatIndonesianDate($rab['created_at'], true); ?>
                                 </td>
                                 <td class="text-end">
-                                    <a href="index.php?page=rabs_show&id=<?php echo $rab['id']; ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                        <i class="fas fa-eye me-1"></i> Detail
-                                    </a>
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <?php if ($rab['status'] == 'submitted_to_finance' && $_SESSION['role'] == 'finance'): ?>
+                                            <button type="button" class="btn btn-sm btn-success rounded-circle p-0 open-advance-paid" 
+                                                style="width: 32px; height: 32px;"
+                                                data-id="<?php echo $rab['id']; ?>" 
+                                                data-number="<?php echo htmlspecialchars($rab['rab_number']); ?>"
+                                                data-bs-toggle="modal" data-bs-target="#advancePaidModal"
+                                                title="Advance Paid">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                        <a href="index.php?page=rabs_show&id=<?php echo $rab['id']; ?>" 
+                                           class="btn btn-sm btn-outline-primary rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                                           style="width: 32px; height: 32px;"
+                                           title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -403,5 +431,87 @@
         </div>
     </div>
 </div>
+
+<?php if ($_SESSION['role'] == 'finance'): ?>
+<!-- Advance Paid Modal -->
+<div class="modal fade" id="advancePaidModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content shadow-lg border-0">
+      <form action="index.php?page=rabs_advance_paid" method="POST" enctype="multipart/form-data">
+          <!-- CSRF Token -->
+          <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+          <div class="modal-header bg-success text-white border-0">
+            <h5 class="modal-title fw-bold"><i class="fas fa-money-check-alt me-2"></i>Advance Paid</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <input type="hidden" name="id" id="modal_rab_id">
+            
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="text-muted small text-uppercase fw-bold">No. RAB</span>
+                </div>
+                <div id="modal_rab_number" class="h5 fw-bold text-dark mb-0">-</div>
+            </div>
+
+            <div class="alert alert-info border-0 bg-light-info mb-4">
+                <div class="d-flex">
+                    <i class="fas fa-info-circle text-info me-3 mt-1"></i>
+                    <div>
+                        <div class="fw-bold text-info">Informasi</div>
+                        <div class="small text-muted">Status RAB akan diubah menjadi <strong>Advance Paid</strong> dan dana dianggap telah dicairkan ke Korlap.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold text-dark">Bukti Transfer <span class="text-muted small fw-normal">(Opsional)</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-upload text-muted"></i></span>
+                    <input type="file" name="transfer_proof" class="form-control border-start-0" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="form-text small">Format: PDF, JPG, PNG. Maksimal 5MB.</div>
+            </div>
+
+            <div class="mb-0">
+                <label class="form-label fw-bold text-dark">Catatan Finance <span class="text-muted small fw-normal">(Opsional)</span></label>
+                <textarea name="finance_note" class="form-control bg-light" rows="3" placeholder="Tuliskan catatan pembayaran jika ada..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light border-0 p-3">
+            <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-success px-4 rounded-pill fw-bold">
+                <i class="fas fa-check-circle me-1"></i> Konfirmasi Pembayaran
+            </button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const advancePaidButtons = document.querySelectorAll('.open-advance-paid');
+    const modalRabId = document.getElementById('modal_rab_id');
+    const modalRabNumber = document.getElementById('modal_rab_number');
+
+    advancePaidButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const rabId = this.getAttribute('data-id');
+            const rabNumber = this.getAttribute('data-number');
+            
+            modalRabId.value = rabId;
+            modalRabNumber.textContent = rabNumber;
+        });
+    });
+});
+</script>
+
+<style>
+.bg-light-info {
+    background-color: #f0f7ff;
+}
+</style>
+<?php endif; ?>
 
 <?php include '../views/layouts/footer.php'; ?>

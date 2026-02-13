@@ -23,7 +23,7 @@ class RabRealization {
     }
 
     // Get all realizations (can be filtered)
-    public function getAll($project_id = null, $role = null, $user_id = null, $limit = null, $offset = null) {
+    public function getAll($project_id = null, $role = null, $user_id = null, $limit = null, $offset = null, $filters = []) {
         $query = "SELECT r.*, p.nama_project, u.full_name as creator_name, rab.rab_number, rab.grand_total as rab_grand_total, rab.status as rab_status,
                   korlap.full_name as korlap_name 
                   FROM " . $this->table_name . " r
@@ -43,6 +43,13 @@ class RabRealization {
         if ($role == 'korlap') {
             $conditions[] = "p.korlap_id = :user_id";
             $params[':user_id'] = $user_id;
+        }
+
+        // Date Range Filter
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $conditions[] = "r.date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
         }
         
         if (!empty($conditions)) {
@@ -69,7 +76,7 @@ class RabRealization {
         return $stmt;
     }
 
-    public function countAll($project_id = null, $role = null, $user_id = null) {
+    public function countAll($project_id = null, $role = null, $user_id = null, $filters = []) {
         $query = "SELECT COUNT(*) as count FROM " . $this->table_name . " r
                   JOIN projects p ON r.project_id = p.project_id";
         
@@ -84,6 +91,13 @@ class RabRealization {
         if ($role == 'korlap') {
             $conditions[] = "p.korlap_id = :user_id";
             $params[':user_id'] = $user_id;
+        }
+
+        // Date Range Filter
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $conditions[] = "r.date BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $filters['start_date'];
+            $params[':end_date'] = $filters['end_date'];
         }
         
         if (!empty($conditions)) {

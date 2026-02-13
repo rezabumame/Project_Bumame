@@ -7,6 +7,29 @@
             <h1 class="page-header-title">Realisasi Harian</h1>
             <p class="page-header-subtitle">Input realisasi harian berdasarkan RAB yang disetujui.</p>
         </div>
+        <?php if (in_array($_SESSION['role'], ['finance', 'superadmin'])): ?>
+        <div class="d-flex gap-2">
+            <form action="index.php" method="GET" class="d-flex gap-2">
+                <input type="hidden" name="page" value="realization_list">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-calendar-alt text-muted"></i>
+                    </span>
+                    <input type="date" name="start_date" class="form-control border-start-0" value="<?php echo $_GET['start_date'] ?? ''; ?>" placeholder="Start Date">
+                </div>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-calendar-alt text-muted"></i>
+                    </span>
+                    <input type="date" name="end_date" class="form-control border-start-0" value="<?php echo $_GET['end_date'] ?? ''; ?>" placeholder="End Date">
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary fw-bold px-3">Filter</button>
+                <a href="index.php?page=realization_export_csv&start_date=<?php echo urlencode($_GET['start_date'] ?? ''); ?>&end_date=<?php echo urlencode($_GET['end_date'] ?? ''); ?>" class="btn btn-sm btn-success fw-bold px-3" title="Export CSV">
+                    <i class="fas fa-file-csv me-1"></i> Export
+                </a>
+            </form>
+        </div>
+        <?php endif; ?>
     </div>
 
             <?php if (isset($_GET['msg'])): ?>
@@ -186,7 +209,7 @@
                                                                     $cons_other = ($cats['consumption'] ?? 0) + ($cats['other'] ?? 0) + ($cats['vendor'] ?? 0);
                                                                 ?>
                                                                 <tr>
-                                                                    <td><?php echo date('d M Y', strtotime($h['date'])); ?></td>
+                                                                    <td><?php echo DateHelper::formatIndonesianDate($h['date']); ?></td>
                                                                     <td class="fw-bold">Rp <?php echo number_format($h['total_amount']); ?></td>
                                                                     
                                                                     <td><?php echo $personnel > 0 ? number_format($personnel) : '-'; ?></td>

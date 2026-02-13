@@ -53,6 +53,10 @@ class DashboardController extends BaseController {
     }
 
     public function getCalendarEvents() {
+        if (!class_exists('DateHelper')) {
+            include_once __DIR__ . '/../helpers/DateHelper.php';
+        }
+
         $korlap_id = ($_SESSION['role'] == 'korlap') ? $_SESSION['user_id'] : null;
         
         $role = null;
@@ -98,7 +102,8 @@ class DashboardController extends BaseController {
                             'lunch' => $row['lunch'],
                             'lunch_notes' => $row['lunch_notes'],
                             'snack' => $row['snack'],
-                            'snack_notes' => $row['snack_notes']
+                            'snack_notes' => $row['snack_notes'],
+                            'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
                 }

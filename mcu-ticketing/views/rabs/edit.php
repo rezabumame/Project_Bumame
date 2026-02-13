@@ -912,25 +912,29 @@ $(document).ready(function() {
                     
                     // Add saved dates if not in available (because they are used by this RAB)
                     savedDates.forEach(d => {
-                        if (!availableDates.includes(d)) {
-                            availableDates.push(d);
+                        const exists = availableDates.some(obj => obj.raw === d);
+                        if (!exists) {
+                            availableDates.push({
+                                raw: d,
+                                formatted: formatDateIndo(d)
+                            });
                         }
                     });
                     
                     // Sort dates
-                    availableDates.sort();
+                    availableDates.sort((a, b) => a.raw.localeCompare(b.raw));
 
                     const dates = availableDates;
                     
                     if(dates.length > 0) {
                         html += '<div class="d-flex flex-wrap gap-2 justify-content-center">';
-                        dates.forEach(function(date) {
+                        dates.forEach(function(dateObj) {
                             // Check if this date is in savedDates
-                            const isChecked = savedDates.includes(date) ? 'checked' : '';
+                            const isChecked = savedDates.includes(dateObj.raw) ? 'checked' : '';
                             html += `
-                                <input type="checkbox" class="btn-check project-date-check" name="dates[]" value="${date}" id="date_${date}" ${isChecked} autocomplete="off">
-                                <label class="btn btn-outline-primary fw-bold rounded-pill px-4" for="date_${date}">
-                                    <i class="fas fa-calendar-day me-2"></i>${formatDateIndo(date)}
+                                <input type="checkbox" class="btn-check project-date-check" name="dates[]" value="${dateObj.raw}" id="date_${dateObj.raw}" ${isChecked} autocomplete="off">
+                                <label class="btn btn-outline-primary fw-bold rounded-pill px-4" for="date_${dateObj.raw}">
+                                    <i class="fas fa-calendar-day me-2"></i>${dateObj.formatted}
                                 </label>
                             `;
                         });
@@ -1016,12 +1020,6 @@ $(document).ready(function() {
     // Initial Load
     loadProjectDates($('#project_id').val());
 
-    // Helper: Format Date
-    function formatDateIndo(dateStr) {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateStr).toLocaleDateString('id-ID', options);
-    }
-
     // Helper: Update Total Days
     function updateTotalDays(count) {
         window.totalDays = count;
@@ -1030,19 +1028,10 @@ $(document).ready(function() {
         // Update Personnel Days (Skip Petugas Loading)
         $('.personnel-days').each(function() {
             const row = $(this).closest('.personnel-row');
-            const role = row.find('input[name*="[role]"]').val(); // Use name selector as ID might be dynamic
-            // Or get it from text? No, hidden input is reliable.
-            // Wait, in edit.php, row structure might be slightly different?
-            // Let's check addPersonnelRow in edit.php to be sure.
-            // But usually input[name*="[role]"] works if name is personnel[X][role]
-            
-            // Safer to check value directly if possible, or assume same structure.
-            // In create.php: <input type="hidden" name="personnel[${personnelIndex}][role]" value="${role}">
-            
-            // Let's assume standard structure.
-             if (role !== 'Petugas Loading') {
-                 $(this).val(count);
-             }
+            const role = row.find('input[name*="[role]"]').val();
+            if (role !== 'Petugas Loading') {
+                $(this).val(count);
+            }
         });
         
         // Update other input fields
