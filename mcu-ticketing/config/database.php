@@ -36,20 +36,27 @@ class Database {
         }
 
         // Pilih kredensial yang sesuai
+        $port = null;
         if ($is_localhost) {
             $host = getenv('DB_HOST') ?: $this->local_host;
             $db_name = getenv('DB_NAME') ?: $this->local_db_name;
             $username = getenv('DB_USER') ?: $this->local_username;
             $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : $this->local_password;
         } else {
-            $host = $this->live_host;
-            $db_name = $this->live_db_name;
-            $username = $this->live_username;
-            $password = $this->live_password;
+            $host = getenv('DB_HOST') ?: $this->live_host;
+            $port = getenv('DB_PORT') ?: null;
+            $db_name = getenv('DB_NAME') ?: $this->live_db_name;
+            $username = getenv('DB_USER') ?: $this->live_username;
+            $livePass = getenv('DB_PASSWORD');
+            if ($livePass === false) {
+                $livePass = getenv('DB_PASS');
+            }
+            $password = ($livePass !== false) ? $livePass : $this->live_password;
         }
 
         try {
-            $this->conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
+            $dsn = "mysql:host=" . $host . ($port ? ";port=" . $port : "") . ";dbname=" . $db_name;
+            $this->conn = new PDO($dsn, $username, $password);
             $this->conn->exec("set names utf8");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $exception) {
