@@ -119,7 +119,7 @@ class InvoiceRequest {
                    JOIN projects p ON irp.project_id = p.project_id
                    WHERE irp.invoice_request_id = ir.id
                   ) as project_ids,
-                  (SELECT GROUP_CONCAT(DISTINCT p.sph_number SEPARATOR ', ')
+                  (SELECT GROUP_CONCAT(DISTINCT p.sph_file SEPARATOR ', ')
                    FROM invoice_request_projects irp
                    JOIN projects p ON irp.project_id = p.project_id
                    WHERE irp.invoice_request_id = ir.id
