@@ -1,0 +1,917 @@
+:root {
+    /* Modern Color Palette */
+    --primary-color: #204EAB;
+    /* Medical Blue */
+    --primary-hover: #173b85;
+    /* Darker shade of Medical Blue */
+    --primary-gradient: linear-gradient(135deg, #204EAB 0%, #173b85 100%);
+
+    --secondary-color: #8b5cf6;
+    /* Violet 500 */
+    --success-color: #10b981;
+    /* Emerald 500 */
+    --info-color: #3b82f6;
+    /* Blue 500 */
+    --warning-color: #f59e0b;
+    /* Amber 500 */
+    --danger-color: #ef4444;
+    /* Red 500 */
+
+    --light-bg: #f3f4f6;
+    /* Gray 100 */
+    --card-bg: #ffffff;
+    --dark-text: #1f2937;
+    /* Gray 800 */
+    --muted-text: #6b7280;
+    /* Gray 500 */
+
+    /* Shadows & Effects */
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --border-radius: 12px;
+
+    --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--light-bg);
+    font-family: var(--font-family);
+    color: var(--dark-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global Scroll Handling */
+body,
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    /* Prevent body scroll */
+}
+
+#wrapper {
+    display: flex;
+    height: 100vh;
+    /* Force viewport height */
+    width: 100vw;
+    /* Force viewport width */
+    overflow: hidden;
+    /* Prevent wrapper scroll */
+}
+
+/* Sidebar Styling */
+#sidebar-wrapper {
+    /* min-height: 100vh; REMOVED to prevent overflow */
+    margin-left: -16rem;
+    transition: margin .3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--card-bg);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+    z-index: 1000;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    /* Mobile: Fixed position to overlay content */
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    /* Full height of wrapper */
+    width: 16rem;
+    overflow-y: auto;
+    /* Scrollable sidebar */
+    scrollbar-width: thin;
+    /* Firefox */
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 2rem 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    background: linear-gradient(to right, rgba(79, 70, 229, 0.05), transparent);
+    letter-spacing: -0.5px;
+}
+
+#sidebar-wrapper .list-group-item {
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    color: var(--muted-text);
+    transition: all 0.2s ease;
+    border-radius: 0 50px 50px 0;
+    margin-right: 1.5rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    /* Prevent 2 lines */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#sidebar-wrapper .list-group-item i {
+    width: 24px;
+    margin-right: 12px;
+    text-align: center;
+    font-size: 1.1em;
+    transition: transform 0.2s;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: #eef2ff;
+    color: var(--primary-color);
+    padding-left: 1.75rem;
+}
+
+#sidebar-wrapper .list-group-item:hover i {
+    transform: scale(1.1);
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background: var(--primary-gradient);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+/* Content Area - Scrollable */
+#page-content-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    /* Independent scroll for content */
+    position: relative;
+}
+
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        position: relative;
+        /* Part of flex layout */
+        margin-left: 0;
+        width: 16rem;
+        flex-shrink: 0;
+        height: 100%;
+        overflow-y: auto;
+        top: auto;
+        left: auto;
+        /* Hide scrollbar for Firefox */
+        scrollbar-width: thin;
+    }
+
+    /* Hide scrollbar for Chrome/Safari/Opera */
+    #sidebar-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #sidebar-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #sidebar-wrapper::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+    }
+
+    #page-content-wrapper {
+        flex-grow: 1;
+        margin-left: 0;
+        /* No margin needed with flex */
+        width: auto;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -16rem;
+        /* Hide sidebar */
+    }
+
+    #wrapper.toggled #page-content-wrapper {
+        margin-left: 0;
+    }
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    z-index: 1050;
+    /* Ensure navbar is above content */
+    position: relative;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    color: var(--primary-color) !important;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+}
+
+/* General Cards */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--card-bg);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.card-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid #f3f4f6;
+    padding: 1.25rem 1.5rem;
+    font-weight: 700;
+    color: var(--dark-text);
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    border: none;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    background-color: #fff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    outline: none;
+}
+
+/* Badges */
+.badge {
+    padding: 0.5em 0.8em;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+}
+
+/* KANBAN BOARD STYLING - Modern & Mobile Friendly */
+.kanban-board {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 2rem;
+    gap: 1.5rem;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 1.5rem;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+}
+
+.kanban-column {
+    min-width: 350px;
+    max-width: 350px;
+    background-color: #f8fafc;
+    /* Slate 50 */
+    border-radius: 16px;
+    padding: 1rem;
+    height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+    scroll-snap-align: start;
+    border: 1px solid #e2e8f0;
+}
+
+.kanban-column-header {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    font-size: 0.95rem;
+}
+
+.kanban-items {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 10px;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.kanban-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kanban-items::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-items::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.kanban-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #f1f5f9;
+    cursor: grab;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: visible;
+    /* Changed to visible for tooltips/badges if needed */
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-color);
+}
+
+.kanban-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    bottom: 15%;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--primary-color);
+    opacity: 0.8;
+}
+
+.kanban-card h6 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+    color: var(--dark-text);
+    font-size: 1rem;
+}
+
+/* Meta info in card */
+.kanban-meta-row {
+    display: flex;
+    align-items: center;
+    color: var(--muted-text);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.kanban-meta-row i {
+    width: 20px;
+    text-align: center;
+    margin-right: 6px;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    /* Slate 400 */
+}
+
+.kanban-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+/* Sales Badge Styling - Prominent */
+.sales-badge {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #4338ca;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sales-badge i {
+    margin-right: 6px;
+    font-size: 0.8rem;
+}
+
+/* Detail Button */
+.btn-detail {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    box-shadow: none;
+    transition: all 0.2s;
+}
+
+.btn-detail:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: rotate(-45deg);
+}
+
+/* Status Colors for Columns */
+.kanban-column:nth-child(1) .kanban-column-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+}
+
+/* Need Approval: Amber */
+.kanban-column:nth-child(2) .kanban-column-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #fff;
+}
+
+/* Need Head: Violet */
+.kanban-column:nth-child(3) .kanban-column-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+}
+
+/* Approved: Emerald */
+.kanban-column:nth-child(4) .kanban-column-header {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+}
+
+/* Rejected: Red */
+.kanban-column:nth-child(5) .kanban-column-header {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: #fff;
+}
+
+/* Re-nego: Orange */
+.kanban-column:nth-child(6) .kanban-column-header {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: #fff;
+}
+
+/* Cancelled: Slate */
+
+/* Matching Card Borders */
+.kanban-column:nth-child(1) .kanban-card::before {
+    background: #f59e0b;
+}
+
+.kanban-column:nth-child(2) .kanban-card::before {
+    background: #8b5cf6;
+}
+
+.kanban-column:nth-child(3) .kanban-card::before {
+    background: #10b981;
+}
+
+.kanban-column:nth-child(4) .kanban-card::before {
+    background: #ef4444;
+}
+
+.kanban-column:nth-child(5) .kanban-card::before {
+    background: #f97316;
+}
+
+.kanban-column:nth-child(6) .kanban-card::before {
+    background: #64748b;
+}
+
+/* Mobile Enhancements */
+@media (max-width: 768px) {
+    .kanban-column {
+        min-width: 88vw;
+        /* Slightly wider on mobile for better focus */
+        max-width: 88vw;
+        height: calc(100vh - 140px);
+        /* Adjust for mobile browser chrome */
+    }
+
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .kanban-board {
+        padding-bottom: 1rem;
+        gap: 1rem;
+        scroll-padding: 1rem;
+    }
+}
+
+/* --- NEW STYLES FOR TABLE & MODAL --- */
+
+/* Modern Table */
+.table-modern {
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+
+.table-modern tbody tr {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.table-modern tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    position: relative;
+}
+
+.table-modern td {
+    border: none;
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+}
+
+.table-modern td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+}
+
+.table-modern td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Avatar */
+.avatar-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+}
+
+/* Modal Modern */
+.modal-modern-header,
+.modal-header.bg-primary {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 1.5rem;
+}
+
+.modal-header.bg-info {
+    background-color: var(--info-color) !important;
+}
+
+.modal-header.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.modal-header.bg-danger {
+    background-color: var(--danger-color) !important;
+}
+
+.modal-header.bg-warning {
+    background-color: var(--warning-color) !important;
+}
+
+.modal-modern-header .btn-close,
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Global Bootstrap Overrides */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-check:checked+.btn-outline-primary,
+.btn-check:active+.btn-outline-primary,
+.btn-outline-primary:active,
+.btn-outline-primary.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.bg-primary-subtle {
+    background-color: rgba(32, 78, 171, 0.1) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.page-link {
+    color: var(--primary-color);
+}
+
+.detail-label {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted-text);
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 1rem;
+}
+
+.detail-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eef2ff;
+}
+
+/* Modern Tabs */
+.nav-tabs-modern {
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.nav-tabs-modern .nav-link {
+    border: none;
+    color: var(--muted-text);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    position: relative;
+    background: transparent;
+}
+
+.nav-tabs-modern .nav-link.active {
+    color: var(--primary-color);
+    background: transparent;
+}
+
+.nav-tabs-modern .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.nav-tabs-modern .nav-link:hover {
+    color: var(--primary-color);
+    border: none;
+}
+
+/* --- TIMELINE STYLES --- */
+.timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    /* Adjust based on icon size */
+    width: 2px;
+    background: #e2e8f0;
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    margin-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    color: var(--muted-text);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-size: 1rem;
+}
+
+/* Role Colors for Timeline Markers */
+.timeline-marker.role-admin_sales {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: #eef2ff;
+}
+
+.timeline-marker.role-admin_ops {
+    border-color: #06b6d4;
+    color: #06b6d4;
+    background: #ecfeff;
+}
+
+/* Cyan */
+.timeline-marker.role-manager_ops {
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+    background: #fffbeb;
+}
+
+.timeline-marker.role-head_ops {
+    border-color: #f97316;
+    color: #f97316;
+    background: #fff7ed;
+}
+
+/* Orange */
+.timeline-marker.role-procurement {
+    border-color: var(--success-color);
+    color: var(--success-color);
+    background: #ecfdf5;
+}
+
+.timeline-marker.role-korlap {
+    border-color: #64748b;
+    color: #64748b;
+    background: #f8fafc;
+}
+
+/* Slate */
+
+.timeline-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    align-items: flex-start;
+}
+
+.timeline-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--dark-text);
+}
+
+.timeline-time {
+    font-size: 0.8rem;
+    color: var(--muted-text);
+    white-space: nowrap;
+    margin-left: 1rem;
+}
+
+.timeline-body {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.timeline-footer {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.8rem;
+    color: var(--muted-text);
+    display: flex;
+    align-items: center;
+}
+
+.status-transition {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.status-badge-mini {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* --- STANDARD PAGE HEADERS --- */
+.page-header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #204EAB;
+    /* Updated Blue */
+    margin-bottom: 0.1rem;
+    letter-spacing: -0.5px;
+}
+
+.page-header-subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    /* Gray 500 */
+    margin-bottom: 0;
+}
+
+/* Ensure container handling */
+.page-header-container {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}

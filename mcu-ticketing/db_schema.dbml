@@ -1,0 +1,220 @@
+Project mcu_ticketing {
+  database_type: 'MariaDB'
+  Note: 'MCU Ticketing System Database Schema'
+}
+
+Table users {
+  user_id int [pk, increment]
+  username varchar
+  password varchar
+  full_name varchar
+  role enum
+  is_active tinyint
+  created_at timestamp
+}
+
+Table projects {
+  project_id varchar [pk]
+  nama_project varchar
+  company_name varchar
+  sales_person_id int
+  jenis_pemeriksaan text
+  foto_peserta enum
+  lunch enum
+  lunch_notes text
+  snack enum
+  snack_notes text
+  header_footer enum
+  total_peserta int
+  tanggal_mcu longtext
+  alamat text
+  sph_file varchar
+  notes text
+  status_project enum
+  project_type enum
+  clinic_location varchar
+  status_vendor enum
+  korlap_id int
+  created_at timestamp
+  created_by int
+  approved_date_manager timestamp
+  approved_by_manager int
+  approved_date_head timestamp
+  approved_by_head int
+  consumption_status enum
+}
+
+Table medical_results {
+  id int [pk, increment]
+  project_id varchar [unique]
+  link_summary_excel text
+  link_summary_dashboard text
+  status enum
+  created_at timestamp
+  updated_at timestamp
+  pending_participants_count int
+  pending_participants_notes text
+}
+
+Table medical_result_items {
+  id int [pk, increment]
+  medical_result_id int
+  assigned_to_user_id int
+  date_mcu date
+  actual_pax_checked int
+  actual_pax_released int
+  release_date date
+  link_pdf text
+  notes text
+  has_difference tinyint
+  difference_names text
+  difference_reason text
+  tat_overdue tinyint
+  tat_issue enum
+  tat_issue_notes text
+  status enum
+  created_at timestamp
+}
+
+Table medical_result_followups {
+  id int [pk, increment]
+  medical_result_item_id int
+  pax_susulan int
+  pax_names text
+  release_date_susulan date
+  reason text
+  tat_overdue tinyint
+  tat_issue enum
+  tat_issue_notes text
+  created_at timestamp
+}
+
+Table rabs {
+  id int [pk, increment]
+  rab_number varchar [unique]
+  project_id varchar
+  created_date date
+  created_by int
+  status enum
+  total_personnel decimal
+  total_transport decimal
+  total_consumption decimal
+  grand_total decimal
+  total_realization decimal
+  location_type enum
+  selected_dates text
+  total_participants int
+  approved_by_manager int
+  approved_date_manager datetime
+  approved_by_head int
+  approved_date_head datetime
+  approved_by_ceo int
+  approved_date_ceo datetime
+  rejection_reason text
+  cost_value decimal
+  cost_percentage decimal
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table rab_medical_results {
+  id int [pk, increment]
+  project_id varchar
+  needs_hardcopy tinyint
+  notes text
+  status enum
+  created_by int
+  created_at datetime
+  updated_at datetime
+  approved_manager_by int
+  approved_manager_at datetime
+  approved_head_by int
+  approved_head_at datetime
+  rejection_reason text
+}
+
+Table sales_persons {
+  id int [pk, increment]
+  sales_name varchar
+  sales_manager_id int
+  phone_number varchar
+  created_at timestamp
+  user_id int
+}
+
+Table sales_managers {
+  id int [pk, increment]
+  manager_name varchar
+  user_id int
+  created_at timestamp
+}
+
+Table invoice_requests {
+  id int [pk, increment]
+  request_number varchar
+  request_date date
+  pic_sales_id int
+  partner_type varchar
+  event_type varchar
+  client_company varchar
+  client_pic varchar
+  client_phone varchar
+  client_email varchar
+  invoice_terms text
+  shipping_address text
+  status enum
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table invoices {
+  id int [pk, increment]
+  invoice_request_id int
+  invoice_number varchar
+  invoice_date date
+  company_name varchar
+  status enum
+  total_amount decimal
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table inventory_requests {
+  id int [pk, increment]
+  project_id varchar
+  request_number varchar
+  created_by int
+  status enum
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table inventory_items {
+  id int [pk, increment]
+  category varchar
+  item_name varchar
+  item_type enum
+  unit varchar
+  target_warehouse enum
+  is_active tinyint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Ref: projects.korlap_id > users.user_id
+Ref: projects.created_by > users.user_id
+Ref: projects.sales_person_id > sales_persons.id
+Ref: sales_persons.user_id > users.user_id
+Ref: sales_persons.sales_manager_id > sales_managers.id
+Ref: sales_managers.user_id > users.user_id
+Ref: medical_results.project_id - projects.project_id
+Ref: medical_result_items.medical_result_id > medical_results.id
+Ref: medical_result_items.assigned_to_user_id > users.user_id
+Ref: medical_result_followups.medical_result_item_id > medical_result_items.id
+Ref: rabs.project_id > projects.project_id
+Ref: rabs.created_by > users.user_id
+Ref: rab_medical_results.project_id > projects.project_id
+Ref: invoice_requests.pic_sales_id > users.user_id
+Ref: invoices.invoice_request_id - invoice_requests.id
+Ref: inventory_requests.project_id > projects.project_id
+Ref: inventory_requests.created_by > users.user_id
