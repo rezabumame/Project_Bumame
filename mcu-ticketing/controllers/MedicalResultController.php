@@ -30,8 +30,7 @@ class MedicalResultController extends BaseController {
 
     public function __construct() {
         parent::__construct();
-        // Check Role - strict access
-        if ($_SESSION['role'] != 'dw_tim_hasil' && $_SESSION['role'] != 'surat_hasil' && $_SESSION['role'] != 'superadmin' && $_SESSION['role'] != 'manager_ops' && $_SESSION['role'] != 'admin_ops') {
+        if ($_SESSION['role'] != 'dw_tim_hasil' && $_SESSION['role'] != 'surat_hasil' && $_SESSION['role'] != 'superadmin' && $_SESSION['role'] != 'manager_ops' && $_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'head_ops') {
             die("Access Denied");
         }
         
