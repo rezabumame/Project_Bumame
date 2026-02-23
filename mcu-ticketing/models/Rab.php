@@ -566,6 +566,23 @@ class Rab {
     }
 
     public function updateApproval($data) {
+        $allowedColumns = [
+            'status', 'rejection_reason', 'rejection_stage',
+            'approved_by_manager', 'approved_date_manager',
+            'approved_by_head', 'approved_date_head',
+            'approved_by_ceo', 'approved_date_ceo',
+            'cost_value', 'cost_percentage'
+        ];
+        $data = array_intersect_key($data, array_flip($allowedColumns));
+        $decimalColumns = ['cost_value', 'cost_percentage'];
+        foreach ($decimalColumns as $col) {
+            if (array_key_exists($col, $data) && $data[$col] === '') {
+                $data[$col] = null;
+            }
+            if (array_key_exists($col, $data) && $data[$col] !== null && $data[$col] !== '' && !is_numeric($data[$col])) {
+                $data[$col] = null;
+            }
+        }
         $fields = [];
         $params = [':id' => $this->id];
         
@@ -574,7 +591,9 @@ class Rab {
             $params[":$key"] = $value;
         }
         
-        // Always update updated_at
+        if (empty($fields)) {
+            return true;
+        }
         $fields[] = "updated_at = NOW()";
         
         $query = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";
