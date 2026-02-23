@@ -140,8 +140,14 @@ class TechnicalMeetingController extends BaseController {
         $created_by = $_SESSION['user_id'];
 
         $target_dir = "../public/uploads/tm/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($target_dir)) {
+                @mkdir($target_dir, 0777, true);
+            }
+            if (!is_dir($target_dir) || !is_writable($target_dir)) {
+                $_SESSION['error_message'] = "Upload directory is not writable. Configure GCS or fix uploads folder permissions.";
+                $this->redirect('technical_meeting_create', ['project_id' => $project_id]);
+            }
         }
 
         $tm_file_path = "";

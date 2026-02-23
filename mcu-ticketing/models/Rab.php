@@ -28,6 +28,14 @@ class Rab {
     
     public $rejection_reason;
     public $rejection_stage;
+
+    public $total_days;
+    public $sph_file;
+    public $lunch_status;
+    public $snack_status;
+    public $procurement_lunch_qty;
+    public $procurement_snack_qty;
+    public $total_vendor;
     
     // Cost (Manager)
     public $cost_value;
@@ -101,6 +109,7 @@ class Rab {
                 SET
                     rab_number = :rab_number,
                     project_id = :project_id,
+                    created_date = :created_date,
                     created_by = :created_by,
                     status = :status,
                     total_personnel = :total_personnel,
@@ -119,9 +128,10 @@ class Rab {
         $this->location_type = htmlspecialchars(strip_tags($this->location_type));
         $this->personnel_notes = htmlspecialchars(strip_tags($this->personnel_notes));
         
-        // Bind
+        $created_date = date('Y-m-d');
         $stmt->bindParam(":rab_number", $this->rab_number);
         $stmt->bindParam(":project_id", $this->project_id);
+        $stmt->bindParam(":created_date", $created_date);
         $stmt->bindParam(":created_by", $this->created_by);
         $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":total_personnel", $this->total_personnel);

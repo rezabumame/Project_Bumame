@@ -384,7 +384,15 @@ class RabRealizationController extends BaseController {
         }
         
         $upload_dir = '../uploads/settlements/';
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0777, true);
+            }
+            if (!is_dir($upload_dir) || !is_writable($upload_dir)) {
+                header("Location: index.php?page=realization_comparison&rab_id=" . $rab_id . "&err=Upload directory is not writable. Configure GCS or fix permissions.");
+                exit;
+            }
+        }
         $filename = 'SETTLEMENT_' . $rab_id . '_' . time() . '.' . $ext;
         $target_path = $upload_dir . $filename;
         $ok = false;
@@ -1307,8 +1315,13 @@ class RabRealizationController extends BaseController {
 
         // Use standard project BA directory
         $uploadDir = '../public/uploads/ba/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
+            if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+                throw new \Exception("Upload directory is not writable. Configure GCS or fix uploads folder permissions.");
+            }
         }
 
         $allowed = ['pdf', 'jpg', 'jpeg', 'png'];

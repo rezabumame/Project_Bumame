@@ -17,9 +17,7 @@ vendor/
 .env
 .env.*
 !*.env.format
-mcu-ticketing/deploy.env
-
-# IDE
+mcu-ticketing/deploy.env# IDE
 .idea/
 .vscode/
 *.swp

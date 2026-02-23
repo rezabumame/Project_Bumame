@@ -1,12 +1,25 @@
 <?php
-$envFile = __DIR__ . '/../.env';
-if (file_exists($envFile) && is_readable($envFile)) {
-    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        $line = trim($line);
-        if ($line !== '' && strpos($line, '#') !== 0 && strpos($line, '=') !== false) {
-            list($key, $value) = explode('=', $line, 2);
-            putenv(trim($key) . '=' . trim($value, " \t\"'"));
+$GLOBALS['_APP_ENV'] = [];
+$envCandidates = [__DIR__ . '/../.env', __DIR__ . '/.env'];
+if (function_exists('getcwd')) {
+    $envCandidates[] = getcwd() . '/.env';
+    $envCandidates[] = getcwd() . '/../.env';
+}
+foreach ($envCandidates as $envFile) {
+    $envFile = realpath($envFile) ?: $envFile;
+    if ($envFile && file_exists($envFile) && is_readable($envFile)) {
+        foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+            if ($line !== '' && strpos($line, '#') !== 0 && strpos($line, '=') !== false) {
+                list($key, $value) = explode('=', $line, 2);
+                $key = trim($key);
+                $value = trim($value, " \t\"'");
+                putenv($key . '=' . $value);
+                $_ENV[$key] = $value;
+                $GLOBALS['_APP_ENV'][$key] = $value;
+            }
         }
+        break;
     }
 }
 $vendorAutoload = __DIR__ . '/../vendor/autoload.php';

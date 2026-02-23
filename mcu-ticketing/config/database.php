@@ -35,23 +35,27 @@ class Database {
             $is_localhost = true;
         }
 
-        // Pilih kredensial yang sesuai
+        $env = function ($key) {
+            $g = $GLOBALS['_APP_ENV'] ?? null;
+            if (!empty($g[$key])) return $g[$key];
+            $v = getenv($key);
+            if ($v !== false && $v !== '') return $v;
+            return $_ENV[$key] ?? null;
+        };
+
         $port = null;
         if ($is_localhost) {
-            $host = getenv('DB_HOST') ?: $this->local_host;
-            $db_name = getenv('DB_NAME') ?: $this->local_db_name;
-            $username = getenv('DB_USER') ?: $this->local_username;
-            $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : $this->local_password;
+            $host = $env('DB_HOST') ?: $this->local_host;
+            $db_name = $env('DB_NAME') ?: $this->local_db_name;
+            $username = $env('DB_USER') ?: $this->local_username;
+            $password = $env('DB_PASSWORD') ?: ($env('DB_PASS') ?: $this->local_password);
+            $port = $env('DB_PORT') ?: null;
         } else {
-            $host = getenv('DB_HOST') ?: $this->live_host;
-            $port = getenv('DB_PORT') ?: null;
-            $db_name = getenv('DB_NAME') ?: $this->live_db_name;
-            $username = getenv('DB_USER') ?: $this->live_username;
-            $livePass = getenv('DB_PASSWORD');
-            if ($livePass === false) {
-                $livePass = getenv('DB_PASS');
-            }
-            $password = ($livePass !== false) ? $livePass : $this->live_password;
+            $host = $env('DB_HOST') ?: $this->live_host;
+            $port = $env('DB_PORT') ?: null;
+            $db_name = $env('DB_NAME') ?: $this->live_db_name;
+            $username = $env('DB_USER') ?: $this->live_username;
+            $password = $env('DB_PASSWORD') ?: ($env('DB_PASS') ?: $this->live_password);
         }
 
         try {

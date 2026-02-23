@@ -274,7 +274,7 @@ class RabController extends BaseController {
         $exclude_rab_id = $_GET['exclude_rab_id'] ?? null;
         
         // Get Project Dates
-        $query = "SELECT tanggal_mcu, total_peserta, sph_file, lunch, snack, procurement_lunch_qty, procurement_snack_qty, lunch_items, snack_items FROM projects WHERE project_id = :id";
+        $query = "SELECT tanggal_mcu, total_peserta, sph_file, lunch, snack, procurement_lunch_qty, procurement_snack_qty FROM projects WHERE project_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":id", $project_id);
         $stmt->execute();
@@ -983,8 +983,14 @@ class RabController extends BaseController {
         $proof_path = null;
         if (isset($_FILES['transfer_proof']) && $_FILES['transfer_proof']['error'] == 0) {
             $target_dir = "../public/uploads/finance_proofs/";
-            if (!file_exists($target_dir)) {
-                mkdir($target_dir, 0777, true);
+            if (!GcsUpload::isEnabled()) {
+                if (!is_dir($target_dir)) {
+                    @mkdir($target_dir, 0777, true);
+                }
+                if (!is_dir($target_dir) || !is_writable($target_dir)) {
+                    $_SESSION['error_message'] = "Upload directory is not writable. Configure GCS or fix uploads folder permissions.";
+                    $this->redirect('rabs_show', ['id' => $id]);
+                }
             }
             $file_extension = pathinfo($_FILES["transfer_proof"]["name"], PATHINFO_EXTENSION);
             $new_filename = "proof_" . $id . "_" . time() . "." . $file_extension;
