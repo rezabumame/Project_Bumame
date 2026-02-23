@@ -120,13 +120,6 @@
                         <i class="fas fa-edit me-2"></i>Edit RAB
                     </a>
                 <?php endif; ?>
-
-                <?php if (!in_array($rab['status'], ['need_approval_manager', 'need_approval_head', 'need_approval_ceo'])): ?>
-                    <a href="index.php?page=rabs_export_pdf&id=<?php echo $rab['id']; ?>" target="_blank" class="btn btn-primary">
-                        <i class="fas fa-file-pdf me-2"></i>Export PDF
-                    </a>
-                <?php endif; ?>
-
                 <?php 
                 // Detection for Consumption Petugas
                 $has_consumption_petugas = false;
@@ -137,18 +130,10 @@
                     }
                 }
                 ?>
-
-                <?php if ($rab['status'] == 'approved' && ($_SESSION['role'] == 'korlap' || $_SESSION['role'] == 'admin_ops')): ?>
-                    <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#submitFinanceModal" id="submitFinanceBtn" 
-                        <?php echo ($has_consumption_petugas && $_SESSION['role'] == 'korlap') ? 'disabled title="Please click Open Lark first"' : ''; ?>>
-                        <i class="fas fa-paper-plane me-2"></i>Submit to Finance
-                    </button>
-                <?php endif; ?>
-
                 <?php 
                 // Special Button for Korlap when consumption is needed
                 if ($has_consumption_petugas && $_SESSION['role'] == 'korlap'): ?>
-                    <?php if (in_array($rab['status'], ['draft', 'rejected', 'need_approval_manager', 'need_approval_head', 'need_approval_ceo', 'approved'])): ?>
+                    <?php if (in_array($rab['status'], ['draft', 'rejected', 'approved'])): ?>
                         <button type="button" class="btn btn-info text-white" onclick="showLarkTemplate()">
                             <i class="fas fa-file-alt me-2"></i>Template Lark
                         </button>
@@ -157,11 +142,24 @@
                         </a>
                     <?php endif; ?>
 
-                    <?php if (in_array($rab['status'], ['draft', 'rejected', 'need_approval_manager', 'need_approval_head', 'need_approval_ceo'])): ?>
+                    <?php if (in_array($rab['status'], ['draft', 'rejected'])): ?>
                         <button type="button" class="btn btn-primary" id="autoApproveSubmitBtn" onclick="autoApproveAndSubmit()" disabled title="Please click Open Lark first">
                             <i class="fas fa-magic me-2"></i>Submit to Finance (Auto Approve)
                         </button>
                     <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($rab['status'] == 'approved' && ($_SESSION['role'] == 'korlap' || $_SESSION['role'] == 'admin_ops')): ?>
+                    <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#submitFinanceModal" id="submitFinanceBtn" 
+                        <?php echo ($has_consumption_petugas && $_SESSION['role'] == 'korlap') ? 'disabled title="Please click Open Lark first"' : ''; ?>>
+                        <i class="fas fa-paper-plane me-2"></i>Submit to Finance
+                    </button>
+                <?php endif; ?>
+
+                <?php if (!in_array($rab['status'], ['need_approval_manager', 'need_approval_head', 'need_approval_ceo'])): ?>
+                    <a href="index.php?page=rabs_export_pdf&id=<?php echo $rab['id']; ?>" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i>Export PDF
+                    </a>
                 <?php endif; ?>
 
                 <?php if ($rab['status'] == 'submitted_to_finance' && $_SESSION['role'] == 'finance'): ?>
