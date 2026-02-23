@@ -1,6 +1,5 @@
 <?php
-require_once '../config/Database.php';
-
+require_once __DIR__ . '/../config/autoload.php';
 $db = (new Database())->getConnection();
 
 // 1. Add settlement_proof_path column if not exists
@@ -23,5 +22,3 @@ $updateQuery = "UPDATE rabs SET settlement_proof_path = transfer_proof_path, tra
                 WHERE transfer_proof_path LIKE '%SETTLEMENT_%'";
 $affectedRows = $db->exec($updateQuery);
 echo "Migrated $affectedRows records to settlement_proof_path.\n";
-
-?>
