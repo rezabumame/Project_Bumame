@@ -9,7 +9,7 @@ $(document).ready(function () {
     if ($(".datepicker").length > 0) {
         $(".datepicker").flatpickr({
             mode: 'multiple',
-            minDate: new Date().fp_incr(3), // 3 days from now
+            minDate: 'today',
             dateFormat: 'Y-m-d',
             altInput: true,
             altFormat: "d M Y"
