@@ -121,10 +121,10 @@
                     </a>
                 <?php endif; ?>
                 <?php 
-                // Detection for Consumption Petugas
+                // Detection for Consumption Petugas (only if subtotal > 0)
                 $has_consumption_petugas = false;
                 foreach ($items as $item) {
-                    if ($item['category'] == 'consumption' && (stripos($item['item_name'], 'Makan') !== false || stripos($item['item_name'], 'Snack') !== false || stripos($item['item_name'], 'Petugas') !== false)) {
+                    if ($item['category'] == 'consumption' && $item['subtotal'] > 0 && (stripos($item['item_name'], 'Makan') !== false || stripos($item['item_name'], 'Snack') !== false || stripos($item['item_name'], 'Petugas') !== false)) {
                         $has_consumption_petugas = true;
                         break;
                     }
