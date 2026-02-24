@@ -192,6 +192,13 @@
         </a>
     </div>
 
+    <?php if (!empty($_GET['err']) || !empty($_GET['error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?php echo htmlspecialchars($_GET['err'] ?? $_GET['error']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <?php endif; ?>
+
     <!-- Stepper -->
     <div class="row justify-content-center mb-4">
         <div class="col-lg-8">

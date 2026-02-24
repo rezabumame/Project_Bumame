@@ -564,48 +564,52 @@ class RabController extends BaseController {
         
         $this->rab->grand_total = $total_personnel + $total_transport + $total_consumption + $total_vendor;
 
-        if ($this->rab->create()) {
-            $this->rab->addItems($items);
-            
-            // Log Action
-            $action_log = ($this->rab->status == 'draft') ? 'RAB Draft Created' : 'RAB Submitted';
-            $this->project->logAction($project_id, $action_log, $_SESSION['user_id'], "RAB Number: " . $this->rab->rab_number);
-
-            // Trigger Project Status Update
-            if ($this->rab->status != 'draft') {
-                $this->project->checkAndSetInProgressOps($project_id, 'Auto-update triggered by RAB creation');
+        try {
+            if ($this->rab->create()) {
+                $this->rab->addItems($items);
                 
-                // Email Notification to Manager
-                try {
-                    $emails = $this->user->getEmailsByRole('manager_ops');
-                    if (!empty($emails)) {
-                        $projectData = $this->project->getProjectById($project_id);
-                        $salesName = $projectData['sales_name'] ?? '-';
-                        $totalPeserta = $projectData['total_peserta'] ?? '-';
-                        $tanggalMcu = isset($projectData['tanggal_mcu']) ? DateHelper::formatSmartDateIndonesian($projectData['tanggal_mcu']) : '-';
+                $action_log = ($this->rab->status == 'draft') ? 'RAB Draft Created' : 'RAB Submitted';
+                $this->project->logAction($project_id, $action_log, $_SESSION['user_id'], "RAB Number: " . $this->rab->rab_number);
 
-                        $subject = "[Action Required] Approval RAB: " . $this->rab->rab_number;
-                        $content = "RAB baru telah diajukan dan memerlukan persetujuan Anda.<br><br>";
-                        $content .= "<b>No. RAB:</b> " . $this->rab->rab_number . "<br>";
-                        $content .= "<b>Nama Project:</b> " . $projectData['nama_project'] . "<br>";
-                        $content .= "<b>Total Peserta:</b> " . $totalPeserta . " Peserta<br>";
-                        $content .= "<b>Tanggal MCU:</b> " . $tanggalMcu . "<br>";
+                if ($this->rab->status != 'draft') {
+                    $this->project->checkAndSetInProgressOps($project_id, 'Auto-update triggered by RAB creation');
+                    
+                    try {
+                        $emails = $this->user->getEmailsByRole('manager_ops');
+                        if (!empty($emails)) {
+                            $projectData = $this->project->getProjectById($project_id);
+                            $salesName = $projectData['sales_name'] ?? '-';
+                            $totalPeserta = $projectData['total_peserta'] ?? '-';
+                            $tanggalMcu = isset($projectData['tanggal_mcu']) ? DateHelper::formatSmartDateIndonesian($projectData['tanggal_mcu']) : '-';
+
+                            $subject = "[Action Required] Approval RAB: " . $this->rab->rab_number;
+                            $content = "RAB baru telah diajukan dan memerlukan persetujuan Anda.<br><br>";
+                            $content .= "<b>No. RAB:</b> " . $this->rab->rab_number . "<br>";
+                            $content .= "<b>Nama Project:</b> " . $projectData['nama_project'] . "<br>";
+                            $content .= "<b>Total Peserta:</b> " . $totalPeserta . " Peserta<br>";
+                            $content .= "<b>Tanggal MCU:</b> " . $tanggalMcu . "<br>";
                         $content .= "<b>Nama Sales:</b> " . $salesName . "<br>";
                         $content .= "<b>Total:</b> Rp " . number_format($this->rab->grand_total, 0, ',', '.') . "<br>";
                         
                         $link = MailHelper::getBaseUrl() . "?page=rabs_show&id=" . $this->rab->id;
                         $html = MailHelper::getTemplate("Pengajuan RAB Baru", $content, $link);
                         MailHelper::send($emails, $subject, $html);
+                        }
+                    } catch (Exception $e) {
+                        error_log("Email notification failed on RAB creation: " . $e->getMessage());
                     }
-                } catch (Exception $e) {
-                    error_log("Email notification failed on RAB creation: " . $e->getMessage());
                 }
-            }
 
-            $msg = ($this->rab->status == 'draft') ? 'RAB berhasil disimpan sebagai draft.' : 'RAB berhasil diajukan.';
-            $this->redirect('rabs_show', ['id' => $this->rab->id, 'msg' => $msg]);
-        } else {
-            die("Error creating RAB.");
+                $msg = ($this->rab->status == 'draft') ? 'RAB berhasil disimpan sebagai draft.' : 'RAB berhasil diajukan.';
+                $this->redirect('rabs_show', ['id' => $this->rab->id, 'msg' => $msg]);
+            } else {
+                die("Error creating RAB.");
+            }
+        } catch (PDOException $e) {
+            $msg = (strpos($e->getMessage(), 'created_date') !== false || strpos($e->getMessage(), "doesn't have a default value") !== false)
+                ? 'Database schema out of date. Run mcu_ticketing_full_install.sql or add created_date to rabs table.'
+                : 'Database error. Check server error log.';
+            $this->redirect('rabs_create', ['project_id' => $project_id, 'err' => $msg]);
         }
     }
 
