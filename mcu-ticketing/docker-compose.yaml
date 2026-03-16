@@ -3,8 +3,7 @@ services:
     build: .
     ports:
       - "8080:8080"
-    environment:
-      DB_HOST: host.docker.internal:3307
-      DB_NAME: mcu_ticketing
-      DB_USER: root
-      DB_PASSWORD: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
