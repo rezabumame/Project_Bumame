@@ -160,7 +160,13 @@ class TechnicalMeetingController extends BaseController {
                      try {
                          GcsUpload::upload($tmp, "uploads/tm/" . $new_filename);
                          $tm_file_path = $new_filename;
-                     } catch (\Exception $e) { }
+                     } catch (\Exception $e) {
+                         error_log("GCS upload failed for TM file: " . $e->getMessage());
+                         // Fallback to local upload
+                         if (move_uploaded_file($tmp, $target_dir . $new_filename)) {
+                             $tm_file_path = $new_filename;
+                         }
+                     }
                  } elseif (move_uploaded_file($tmp, $target_dir . $new_filename)) {
                      $tm_file_path = $new_filename;
                  }
@@ -177,7 +183,13 @@ class TechnicalMeetingController extends BaseController {
                      try {
                          GcsUpload::upload($tmp, "uploads/tm/" . $new_filename);
                          $layout_file_path = $new_filename;
-                     } catch (\Exception $e) { }
+                     } catch (\Exception $e) {
+                         error_log("GCS upload failed for layout file: " . $e->getMessage());
+                         // Fallback to local upload
+                         if (move_uploaded_file($tmp, $target_dir . $new_filename)) {
+                             $layout_file_path = $new_filename;
+                         }
+                     }
                  } elseif (move_uploaded_file($tmp, $target_dir . $new_filename)) {
                      $layout_file_path = $new_filename;
                  }
