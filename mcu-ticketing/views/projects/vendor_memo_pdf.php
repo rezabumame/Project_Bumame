@@ -227,30 +227,50 @@
 
     <table class="signature-table">
         <tr>
-            <td>
+            <td style="width: 25%;">
                 <div class="sig-header">Diajukan oleh:</div>
-                <div class="sig-content">
-                    <div class="sig-name"><?php echo htmlspecialchars($prepared_by_name); ?></div>
-                    <div class="sig-title"><?php echo htmlspecialchars($prepared_by_title); ?></div>
-                </div>
-            </td>
-            <td>
-                <div class="sig-header">Disetujui Oleh:</div>
                 <div class="sig-content">
                     <?php
                     $get_qr_verify = function($page, $params) {
                         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
                         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
                         $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+                        // Use public verify page
                         $verify_url = $scheme . $host . $basePath . '/index.php?page=' . $page . '&' . http_build_query($params);
                         return "https://quickchart.io/qr?text=" . urlencode($verify_url) . "&size=100&margin=1";
                     };
-                    // Link to project detail for verification
-                    $qr_url = $get_qr_verify('all_projects', ['open_project_id' => $project['project_id']]);
+                    
+                    // QR for Preparer
+                    $qr_url_preparer = $get_qr_verify('qr_verify_internal_memo', [
+                        'id' => $project['project_id'],
+                        'cost_code_id' => $cost_code_id,
+                        'who' => 'preparer',
+                        'pn' => $prepared_by_name,
+                        'pt' => $prepared_by_title
+                    ]);
                     ?>
                     <div class="text-center">
                         <div class="verified-badge">Verified Digital Signature</div>
-                        <img src="<?php echo $qr_url; ?>" alt="QR" class="qr-code">
+                        <img src="<?php echo $qr_url_preparer; ?>" alt="QR" class="qr-code">
+                    </div>
+                    <div class="sig-name"><?php echo htmlspecialchars($prepared_by_name); ?></div>
+                    <div class="sig-title"><?php echo htmlspecialchars($prepared_by_title); ?></div>
+                </div>
+            </td>
+            <td style="width: 25%;">
+                <div class="sig-header">Disetujui Oleh:</div>
+                <div class="sig-content">
+                    <?php
+                    // QR for Approver
+                    $qr_url_approver = $get_qr_verify('qr_verify_internal_memo', [
+                        'id' => $project['project_id'],
+                        'cost_code_id' => $cost_code_id,
+                        'who' => 'approver'
+                    ]);
+                    ?>
+                    <div class="text-center">
+                        <div class="verified-badge">Verified Digital Signature</div>
+                        <img src="<?php echo $qr_url_approver; ?>" alt="QR" class="qr-code">
                     </div>
                     <div class="sig-name"><?php echo htmlspecialchars($approved_by_1_name); ?></div>
                     <div class="sig-title"><?php echo htmlspecialchars($approved_by_1_title); ?></div>

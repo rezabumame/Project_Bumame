@@ -466,6 +466,45 @@ class ProjectController extends BaseController {
 
 
 
+    public function qr_verify_memo() {
+        $project_id = $_GET['id'] ?? null;
+        $cost_code_id = $_GET['cost_code_id'] ?? null;
+        $who = $_GET['who'] ?? 'approver';
+
+        if (!$project_id) {
+            die("Invalid Project ID");
+        }
+
+        $project = $this->project->getProjectById($project_id);
+        if (!$project) {
+            die("Project not found");
+        }
+
+        // Fetch Vendor Allocations
+        $allocations_stmt = $this->project->getVendorAllocations($project_id);
+        $allocations = $allocations_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch Cost Code
+        $costCode = $this->loadModel('CostCode');
+        $selected_cost_code = $costCode->getById($cost_code_id);
+
+        $setting = $this->loadModel('SystemSetting');
+
+        // Determine Signer Info
+        if ($who === 'preparer') {
+            $name = !empty($project['korlap_name']) ? $project['korlap_name'] : ($_GET['pn'] ?? 'Admin');
+            $title = !empty($project['korlap_jabatan']) ? $project['korlap_jabatan'] : ($_GET['pt'] ?? 'Operation Support');
+            $status_label = 'Diajukan';
+        } else {
+            $name = $setting->get('vendor_memo_signer_2_name') ?? '';
+            $title = $setting->get('vendor_memo_signer_2_title') ?? 'Head of Operations';
+            $status_label = 'Approved';
+        }
+
+        include '../views/projects/qr_verify_memo.php';
+        exit;
+    }
+
     public function cancel_berita_acara() {
         if (!in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])) {
             die("Unauthorized");

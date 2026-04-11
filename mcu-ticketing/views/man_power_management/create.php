@@ -29,8 +29,8 @@
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="status" name="status" required>
-                            <option value="external" selected>External</option>
-                            <option value="internal">Internal</option>
+                            <option value="External" selected>External</option>
+                            <option value="Internal">Internal</option>
                         </select>
                     </div>
                     <div class="col-md-12 mb-3">

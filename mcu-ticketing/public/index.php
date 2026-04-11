@@ -19,9 +19,10 @@ $router->add('logout', 'AuthController', 'logout');
 $router->add('qr_verify_invoice_request', 'InvoiceRequestController', 'qr_verify');
 $router->add('qr_verify_rab', 'RabController', 'qr_verify');
 $router->add('qr_verify_lpum', 'RabRealizationController', 'qr_verify');
+$router->add('qr_verify_internal_memo', 'ProjectController', 'qr_verify_memo');
 
 // Auth Guard
-$public_pages = ['login', 'auth_login', 'qr_verify_invoice_request', 'qr_verify_rab', 'qr_verify_lpum', 'api_fetch_data'];
+$public_pages = ['login', 'auth_login', 'qr_verify_invoice_request', 'qr_verify_rab', 'qr_verify_lpum', 'qr_verify_internal_memo', 'api_fetch_data'];
 if (!in_array($page, $public_pages)) {
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: index.php?page=login");

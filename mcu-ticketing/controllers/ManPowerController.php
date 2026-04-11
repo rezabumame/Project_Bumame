@@ -16,6 +16,11 @@ class ManPowerController extends BaseController {
     public function index() {
         $page_title = "Staff Management";
         
+        // Temporary fix for data casing issue
+        if (isset($_GET['fix_data']) && $_SESSION['role'] === 'superadmin') {
+            $this->runDataFix();
+        }
+
         $search = $_GET['search'] ?? '';
         $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
         $limit = 10;
@@ -59,7 +64,8 @@ class ManPowerController extends BaseController {
         
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $this->manPower->name = $_POST['name'];
-            $this->manPower->status = $_POST['status'];
+            // Normalize status to match ENUM ('Internal', 'External')
+            $this->manPower->status = ucfirst(strtolower($_POST['status']));
             $this->manPower->email = $_POST['email'];
             $this->manPower->is_active = isset($_POST['is_active']) ? 1 : 0;
             
@@ -101,7 +107,8 @@ class ManPowerController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $this->manPower->id = $_POST['id'];
             $this->manPower->name = $_POST['name'];
-            $this->manPower->status = $_POST['status'];
+            // Normalize status to match ENUM ('Internal', 'External')
+            $this->manPower->status = ucfirst(strtolower($_POST['status']));
             $this->manPower->email = $_POST['email'];
             $this->manPower->is_active = isset($_POST['is_active']) ? 1 : 0;
             
@@ -114,6 +121,66 @@ class ManPowerController extends BaseController {
                 echo "Error updating Man Power.";
             }
         }
+    }
+
+    private function runDataFix() {
+        // 1. Get official skills
+        $mappingStr = $this->setting->get('rab_personnel_codes');
+        $officialSkills = [];
+        $lines = explode("\n", str_replace("\r", "", $mappingStr));
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+            $parts = explode('=', $line, 2);
+            if (count($parts) == 2) {
+                $officialSkills[] = trim($parts[1]);
+            }
+        }
+
+        // 2. Fetch all man_powers
+        $stmt = $this->manPower->getAll('', 9999, 0);
+        $man_powers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $updatedCount = 0;
+        foreach ($man_powers as $mp) {
+            $needsUpdate = false;
+            
+            // Normalize status
+            $newStatus = ucfirst(strtolower($mp['status']));
+            if ($newStatus !== $mp['status']) {
+                $needsUpdate = true;
+            }
+
+            // Normalize skills
+            $skills = json_decode($mp['skills'], true) ?? [];
+            $newSkills = [];
+            foreach ($skills as $s) {
+                $matched = false;
+                foreach ($officialSkills as $os) {
+                    if (strcasecmp($s, $os) == 0) {
+                        $newSkills[] = $os;
+                        if ($s !== $os) $needsUpdate = true;
+                        $matched = true;
+                        break;
+                    }
+                }
+                if (!$matched) $newSkills[] = $s;
+            }
+
+            if ($needsUpdate) {
+                $this->manPower->id = $mp['id'];
+                $this->manPower->name = $mp['name'];
+                $this->manPower->status = $newStatus;
+                $this->manPower->skills = json_encode($newSkills);
+                $this->manPower->email = $mp['email'];
+                $this->manPower->is_active = $mp['is_active'];
+                if ($this->manPower->update()) {
+                    $updatedCount++;
+                }
+            }
+        }
+        
+        $_SESSION['fix_msg'] = "Automation: Processed all records. Updated $updatedCount staff members with inconsistent casing.";
     }
 
     private function getAvailableSkills() {

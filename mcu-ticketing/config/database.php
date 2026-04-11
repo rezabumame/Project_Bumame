@@ -6,7 +6,8 @@ class Database {
     // Script ini akan otomatis memilih database Local atau Hosting berdasarkan servernya.
     
     // 1. KREDENSIAL LOKAL (XAMPP Laptop)
-    private $local_host = "127.0.0.1:3307";
+    private $local_host = "127.0.0.1";
+    private $local_port = "3307";
     private $local_db_name = "mcu_ticketing";
     private $local_username = "root";
     private $local_password = "";
@@ -49,7 +50,7 @@ class Database {
             $db_name = $env('DB_NAME') ?: $this->local_db_name;
             $username = $env('DB_USER') ?: $this->local_username;
             $password = $env('DB_PASSWORD') ?: ($env('DB_PASS') ?: $this->local_password);
-            $port = $env('DB_PORT') ?: null;
+            $port = $env('DB_PORT') ?: $this->local_port;
         } else {
             $host = $env('DB_HOST') ?: $this->live_host;
             $port = $env('DB_PORT') ?: null;

@@ -31,8 +31,8 @@
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="status" name="status" required>
-                            <option value="external" <?php echo ($man_power['status'] == 'external') ? 'selected' : ''; ?>>External</option>
-                            <option value="internal" <?php echo ($man_power['status'] == 'internal') ? 'selected' : ''; ?>>Internal</option>
+                            <option value="External" <?php echo (strcasecmp($man_power['status'], 'external') == 0) ? 'selected' : ''; ?>>External</option>
+                            <option value="Internal" <?php echo (strcasecmp($man_power['status'], 'internal') == 0) ? 'selected' : ''; ?>>Internal</option>
                         </select>
                     </div>
                     <div class="col-md-12 mb-3">
@@ -40,7 +40,15 @@
                         <div class="card p-3 bg-light">
                             <div class="row">
                                 <?php foreach ($skills as $skill): ?>
-                                <?php $checked = in_array($skill['name'], $man_power['skills_array']) ? 'checked' : ''; ?>
+                                <?php 
+                                    $checked = '';
+                                    foreach ($man_power['skills_array'] as $s) {
+                                        if (strcasecmp($s, $skill['name']) == 0) {
+                                            $checked = 'checked';
+                                            break;
+                                        }
+                                    }
+                                ?>
                                 <div class="col-md-4 mb-2">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="skills[]" value="<?php echo htmlspecialchars($skill['name']); ?>" id="skill_<?php echo md5($skill['name']); ?>" <?php echo $checked; ?>>
