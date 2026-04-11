@@ -728,6 +728,9 @@ function updateProjectStatus(id, status, confirmMsg) {
 }
 
 function submitStatusUpdate(id, status, reason) {
+    // Disable any action buttons in the modal footer to prevent double click
+    $('#detailModal .modal-footer button').prop('disabled', true);
+    
     Swal.fire({
         title: 'Processing...',
         didOpen: () => Swal.showLoading()
@@ -741,8 +744,14 @@ function submitStatusUpdate(id, status, reason) {
                 Swal.fire('Success', 'Status updated successfully', 'success').then(() => location.reload());
             } else {
                 Swal.fire('Error', res.message || 'Update failed', 'error');
+                // Re-enable buttons if error
+                $('#detailModal .modal-footer button').prop('disabled', false);
             }
-        } catch (e) { Swal.fire('Error', 'Invalid server response', 'error'); }
+        } catch (e) { 
+            Swal.fire('Error', 'Invalid server response', 'error');
+            // Re-enable buttons if error
+            $('#detailModal .modal-footer button').prop('disabled', false);
+        }
     });
 }
 

@@ -716,8 +716,7 @@ class RabController extends BaseController {
                 $data['cost_value'] = str_replace('.', '', $cost_value);
                 
                 $data['cost_percentage'] = $_POST['cost_percentage'] ?? 0;
-            } elseif ($role == 'head_ops' && ($rabData['status'] == 'need_approval_head' || $rabData['status'] == 'need_approval_manager')) {
-                // If head_ops approves but it's still in need_approval_manager, they can approve it directly
+            } elseif ($role == 'head_ops' && $rabData['status'] == 'need_approval_head') {
                 $data['approved_by_head'] = $user_id;
                 $data['approved_date_head'] = date('Y-m-d H:i:s');
 
@@ -726,10 +725,14 @@ class RabController extends BaseController {
                 } else {
                     $data['status'] = 'approved';
                 }
-            } elseif ($role == 'ceo' && ($rabData['status'] == 'need_approval_ceo' || $rabData['status'] == 'need_approval_head' || $rabData['status'] == 'need_approval_manager')) {
+            } elseif ($role == 'ceo' && $rabData['status'] == 'need_approval_ceo') {
                 $data['status'] = 'approved';
                 $data['approved_by_ceo'] = $user_id;
                 $data['approved_date_ceo'] = date('Y-m-d H:i:s');
+            } elseif ($action == 'approve' && in_array($rabData['status'], ['approved', 'submitted_to_finance', 'advance_paid', 'need_approval_realization', 'realization_approved', 'completed'])) {
+                // Handle double-click/already approved case gracefully
+                header("Location: index.php?page=rabs_show&id=" . $id . "&msg=RAB sudah disetujui sebelumnya.");
+                return;
             } else {
                 echo "Unauthorized action or invalid status transition. Role: $role, Status: " . $rabData['status'];
                 return;

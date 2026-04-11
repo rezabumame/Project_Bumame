@@ -886,7 +886,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-            <button type="submit" class="btn btn-success px-4">Ya, Approve</button>
+            <button type="submit" class="btn btn-success px-4" id="confirmApproveBtn">Ya, Approve</button>
           </div>
       </form>
     </div>
@@ -915,7 +915,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-            <button type="submit" class="btn btn-danger px-4">Submit Rejection</button>
+            <button type="submit" class="btn btn-danger px-4" id="confirmRejectBtn">Submit Rejection</button>
           </div>
       </form>
     </div>
@@ -1159,6 +1159,19 @@
     // Initialize on load
     window.addEventListener('DOMContentLoaded', function() {
         updateModalCost();
+        
+        // Prevent double submission for all approval/action forms
+        $('form').on('submit', function() {
+            const btn = $(this).find('button[type="submit"]');
+            if (btn.length > 0 && !btn.hasClass('no-disable')) {
+                btn.prop('disabled', true);
+                const originalText = btn.html();
+                btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
+                
+                // If it's a modal form, ensure it stays disabled even if user tries to close/reopen
+                // (though usually the page will redirect after submit)
+            }
+        });
     });
 </script>
 

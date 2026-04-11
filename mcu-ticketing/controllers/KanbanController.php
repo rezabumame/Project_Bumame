@@ -93,6 +93,14 @@ class KanbanController extends BaseController {
             }
             $current_status = $current_project['status_project'];
 
+            // Handle already approved/completed case gracefully (double-click prevention)
+            if ($new_status == 'approved' && $current_status == 'approved') {
+                $this->jsonResponse(['status' => 'success']);
+            }
+            if ($new_status == 'need_approval_head' && $current_status == 'need_approval_head') {
+                $this->jsonResponse(['status' => 'success']);
+            }
+
             // Validate Transition
             $validation = $this->isValidTransition($current_status, $new_status, $_SESSION['role']);
             if ($validation !== true) {
