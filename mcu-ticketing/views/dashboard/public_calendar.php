@@ -105,39 +105,42 @@
             text-decoration: none !important;
         }
 
-        /* Event Card Style - Ultra Minimalist Dot Style */
-        .custom-event {
+        /* Event Card Style - Dots only, no box */
+        .fc-event {
             background: transparent !important;
             border: none !important;
-            padding: 2px 4px !important;
-            margin: 1px 0 !important;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            box-shadow: none !important;
+        }
+
+        .custom-event {
             display: flex;
             align-items: center;
             gap: 6px;
+            padding: 2px 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 4px;
+            width: 100%;
         }
 
         .custom-event:hover {
-            background: rgba(0,0,0,0.03) !important;
-            border-radius: 4px;
+            background: rgba(0,0,0,0.05) !important;
         }
 
         .event-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             flex-shrink: 0;
         }
 
         .event-title {
-            font-size: 11.5px;
+            font-size: 12px;
             font-weight: 500;
             color: #334155;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            display: block;
         }
 
         /* More Link */
