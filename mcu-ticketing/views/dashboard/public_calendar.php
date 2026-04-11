@@ -17,6 +17,7 @@
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/id.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <style>
@@ -218,6 +219,7 @@
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
+            locale: 'id',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
@@ -229,7 +231,11 @@
             
             eventContent: function(arg) {
                 let title = arg.event.title;
-                if (title.length > 25) title = title.substring(0, 22) + '...';
+                
+                // Only truncate in Month view, show full in List view
+                if (arg.view.type === 'dayGridMonth') {
+                    if (title.length > 25) title = title.substring(0, 22) + '...';
+                }
                 
                 let el = document.createElement('div');
                 el.className = 'custom-event';
@@ -239,7 +245,7 @@
                 
                 el.innerHTML = `
                     <div class="event-dot" style="background-color: ${dotColor}"></div>
-                    <span class="event-title">${title}</span>
+                    <span class="event-title" style="${arg.view.type === 'listMonth' ? 'white-space: normal; overflow: visible;' : ''}">${title}</span>
                 `;
                 
                 // Tooltip info
@@ -258,6 +264,32 @@
                 
                 return { domNodes: [el] };
             },
+
+            // Customize List View Header to show project count
+            dayHeaderDidMount: function(arg) {
+                if (arg.view.type === 'listMonth') {
+                    // This is for the header of each day group in list view
+                }
+            },
+
+            viewDidMount: function(arg) {
+                if (arg.view.type === 'listMonth') {
+                    // Logic to add project count to list headers
+                    setTimeout(() => {
+                        $('.fc-list-day').each(function() {
+                            const dateRow = $(this);
+                            const nextEvents = dateRow.nextUntil('.fc-list-day', '.fc-list-event');
+                            const count = nextEvents.length;
+                            if (count > 0) {
+                                const titleCell = dateRow.find('.fc-list-day-text');
+                                if (!titleCell.find('.project-count-badge').length) {
+                                    titleCell.append(` <span class="badge bg-primary project-count-badge ms-2" style="background-color: #204EAB !important; font-size: 10px; vertical-align: middle;">${count} Proyek</span>`);
+                                }
+                            }
+                        });
+                    }, 100);
+                }
+            },
             
             didOpen: function() {
                 initTooltip();
@@ -272,9 +304,26 @@
                 });
             },
 
-            datesSet: function() {
+            datesSet: function(info) {
                 // Re-initialize tooltips whenever view changes
                 setTimeout(initTooltip, 100);
+
+                // Re-add project count in List view
+                if (info.view.type === 'listMonth') {
+                    setTimeout(() => {
+                        $('.fc-list-day').each(function() {
+                            const dateRow = $(this);
+                            const nextEvents = dateRow.nextUntil('.fc-list-day', '.fc-list-event');
+                            const count = nextEvents.length;
+                            if (count > 0) {
+                                const titleCell = dateRow.find('.fc-list-day-text');
+                                if (!titleCell.find('.project-count-badge').length) {
+                                    titleCell.append(` <span class="badge bg-primary project-count-badge ms-2" style="background-color: #204EAB !important; font-size: 10px; vertical-align: middle; border-radius: 10px;">${count} Proyek</span>`);
+                                }
+                            }
+                        });
+                    }, 50);
+                }
             }
         });
         calendar.render();
