@@ -184,8 +184,11 @@ class DashboardController extends BaseController {
             $this->jsonResponse(['error' => 'Project not found'], 404);
         }
 
-        // Return only public-safe fields (similar to the Detail tab in local view)
-        // We exclude documents, chat, vendor list, costings, etc.
+        // Include Technical Meeting
+        $tmModel = $this->loadModel('TechnicalMeeting');
+        $technical_meeting = $tmModel->getByProject($_GET['id']);
+
+        // Return only public-safe fields
         $safe_data = [
             'project_id' => $project_data['project_id'],
             'nama_project' => $project_data['nama_project'],
@@ -211,9 +214,12 @@ class DashboardController extends BaseController {
             'foto_peserta' => $project_data['foto_peserta'],
             'jenis_pemeriksaan' => $project_data['jenis_pemeriksaan'],
             'status_project' => $project_data['status_project'],
+            'technical_meeting' => $technical_meeting,
             'rabs' => [], // Empty to hide docs
             'vendor_allocations' => [], // Empty to hide vendor info
-            'history' => [] // Empty to hide history
+            'history' => [], // Empty to hide history
+            'staff_assignments' => [],
+            'realizations' => []
         ];
 
         $this->jsonResponse($safe_data);

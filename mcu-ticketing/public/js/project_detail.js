@@ -52,7 +52,19 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
         data: { id: projectId },
         success: function (response) {
             try {
-                const p = typeof response === 'string' ? JSON.parse(response) : response;
+                let p;
+                if (typeof response === 'string') {
+                    try {
+                        p = JSON.parse(response);
+                    } catch (e) {
+                        console.error("JSON Parse Error in AJAX Success:", e, response);
+                        $('#modal-content-body').html('<div class="alert alert-danger">Error processing server response.</div>');
+                        return;
+                    }
+                } else {
+                    p = response;
+                }
+
                 if (!p) {
                     $('#modal-content-body').html('<div class="alert alert-danger">Project not found (Empty response)</div>');
                     return;
