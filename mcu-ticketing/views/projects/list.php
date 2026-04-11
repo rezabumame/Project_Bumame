@@ -505,8 +505,9 @@ if (!class_exists('DateHelper')) {
                                         // Status before Ops starts (before 'in_progress_ops')
                                         $pre_ops_statuses = [
                                             're-nego', 'rejected', 'need_approval_manager', 'need_approval_head', 
-                                            'approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'vendor_requested'
+                                            'approved'
                                         ];
+                                        // Superadmin and Admin Sales can edit until Approved
                                         if (in_array(trim($row['status_project']), $pre_ops_statuses)) {
                                             $can_edit = true;
                                         }
