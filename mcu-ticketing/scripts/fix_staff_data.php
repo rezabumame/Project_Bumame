@@ -1,16 +1,11 @@
 <?php
 /**
- * Standalone Repair Script
- * Purpose: Fix casing inconsistency in man_powers table (Status & Skills)
- * Usage: Run once via browser or CLI: php scripts/fix_staff_data.php
+ * Standalone Repair Script - REFINED
+ * Purpose: Fix casing inconsistency in man_powers table based on Official Acuan
+ * Usage: Run via browser: http://localhost/bumame/mcu-ticketing/scripts/fix_staff_data.php
  */
 
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/SystemSetting.php';
-require_once __DIR__ . '/../models/ManPower.php';
-
-// Prevent unauthenticated access if run via web (Optional but recommended)
-// In this case, we keep it simple for the user to run.
 
 $database = new Database();
 $db = $database->getConnection();
@@ -19,34 +14,42 @@ if (!$db) {
     die("Database connection failed. Please check config/database.php");
 }
 
-$setting = new SystemSetting($db);
-$manPower = new ManPower($db);
-
-echo "<h1>Man Power Data Repair Script</h1>";
+echo "<h1>Man Power Data Repair Script (Refined)</h1>";
 echo "<pre>";
 
-// 1. Get official skills from settings
-$mappingStr = $setting->get('rab_personnel_codes');
-$officialSkills = [];
-$lines = explode("\n", str_replace("\r", "", $mappingStr));
-foreach ($lines as $line) {
-    $line = trim($line);
-    if (empty($line)) continue;
-    $parts = explode('=', $line, 2);
-    if (count($parts) == 2) {
-        $officialSkills[] = trim($parts[1]);
-    }
-}
+/**
+ * ACUAN RESMI - Sesuai Screenshot User
+ */
+$officialSkills = [
+    "Admin",
+    "Audiometri",
+    "Dokter",
+    "Driver",
+    "EKG",
+    "Injeksi",
+    "Nakes Feses",
+    "Pap smear",
+    "Petugas Loading",
+    "Plebo",
+    "Rectal",
+    "Rontgen",
+    "Spirometri",
+    "TTV",
+    "Treadmill",
+    "USG Abdomen",
+    "USG Mammae",
+    "Visus"
+];
 
-echo "Found " . count($officialSkills) . " official skills in settings.\n";
+echo "Menggunakan " . count($officialSkills) . " keahlian resmi sebagai acuan.\n";
 
-// 2. Fetch ALL records
+// 1. Fetch ALL records
 $query = "SELECT * FROM man_powers";
 $stmt = $db->prepare($query);
 $stmt->execute();
 $all_staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo "Processing " . count($all_staff) . " records...\n\n";
+echo "Memproses " . count($all_staff) . " data petugas...\n\n";
 
 $updatedCount = 0;
 foreach ($all_staff as $staff) {
@@ -54,19 +57,19 @@ foreach ($all_staff as $staff) {
     $logMsg = "[ID: {$staff['id']}] Name: {$staff['name']} - ";
     
     // Fix Status
-    $currentStatus = $staff['status'];
-    $newStatus = ucfirst(strtolower(trim($currentStatus)));
-    if ($newStatus !== $currentStatus) {
-        $logMsg .= "Status fixed ($currentStatus -> $newStatus). ";
+    $currentStatus = trim($staff['status']);
+    $newStatus = ucfirst(strtolower($currentStatus));
+    if ($newStatus !== $staff['status']) {
+        $logMsg .= "Status diperbaiki ($currentStatus -> $newStatus). ";
         $needsUpdate = true;
     }
 
     // Fix Skills
-    $skills = json_decode($staff['skills'], true) ?? [];
+    $currentSkills = json_decode($staff['skills'], true) ?? [];
     $newSkills = [];
     $skillChanges = [];
     
-    foreach ($skills as $s) {
+    foreach ($currentSkills as $s) {
         $s = trim($s);
         $matched = false;
         foreach ($officialSkills as $os) {
@@ -81,12 +84,13 @@ foreach ($all_staff as $staff) {
             }
         }
         if (!$matched) {
-            $newSkills[] = $s; // Keep as is if not found in official list
+            // Jika tidak ada di acuan, tetap simpan tapi bersihkan spasi
+            $newSkills[] = $s; 
         }
     }
 
     if (!empty($skillChanges)) {
-        $logMsg .= "Skills fixed (" . implode(", ", $skillChanges) . "). ";
+        $logMsg .= "Skills diperbaiki (" . implode(", ", $skillChanges) . "). ";
     }
 
     if ($needsUpdate) {
@@ -98,18 +102,41 @@ foreach ($all_staff as $staff) {
         $updateStmt->bindParam(":id", $staff['id']);
         
         if ($updateStmt->execute()) {
-            echo $logMsg . "SUCCESS\n";
+            echo $logMsg . "HASIL: SUKSES\n";
             $updatedCount++;
         } else {
-            echo $logMsg . "FAILED\n";
+            echo $logMsg . "HASIL: GAGAL\n";
         }
     }
 }
 
 echo "\n------------------------------------------------\n";
-echo "Repair Completed!\n";
-echo "Total Records Processed: " . count($all_staff) . "\n";
-echo "Total Records Updated: $updatedCount\n";
+echo "Perbaikan Selesai!\n";
+echo "Total Data Diproses: " . count($all_staff) . "\n";
+echo "Total Data Diupdate: $updatedCount\n";
 echo "------------------------------------------------\n";
 echo "</pre>";
+
+/**
+ * BONUS: Update System Setting agar ke depannya ejaan sesuai acuan
+ */
+echo "<h3>Sinkronisasi Pengaturan Sistem...</h3>";
+$codes = [];
+$i = 1;
+foreach ($officialSkills as $os) {
+    $code = str_replace(' ', '_', strtoupper($os));
+    $codes[] = "SKILL_$i=$os";
+    $i++;
+}
+$newSettingValue = implode("\n", $codes);
+
+$updateSettingQuery = "UPDATE system_settings SET value = :val WHERE `key` = 'rab_personnel_codes'";
+$updateSettingStmt = $db->prepare($updateSettingQuery);
+$updateSettingStmt->bindParam(":val", $newSettingValue);
+
+if ($updateSettingStmt->execute()) {
+    echo "<p style='color: green;'>Pengaturan RAB Personnel Codes telah disinkronkan dengan acuan resmi!</p>";
+} else {
+    echo "<p style='color: red;'>Gagal sinkronisasi pengaturan sistem.</p>";
+}
 ?>
