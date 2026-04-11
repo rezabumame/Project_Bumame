@@ -459,13 +459,16 @@ class Project {
     }
 
     public function getAllForCalendar($korlap_id = null, $role = null, $user_id = null) {
-        $select = "SELECT p.project_id, p.nama_project, p.tanggal_mcu, p.status_project, p.lunch, p.lunch_notes, p.snack, p.snack_notes";
+        $select = "SELECT p.project_id, p.nama_project, p.tanggal_mcu, p.status_project, p.lunch, p.lunch_notes, p.snack, p.snack_notes, 
+                         p.total_peserta, p.jenis_pemeriksaan, sp.sales_name";
         
         if ($role == 'dw_tim_hasil') {
-            $select = "SELECT DISTINCT p.project_id, p.nama_project, p.tanggal_mcu, p.status_project, p.lunch, p.lunch_notes, p.snack, p.snack_notes";
+            $select = "SELECT DISTINCT p.project_id, p.nama_project, p.tanggal_mcu, p.status_project, p.lunch, p.lunch_notes, p.snack, p.snack_notes, 
+                               p.total_peserta, p.jenis_pemeriksaan, sp.sales_name";
         }
         
-        $query = $select . " FROM " . $this->table_name . " p";
+        $query = $select . " FROM " . $this->table_name . " p 
+                 LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id";
         
         $joinClause = "";
         $whereClause = "";

@@ -37,9 +37,10 @@ function showCancelModal(projectId, date, formattedDate) {
     myModal.show();
 }
 
-function loadProjectDetail(projectId, activeTab = 'details') {
+function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
     // Handle null passed from URLSearchParams
     activeTab = activeTab || 'details';
+    const hideTabs = options.hideTabs || false;
 
     $('#detailModal').modal('show');
     $('#modal-content-body').html('<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>');
@@ -574,7 +575,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                 // Tabs Construction
                 // Tabs Construction
                 var tabsHtml = `
-                    <div class="tabs-scroll-wrapper mb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #dee2e6; scrollbar-width: none;">
+                    <div class="tabs-scroll-wrapper mb-3" style="${hideTabs ? 'display: none !important;' : 'overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #dee2e6; scrollbar-width: none;'}">
                         <style>
                             .tabs-scroll-wrapper::-webkit-scrollbar { display: none; }
                             #projectTabs .nav-link { white-space: nowrap; border: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
@@ -614,6 +615,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                         <div class="tab-pane fade ${activeTab === 'details' ? 'show active' : ''}" id="details" role="tabpanel">
                             ${detailsHtml}
                         </div>
+                        ${!hideTabs ? `
                         <div class="tab-pane fade ${activeTab === 'chatter' ? 'show active' : ''}" id="chatter" role="tabpanel">
                             <div id="chatter-content">
                                 <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
@@ -644,37 +646,40 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                         <div class="tab-pane fade ${activeTab === 'history' ? 'show active' : ''}" id="history" role="tabpanel">
                             ${historyHtml}
                         </div>
+                        ` : ''}
                     </div>
                 `;
 
                 $('#modal-content-body').html(tabsHtml);
 
                 // Initialize Chatter or Badge
-                if (activeTab === 'chatter') {
-                    loadChatter(projectId);
-                } else {
-                    $.get('index.php?page=get_unread_chat_count', { project_id: projectId }, function (res) {
-                        try {
-                            const data = JSON.parse(res);
-                            if (data.unread > 0) {
-                                $('#chatter-badge').text(data.unread).show();
-                            }
-                        } catch (e) { }
+                if (!hideTabs) {
+                    if (activeTab === 'chatter') {
+                        loadChatter(projectId);
+                    } else {
+                        $.get('index.php?page=get_unread_chat_count', { project_id: projectId }, function (res) {
+                            try {
+                                const data = JSON.parse(res);
+                                if (data.unread > 0) {
+                                    $('#chatter-badge').text(data.unread).show();
+                                }
+                            } catch (e) { }
+                        });
+                    }
+
+                    // Add click listener to refresh chatter when tab is clicked
+                    document.getElementById('chatter-tab').addEventListener('shown.bs.tab', function (e) {
+                        loadChatter(projectId);
+                        $('#chatter-badge').hide(); // Clear badge
                     });
                 }
-
-                // Add click listener to refresh chatter when tab is clicked
-                document.getElementById('chatter-tab').addEventListener('shown.bs.tab', function (e) {
-                    loadChatter(projectId);
-                    $('#chatter-badge').hide(); // Clear badge
-                });
 
                 // Add action buttons logic
                 let buttons = '';
                 const btnStyle = "box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); font-weight: 600; letter-spacing: 0.5px;";
                 const hoverEffect = "onmouseover=\"this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)'\" onmouseout=\"this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'\"";
 
-                if (typeof userRole !== 'undefined') {
+                if (!hideTabs && typeof userRole !== 'undefined') {
                     if ((userRole === 'manager_ops' || userRole === 'superadmin') && p.status_project === 'need_approval_manager') {
                         buttons += `<button class="btn btn-success me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #28a745 0%, #218838 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'need_approval_head', 'Approve this project?')"><i class="fas fa-check-circle me-2"></i>Approve</button>`;
                         buttons += `<button class="btn btn-danger me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'rejected', 'Reject this project?')"><i class="fas fa-times-circle me-2"></i>Reject</button>`;

@@ -103,6 +103,66 @@ class DashboardController extends BaseController {
                             'lunch_notes' => $row['lunch_notes'],
                             'snack' => $row['snack'],
                             'snack_notes' => $row['snack_notes'],
+                            'total_pax' => $row['total_peserta'],
+                            'exam_types' => $row['jenis_pemeriksaan'],
+                            'sales_name' => $row['sales_name'],
+                            'formatted_date' => DateHelper::formatIndonesianDate($date)
+                        ]
+                    ];
+                }
+            }
+        }
+
+        $this->jsonResponse($events);
+    }
+
+    public function publicCalendar() {
+        $this->view('dashboard/public_calendar');
+    }
+
+    public function getPublicCalendarEvents() {
+        if (!class_exists('DateHelper')) {
+            include_once __DIR__ . '/../helpers/DateHelper.php';
+        }
+
+        // Public calendar shows all projects without role filtering
+        $stmt = $this->project->getAllForCalendar();
+        $events = [];
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $dates = json_decode($row['tanggal_mcu']);
+            if (json_last_error() !== JSON_ERROR_NONE && !is_array($dates)) {
+                $dates = [$row['tanggal_mcu']]; 
+            }
+
+            $color = '#204EAB';
+            if ($row['status_project'] == 're-nego' || $row['status_project'] == 'cancelled' || $row['status_project'] == 'rejected') {
+                $color = '#dc3545';
+            } elseif ($row['status_project'] == 'approved') {
+                $color = '#204EAB';
+            } elseif (strpos($row['status_project'], 'need_approval') !== false) {
+                $color = '#fd7e14';
+            } elseif ($row['status_project'] == 'completed') {
+                $color = '#198754';
+            }
+
+            if (is_array($dates)) {
+                foreach ($dates as $date) {
+                    $events[] = [
+                        'id' => $row['project_id'],
+                        'title' => $row['nama_project'],
+                        'start' => $date,
+                        'backgroundColor' => $color,
+                        'borderColor' => $color,
+                        'extendedProps' => [
+                            'status' => $row['status_project'],
+                            'lunch' => $row['lunch'],
+                            'lunch_notes' => $row['lunch_notes'],
+                            'snack' => $row['snack'],
+                            'snack_notes' => $row['snack_notes'],
+                            'total_pax' => $row['total_peserta'],
+                            'exam_types' => $row['jenis_pemeriksaan'],
+                            'sales_name' => $row['sales_name'],
                             'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
