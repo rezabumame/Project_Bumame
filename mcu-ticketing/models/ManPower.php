@@ -41,11 +41,21 @@ class ManPower {
         return false;
     }
 
-    public function getAll($search = '', $limit = null, $offset = null) {
-        $query = "SELECT * FROM " . $this->table_name;
+    public function getAll($filters = [], $limit = null, $offset = null) {
+        $search = $filters['search'] ?? '';
+        $status = $filters['status'] ?? '';
+        $skill = $filters['skill'] ?? '';
+
+        $query = "SELECT * FROM " . $this->table_name . " WHERE 1=1";
         
         if (!empty($search)) {
-            $query .= " WHERE name LIKE :search OR email LIKE :search OR skills LIKE :search";
+            $query .= " AND (name LIKE :search OR email LIKE :search OR skills LIKE :search)";
+        }
+        if (!empty($status)) {
+            $query .= " AND status = :status";
+        }
+        if (!empty($skill)) {
+            $query .= " AND skills LIKE :skill";
         }
         
         $query .= " ORDER BY name ASC";
@@ -60,6 +70,13 @@ class ManPower {
             $search_term = "%{$search}%";
             $stmt->bindParam(":search", $search_term);
         }
+        if (!empty($status)) {
+            $stmt->bindParam(":status", $status);
+        }
+        if (!empty($skill)) {
+            $skill_term = '%"' . $skill . '"%';
+            $stmt->bindParam(":skill", $skill_term);
+        }
 
         if ($limit !== null && $offset !== null) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
@@ -70,11 +87,21 @@ class ManPower {
         return $stmt;
     }
 
-    public function countAll($search = '') {
-        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+    public function countAll($filters = []) {
+        $search = $filters['search'] ?? '';
+        $status = $filters['status'] ?? '';
+        $skill = $filters['skill'] ?? '';
+
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE 1=1";
         
         if (!empty($search)) {
-            $query .= " WHERE name LIKE :search OR email LIKE :search OR skills LIKE :search";
+            $query .= " AND (name LIKE :search OR email LIKE :search OR skills LIKE :search)";
+        }
+        if (!empty($status)) {
+            $query .= " AND status = :status";
+        }
+        if (!empty($skill)) {
+            $query .= " AND skills LIKE :skill";
         }
 
         $stmt = $this->conn->prepare($query);
@@ -82,6 +109,13 @@ class ManPower {
         if (!empty($search)) {
             $search_term = "%{$search}%";
             $stmt->bindParam(":search", $search_term);
+        }
+        if (!empty($status)) {
+            $stmt->bindParam(":status", $status);
+        }
+        if (!empty($skill)) {
+            $skill_term = '%"' . $skill . '"%';
+            $stmt->bindParam(":skill", $skill_term);
         }
 
         $stmt->execute();

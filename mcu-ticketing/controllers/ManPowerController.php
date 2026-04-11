@@ -21,15 +21,20 @@ class ManPowerController extends BaseController {
             $this->runDataFix();
         }
 
-        $search = $_GET['search'] ?? '';
+        $filters = [
+            'search' => $_GET['search'] ?? '',
+            'status' => $_GET['status_filter'] ?? '',
+            'skill' => $_GET['skill_filter'] ?? ''
+        ];
+        
         $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
         $limit = 10;
         $offset = ($page - 1) * $limit;
 
-        $stmt = $this->manPower->getAll($search, $limit, $offset);
+        $stmt = $this->manPower->getAll($filters, $limit, $offset);
         $man_powers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $total_rows = $this->manPower->countAll($search);
+        $total_rows = $this->manPower->countAll($filters);
         $total_pages = ceil($total_rows / $limit);
 
         // Decode skills for display
@@ -38,13 +43,15 @@ class ManPowerController extends BaseController {
         }
 
         $can_edit = in_array($_SESSION['role'], ['superadmin', 'admin_ops']);
+        $available_skills = $this->getAvailableSkills();
 
         $this->view('man_power_management/index', [
             'man_powers' => $man_powers,
-            'search' => $search,
+            'filters' => $filters,
             'current_page' => $page,
             'total_pages' => $total_pages,
-            'can_edit' => $can_edit
+            'can_edit' => $can_edit,
+            'available_skills' => $available_skills
         ]);
     }
 
@@ -64,8 +71,9 @@ class ManPowerController extends BaseController {
         
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $this->manPower->name = $_POST['name'];
-            // Normalize status to match ENUM ('Internal', 'External')
-            $this->manPower->status = ucfirst(strtolower($_POST['status']));
+            // Status from switch/checkbox: if checked it sends 'Internal' (or 'on'), else 'External'
+            $status = $_POST['status'] ?? 'External';
+            $this->manPower->status = ($status === 'on' || $status === 'Internal') ? 'Internal' : 'External';
             $this->manPower->email = $_POST['email'];
             $this->manPower->is_active = isset($_POST['is_active']) ? 1 : 0;
             
@@ -107,8 +115,9 @@ class ManPowerController extends BaseController {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $this->manPower->id = $_POST['id'];
             $this->manPower->name = $_POST['name'];
-            // Normalize status to match ENUM ('Internal', 'External')
-            $this->manPower->status = ucfirst(strtolower($_POST['status']));
+            // Status from switch: if checked it sends 'Internal', else 'External'
+            $status = $_POST['status'] ?? 'External';
+            $this->manPower->status = ($status === 'on' || $status === 'Internal') ? 'Internal' : 'External';
             $this->manPower->email = $_POST['email'];
             $this->manPower->is_active = isset($_POST['is_active']) ? 1 : 0;
             

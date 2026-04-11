@@ -27,11 +27,18 @@
                         <input type="email" class="form-control" id="email" name="email">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                        <select class="form-select" id="status" name="status" required>
-                            <option value="External" selected>External</option>
-                            <option value="Internal">Internal</option>
-                        </select>
+                        <label class="form-label d-block">Staff Status <span class="text-danger">*</span></label>
+                        <div class="form-check form-switch form-check-inline mt-2">
+                            <input type="hidden" name="status" value="External">
+                            <input class="form-check-input" type="checkbox" id="status_switch" name="status" value="Internal">
+                            <label class="form-check-label fw-bold" for="status_switch" id="status_label">External</label>
+                        </div>
+                        <div class="form-text mt-1 text-muted small">Toggle to switch between Internal and External status.</div>
+                        <script>
+                            document.getElementById('status_switch').addEventListener('change', function() {
+                                document.getElementById('status_label').innerText = this.checked ? 'Internal' : 'External';
+                            });
+                        </script>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Skills / Stations <span class="text-danger">*</span></label>

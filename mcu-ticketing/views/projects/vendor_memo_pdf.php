@@ -198,6 +198,7 @@
                 <th>NAMA PEMERIKSAAN</th>
                 <th style="width: 80px;">JUMLAH</th>
                 <th>REMARKS</th>
+                <th>VENDOR</th>
             </tr>
         </thead>
         <tbody>
@@ -208,11 +209,12 @@
                     <td><?php echo htmlspecialchars($row['exam_type']); ?></td>
                     <td style="text-align: center;"><?php echo htmlspecialchars($row['participant_count']); ?></td>
                     <td><?php echo htmlspecialchars($row['notes']); ?></td>
+                    <td><?php echo htmlspecialchars($row['assigned_vendor_name'] ?? '-'); ?></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="4" style="text-align: center;">No vendor assignments found.</td>
+                    <td colspan="5" style="text-align: center;">No vendor assignments found.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

@@ -33,11 +33,34 @@
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-6">
-                    <form action="index.php" method="GET" class="d-flex">
+                <div class="col-md-12">
+                    <form action="index.php" method="GET" class="row g-2 align-items-center">
                         <input type="hidden" name="page" value="man_power_management">
-                        <input type="text" name="search" class="form-control me-2" placeholder="Search by name, email, or skill..." value="<?php echo htmlspecialchars($search); ?>">
-                        <button type="submit" class="btn btn-outline-primary">Search</button>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" name="search" class="form-control border-start-0" placeholder="Search name, email, or skill..." value="<?php echo htmlspecialchars($filters['search']); ?>">
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <select name="status_filter" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="Internal" <?php echo ($filters['status'] == 'Internal') ? 'selected' : ''; ?>>Internal</option>
+                                <option value="External" <?php echo ($filters['status'] == 'External') ? 'selected' : ''; ?>>External</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="skill_filter" class="form-select">
+                                <option value="">All Skills</option>
+                                <?php foreach($available_skills as $s): ?>
+                                    <option value="<?php echo htmlspecialchars($s['name']); ?>" <?php echo ($filters['skill'] == $s['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($s['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary px-4">Filter</button>
+                            <a href="index.php?page=man_power_management" class="btn btn-outline-secondary">Reset</a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -105,7 +128,7 @@
                 <ul class="pagination justify-content-center">
                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                         <li class="page-item <?php echo ($i == $current_page) ? 'active' : ''; ?>">
-                            <a class="page-link" href="index.php?page=man_power_management&p=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"><?php echo $i; ?></a>
+                            <a class="page-link" href="index.php?page=man_power_management&p=<?php echo $i; ?>&search=<?php echo urlencode($filters['search']); ?>&status_filter=<?php echo urlencode($filters['status']); ?>&skill_filter=<?php echo urlencode($filters['skill']); ?>"><?php echo $i; ?></a>
                         </li>
                     <?php endfor; ?>
                 </ul>
