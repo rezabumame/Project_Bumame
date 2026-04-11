@@ -65,8 +65,11 @@ class ApiController extends BaseController {
 
     private function export_rabs() {
         $query = "SELECT r.rab_number, r.status, r.location_type, r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage, r.total_participants,
+                         r.total_personnel, r.total_transport, r.total_consumption,
+                         (SELECT SUM(subtotal) FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as total_vendor,
+                         r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at,
                          p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
-                         sp.sales_name, u_korlap.full_name as korlap_name, u_creator.full_name as creator_name,
+                         sp.sales_name, u_korlap.full_name as korlap_name,
                          (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, (CASE WHEN days > 0 THEN CONCAT(' x ', days) ELSE '' END), ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_items WHERE rab_id = r.id AND category = 'personnel') as personnel_details,
                          (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
@@ -79,27 +82,35 @@ class ApiController extends BaseController {
                   LEFT JOIN projects p ON r.project_id = p.project_id
                   LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
                   LEFT JOIN users u_korlap ON p.korlap_id = u_korlap.user_id
-                  LEFT JOIN users u_creator ON r.created_by = u_creator.user_id
                   ORDER BY r.created_at DESC";
         
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        require_once '../helpers/DateHelper.php';
+
         // Post-process for readability
         foreach ($data as &$row) {
-            // Format dates
-            if (!empty($row['tanggal_mcu'])) {
-                $dates = json_decode($row['tanggal_mcu'], true);
-                if (is_array($dates)) {
-                    $row['tanggal_mcu'] = implode(', ', $dates);
-                }
-            }
+            // Format MCU Date using Smart Helper
+            $row['tanggal_mcu'] = DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']);
             
-            // Format Currency columns with Dot (Indonesian Style)
+            // Format Timeline Dates
+            $row['tgl_pengajuan'] = $row['tgl_pengajuan'] ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-';
+            $row['approved_date_manager'] = $row['approved_date_manager'] ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-';
+            $row['approved_date_head'] = $row['approved_date_head'] ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-';
+            $row['submitted_to_finance_at'] = $row['submitted_to_finance_at'] ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-';
+            $row['finance_paid_at'] = $row['finance_paid_at'] ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-';
+
+            // Format Currency columns with Dot
             $row['grand_total'] = number_format($row['grand_total'], 0, ',', '.');
             $row['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
             $row['budget_percentage'] = number_format($row['budget_percentage'], 2, ',', '.') . '%';
+            
+            $row['total_personnel'] = number_format($row['total_personnel'], 0, ',', '.');
+            $row['total_transport'] = number_format($row['total_transport'], 0, ',', '.');
+            $row['total_consumption'] = number_format($row['total_consumption'], 0, ',', '.');
+            $row['total_vendor'] = number_format($row['total_vendor'], 0, ',', '.');
         }
         
         $this->jsonResponse(['status' => 'success', 'data' => $data]);
@@ -107,11 +118,11 @@ class ApiController extends BaseController {
 
     private function export_realizations() {
         $query = "SELECT rr.date as realization_date, rr.actual_participants, rr.total_amount as realization_total, rr.status as realization_status,
+                         rr.created_at as tgl_input_realisasi,
                          r.rab_number, r.grand_total as rab_total, r.cost_value as budget_ops,
                          (r.cost_value - rr.total_amount) as variance,
                          (rr.total_amount / r.cost_value * 100) as realization_percentage,
                          p.nama_project, p.company_name,
-                         u_creator.full_name as creator_name,
                          (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_realization_items WHERE realization_id = rr.id AND category = 'personnel') as personnel_realization,
                          (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
@@ -123,7 +134,6 @@ class ApiController extends BaseController {
                   FROM rab_realizations rr
                   LEFT JOIN rabs r ON rr.rab_id = r.id
                   LEFT JOIN projects p ON rr.project_id = p.project_id
-                  LEFT JOIN users u_creator ON rr.created_by = u_creator.user_id
                   ORDER BY rr.date DESC";
         
         $stmt = $this->db->prepare($query);
@@ -131,6 +141,10 @@ class ApiController extends BaseController {
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($data as &$row) {
+            // Format Dates
+            $row['realization_date'] = date('d M Y', strtotime($row['realization_date']));
+            $row['tgl_input_realisasi'] = $row['tgl_input_realisasi'] ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-';
+
             // Format Currency
             $row['realization_total'] = number_format($row['realization_total'], 0, ',', '.');
             $row['rab_total'] = number_format($row['rab_total'], 0, ',', '.');
