@@ -10,10 +10,10 @@
         body { background-color: #f4f7f6; font-family: 'Inter', sans-serif; }
         .verify-card { max-width: 500px; margin: 50px auto; border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .status-badge { font-size: 0.9rem; padding: 8px 16px; border-radius: 50px; }
-        .success-bg { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
+        .success-bg { background: linear-gradient(135deg, #204EAB 0%, #173b85 100%); color: white; }
         .info-label { color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-value { font-weight: 600; color: #343a40; }
-        .signature-section { background: #f8f9fa; border-radius: 15px; padding: 20px; margin-top: 20px; border-left: 5px solid #28a745; }
+        .signature-section { background: #f8f9fa; border-radius: 15px; padding: 20px; margin-top: 20px; border-left: 5px solid #204EAB; }
     </style>
 </head>
 <body>
@@ -21,7 +21,7 @@
         <div class="card verify-card mt-5">
             <div class="card-header success-bg text-center py-4 border-0 rounded-top-20">
                 <i class="fas fa-check-circle fa-3x mb-3 text-white"></i>
-                <h4 class="mb-0 text-white">Verified Digital Signature</h4>
+                <h4 class="mb-0 text-white">Verification Status</h4>
                 <p class="mb-0 opacity-75">Bumame Internal Document</p>
             </div>
             <div class="card-body p-4">
@@ -48,7 +48,7 @@
                             <div class="h5 mb-0 info-value"><?php echo htmlspecialchars($name); ?></div>
                             <div class="text-muted"><?php echo htmlspecialchars($title); ?></div>
                         </div>
-                        <div class="text-success ms-3 text-center">
+                        <div class="ms-3 text-center" style="color: #204EAB;">
                             <i class="fas fa-shield-alt fa-2x"></i>
                             <div class="small fw-bold mt-1">AUTHENTIC</div>
                         </div>

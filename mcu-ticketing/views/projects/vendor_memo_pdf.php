@@ -252,7 +252,6 @@
                     ]);
                     ?>
                     <div class="text-center">
-                        <div class="verified-badge">Verified Digital Signature</div>
                         <img src="<?php echo $qr_url_preparer; ?>" alt="QR" class="qr-code">
                     </div>
                     <div class="sig-name"><?php echo htmlspecialchars($prepared_by_name); ?></div>
@@ -271,7 +270,6 @@
                     ]);
                     ?>
                     <div class="text-center">
-                        <div class="verified-badge">Verified Digital Signature</div>
                         <img src="<?php echo $qr_url_approver; ?>" alt="QR" class="qr-code">
                     </div>
                     <div class="sig-name"><?php echo htmlspecialchars($approved_by_1_name); ?></div>

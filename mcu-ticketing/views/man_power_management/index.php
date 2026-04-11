@@ -9,9 +9,11 @@
         </div>
         <?php if($can_edit): ?>
         <div>
+            <?php if($needs_normalization): ?>
             <a href="index.php?page=man_power_management&fix_data=1" class="btn btn-outline-warning me-2" onclick="return confirm('Normalize existing staff data casing? This will fix status and skill names.')">
                 <i class="fas fa-sync me-2"></i>Normalize Data
             </a>
+            <?php endif; ?>
             <a href="index.php?page=man_power_create" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Add New Man Power
             </a>

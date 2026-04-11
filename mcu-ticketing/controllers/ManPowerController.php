@@ -44,6 +44,42 @@ class ManPowerController extends BaseController {
 
         $can_edit = in_array($_SESSION['role'], ['superadmin', 'admin_ops']);
         $available_skills = $this->getAvailableSkills();
+        $needs_normalization = false;
+
+        if ($can_edit) {
+            $all_staff_stmt = $this->manPower->getAll([], 9999, 0);
+            $all_staff = $all_staff_stmt->fetchAll(PDO::FETCH_ASSOC);
+            $official_skills_list = array_column($available_skills, 'name');
+            
+            foreach ($all_staff as $staff) {
+                // Check Status
+                if ($staff['status'] !== ucfirst(strtolower($staff['status']))) {
+                    $needs_normalization = true;
+                    break;
+                }
+                
+                // Check Skills
+                $staff_skills = json_decode($staff['skills'], true) ?? [];
+                foreach ($staff_skills as $ss) {
+                    $is_official = false;
+                    foreach ($official_skills_list as $os) {
+                        if ($ss === $os) {
+                            $is_official = true;
+                            break;
+                        }
+                    }
+                    if (!$is_official) {
+                        // Check if it matches case-insensitively but not exactly
+                        foreach ($official_skills_list as $os) {
+                            if (strcasecmp($ss, $os) == 0) {
+                                $needs_normalization = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         $this->view('man_power_management/index', [
             'man_powers' => $man_powers,
@@ -51,7 +87,8 @@ class ManPowerController extends BaseController {
             'current_page' => $page,
             'total_pages' => $total_pages,
             'can_edit' => $can_edit,
-            'available_skills' => $available_skills
+            'available_skills' => $available_skills,
+            'needs_normalization' => $needs_normalization
         ]);
     }
 
@@ -147,7 +184,7 @@ class ManPowerController extends BaseController {
         }
 
         // 2. Fetch all man_powers
-        $stmt = $this->manPower->getAll('', 9999, 0);
+        $stmt = $this->manPower->getAll([], 9999, 0);
         $man_powers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $updatedCount = 0;
