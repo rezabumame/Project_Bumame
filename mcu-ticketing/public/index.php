@@ -254,6 +254,9 @@ $router->add('man_power_assign_store', 'ProjectManPowerController', 'store');
 $router->add('man_power_assignment_delete', 'ProjectManPowerController', 'delete');
 $router->add('project_man_power_export', 'ProjectManPowerController', 'export');
 
+// API for AppScript
+$router->add('api_fetch_data', 'ApiController', 'fetch_data');
+
 // Dispatch
 // DEBUG: Check routes
 if ($page === 'rab_medical_index') {
