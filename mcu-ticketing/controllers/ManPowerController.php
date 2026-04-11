@@ -16,11 +16,6 @@ class ManPowerController extends BaseController {
     public function index() {
         $page_title = "Staff Management";
         
-        // Temporary fix for data casing issue
-        if (isset($_GET['fix_data']) && $_SESSION['role'] === 'superadmin') {
-            $this->runDataFix();
-        }
-
         $filters = [
             'search' => $_GET['search'] ?? '',
             'status' => $_GET['status_filter'] ?? '',
@@ -44,42 +39,6 @@ class ManPowerController extends BaseController {
 
         $can_edit = in_array($_SESSION['role'], ['superadmin', 'admin_ops']);
         $available_skills = $this->getAvailableSkills();
-        $needs_normalization = false;
-
-        if ($can_edit) {
-            $all_staff_stmt = $this->manPower->getAll([], 9999, 0);
-            $all_staff = $all_staff_stmt->fetchAll(PDO::FETCH_ASSOC);
-            $official_skills_list = array_column($available_skills, 'name');
-            
-            foreach ($all_staff as $staff) {
-                // Check Status
-                if ($staff['status'] !== ucfirst(strtolower($staff['status']))) {
-                    $needs_normalization = true;
-                    break;
-                }
-                
-                // Check Skills
-                $staff_skills = json_decode($staff['skills'], true) ?? [];
-                foreach ($staff_skills as $ss) {
-                    $is_official = false;
-                    foreach ($official_skills_list as $os) {
-                        if ($ss === $os) {
-                            $is_official = true;
-                            break;
-                        }
-                    }
-                    if (!$is_official) {
-                        // Check if it matches case-insensitively but not exactly
-                        foreach ($official_skills_list as $os) {
-                            if (strcasecmp($ss, $os) == 0) {
-                                $needs_normalization = true;
-                                break 2;
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         $this->view('man_power_management/index', [
             'man_powers' => $man_powers,
@@ -87,8 +46,7 @@ class ManPowerController extends BaseController {
             'current_page' => $page,
             'total_pages' => $total_pages,
             'can_edit' => $can_edit,
-            'available_skills' => $available_skills,
-            'needs_normalization' => $needs_normalization
+            'available_skills' => $available_skills
         ]);
     }
 
@@ -169,65 +127,7 @@ class ManPowerController extends BaseController {
         }
     }
 
-    private function runDataFix() {
-        // 1. Get official skills
-        $mappingStr = $this->setting->get('rab_personnel_codes');
-        $officialSkills = [];
-        $lines = explode("\n", str_replace("\r", "", $mappingStr));
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line)) continue;
-            $parts = explode('=', $line, 2);
-            if (count($parts) == 2) {
-                $officialSkills[] = trim($parts[1]);
-            }
-        }
 
-        // 2. Fetch all man_powers
-        $stmt = $this->manPower->getAll([], 9999, 0);
-        $man_powers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $updatedCount = 0;
-        foreach ($man_powers as $mp) {
-            $needsUpdate = false;
-            
-            // Normalize status
-            $newStatus = ucfirst(strtolower($mp['status']));
-            if ($newStatus !== $mp['status']) {
-                $needsUpdate = true;
-            }
-
-            // Normalize skills
-            $skills = json_decode($mp['skills'], true) ?? [];
-            $newSkills = [];
-            foreach ($skills as $s) {
-                $matched = false;
-                foreach ($officialSkills as $os) {
-                    if (strcasecmp($s, $os) == 0) {
-                        $newSkills[] = $os;
-                        if ($s !== $os) $needsUpdate = true;
-                        $matched = true;
-                        break;
-                    }
-                }
-                if (!$matched) $newSkills[] = $s;
-            }
-
-            if ($needsUpdate) {
-                $this->manPower->id = $mp['id'];
-                $this->manPower->name = $mp['name'];
-                $this->manPower->status = $newStatus;
-                $this->manPower->skills = json_encode($newSkills);
-                $this->manPower->email = $mp['email'];
-                $this->manPower->is_active = $mp['is_active'];
-                if ($this->manPower->update()) {
-                    $updatedCount++;
-                }
-            }
-        }
-        
-        $_SESSION['fix_msg'] = "Automation: Processed all records. Updated $updatedCount staff members with inconsistent casing.";
-    }
 
     private function getAvailableSkills() {
         // Fetch from RAB Configuration (personnel codes)

@@ -9,11 +9,6 @@
         </div>
         <?php if($can_edit): ?>
         <div>
-            <?php if($needs_normalization): ?>
-            <a href="index.php?page=man_power_management&fix_data=1" class="btn btn-outline-warning me-2" onclick="return confirm('Normalize existing staff data casing? This will fix status and skill names.')">
-                <i class="fas fa-sync me-2"></i>Normalize Data
-            </a>
-            <?php endif; ?>
             <a href="index.php?page=man_power_create" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Add New Man Power
             </a>
@@ -21,16 +16,7 @@
         <?php endif; ?>
     </div>
 
-    <?php if (isset($_SESSION['fix_msg'])): ?>
-    <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        <?php 
-            echo $_SESSION['fix_msg']; 
-            unset($_SESSION['fix_msg']);
-        ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <?php endif; ?>
+
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body">
