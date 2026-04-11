@@ -391,7 +391,7 @@ class ProjectManPowerController extends BaseController {
                 WHERE pmp.date BETWEEN :start_date AND :end_date";
 
         if (!$include_internal) {
-            $sql .= " AND mp.status != 'internal'";
+            $sql .= " AND LOWER(mp.status) != 'internal'";
         }
 
         $sql .= " ORDER BY p.nama_project ASC, pmp.date ASC, pmp.role ASC, mp.name ASC";
