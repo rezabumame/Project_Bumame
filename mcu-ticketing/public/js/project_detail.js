@@ -45,26 +45,17 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
     $('#detailModal').modal('show');
     $('#modal-content-body').html('<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>');
 
-    const detailUrl = options.isPublic ? 'index.php?page=get_public_project_detail_ajax' : 'index.php?page=get_project_detail_ajax';
+    const detailUrl = options.isPublic ? 'public_project_detail.php' : 'index.php?page=get_project_detail_ajax';
 
     $.ajax({
         url: detailUrl,
         data: { id: projectId },
+        dataType: 'json', // Force JSON parsing
         success: function (response) {
             try {
-                let p;
-                if (typeof response === 'string') {
-                    try {
-                        p = JSON.parse(response);
-                    } catch (e) {
-                        console.error("JSON Parse Error in AJAX Success:", e, response);
-                        $('#modal-content-body').html('<div class="alert alert-danger">Error processing server response.</div>');
-                        return;
-                    }
-                } else {
-                    p = response;
-                }
-
+                // If it's already an object, great. If not, the dataType: 'json' should have handled it.
+                let p = response;
+                
                 if (!p) {
                     $('#modal-content-body').html('<div class="alert alert-danger">Project not found (Empty response)</div>');
                     return;
