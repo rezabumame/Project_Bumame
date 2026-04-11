@@ -1379,7 +1379,7 @@ class ProjectController extends BaseController {
 
         // Include RAB Info - Fetch all non-rejected RABs for this project
         $rabModel = $this->loadModel('Rab');
-        $rabs_query = "SELECT id, rab_number, status FROM rabs WHERE project_id = :project_id AND status != 'rejected' ORDER BY created_at DESC";
+        $rabs_query = "SELECT id, rab_number, status, realization_status FROM rabs WHERE project_id = :project_id AND status != 'rejected' ORDER BY created_at DESC";
         $stmtRabs = $this->db->prepare($rabs_query);
         $stmtRabs->bindParam(':project_id', $id);
         $stmtRabs->execute();
@@ -1391,6 +1391,14 @@ class ProjectController extends BaseController {
             'need_approval_realization', 'realization_approved', 
             'completed', 'realization_rejected', 'closed'
         ];
+
+        // Statuses for Realization (LPUM)
+        $lpum_statuses = ['need_approval_realization', 'realization_approved', 'completed', 'realization_rejected', 'closed'];
+
+        // Add realization flag to each RAB
+        foreach ($project['rabs'] as &$rab) {
+            $rab['has_lpum'] = in_array($rab['status'], $lpum_statuses);
+        }
 
         // For backward compatibility with JS, also set the first RAB as "approved_rab" if it exists
         if (!empty($project['rabs'])) {

@@ -414,6 +414,18 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                                             </div>
                                                             <i class="fas fa-download small"></i>
                                                         </a>
+                                                        ${rab.has_lpum ? `
+                                                        <a href="index.php?page=realization_export_lpum&rab_id=${rab.id}" target="_blank" class="btn btn-success w-100 p-2 d-flex align-items-center justify-content-between shadow-sm rounded-3 mt-1 export-lpum-btn" style="border: none; font-size: 0.85rem;">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="fas fa-file-invoice-dollar me-2"></i>
+                                                                <div class="text-start">
+                                                                    <div class="fw-bold">Export PDF LPUM</div>
+                                                                    <div class="small opacity-75">${rab.rab_number || 'Download Realization'}</div>
+                                                                </div>
+                                                            </div>
+                                                            <i class="fas fa-print small"></i>
+                                                        </a>
+                                                        ` : ''}
                                                     `;
                                 }).join('');
                             }
