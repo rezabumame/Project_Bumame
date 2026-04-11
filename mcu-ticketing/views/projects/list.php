@@ -289,7 +289,7 @@ if (!class_exists('DateHelper')) {
                                                     </a>
                                                 <?php endif; ?>
                                             <?php endif; ?>
-                                            <?php if (isset($_SESSION['role']) && ($_SESSION['role'] == 'admin_ops' || $_SESSION['role'] == 'korlap') && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
+                                            <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'korlap', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
                                                 <button class="btn btn-sm btn-outline-warning btn-assign-vendor" 
                                                         data-id="<?php echo $row['project_id']; ?>" 
                                                         data-project-name="<?php echo htmlspecialchars($row['nama_project']); ?>"
@@ -302,7 +302,7 @@ if (!class_exists('DateHelper')) {
                                                 </button>
                                             <?php endif; ?>
 
-                                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin_ops' && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
+                                            <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
                                                 <?php if (empty($row['korlap_id'])): ?>
                                                     <button class="btn btn-sm btn-outline-info btn-assign-korlap" data-id="<?php echo $row['project_id']; ?>" title="Assign Korlap">
                                                         <i class="fas fa-user-check"></i>
@@ -314,7 +314,7 @@ if (!class_exists('DateHelper')) {
                                                 <?php endif; ?>
                                             <?php endif; ?>
 
-                                            <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && ($_SESSION['role'] == 'korlap' || $_SESSION['role'] == 'admin_ops')) && empty($row['tm_id'])): ?>
+                                            <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])) && empty($row['tm_id'])): ?>
                                                 <a href="index.php?page=technical_meeting_create&project_id=<?php echo $row['project_id']; ?>" class="btn btn-sm btn-outline-info" title="Technical Meeting">
                                                     <i class="fas fa-handshake"></i>
                                                 </a>
@@ -831,12 +831,6 @@ $(document).ready(function() {
                 
                 // If not, we implement direct AJAX here to be safe.
                 
-                Swal.fire({
-                    title: 'Processing...',
-                    didOpen: () => Swal.showLoading(),
-                    allowOutsideClick: false
-                });
-
                 $.ajax({
                     url: 'index.php?page=update_project_status',
                     type: 'POST',
@@ -1591,11 +1585,6 @@ function saveVendorAllocations() {
         return false;
     }
 
-    Swal.fire({
-        title: 'Saving...',
-        didOpen: () => Swal.showLoading()
-    });
-
     $.ajax({
         url: 'index.php?page=assign_vendor_ajax',
         method: 'POST',
@@ -1624,11 +1613,6 @@ function saveKorlapAssignment() {
         Swal.fire('Warning', 'Please select a Korlap', 'warning');
         return;
     }
-
-    Swal.fire({
-        title: 'Saving...',
-        didOpen: () => Swal.showLoading()
-    });
 
     $.ajax({
         url: 'index.php?page=assign_korlap_ajax',

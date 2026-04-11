@@ -131,6 +131,19 @@
             font-size: 11px;
             margin-bottom: 5px;
         }
+        .qr-code {
+            width: 70px;
+            height: 70px;
+            margin: 5px auto;
+            display: block;
+        }
+        .verified-badge {
+            font-size: 8px;
+            color: #28a745;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
         
         /* Print adjustments */
         @media print {
@@ -162,7 +175,7 @@
         </tr>
         <tr>
             <td class="info-label">Vendor</td>
-            <td style="border-left: none;">: </td> <!-- Empty as per image requirement if no data, or maybe allow write-in -->
+            <td style="border-left: none;">: <strong><?php echo htmlspecialchars($assigned_vendor_display); ?></strong></td>
         </tr>
         <tr>
             <td class="info-label">Pembayaran</td>
@@ -224,6 +237,21 @@
             <td>
                 <div class="sig-header">Disetujui Oleh:</div>
                 <div class="sig-content">
+                    <?php
+                    $get_qr_verify = function($page, $params) {
+                        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+                        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                        $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+                        $verify_url = $scheme . $host . $basePath . '/index.php?page=' . $page . '&' . http_build_query($params);
+                        return "https://quickchart.io/qr?text=" . urlencode($verify_url) . "&size=100&margin=1";
+                    };
+                    // Link to project detail for verification
+                    $qr_url = $get_qr_verify('all_projects', ['open_project_id' => $project['project_id']]);
+                    ?>
+                    <div class="text-center">
+                        <div class="verified-badge">Verified Digital Signature</div>
+                        <img src="<?php echo $qr_url; ?>" alt="QR" class="qr-code">
+                    </div>
                     <div class="sig-name"><?php echo htmlspecialchars($approved_by_1_name); ?></div>
                     <div class="sig-title"><?php echo htmlspecialchars($approved_by_1_title); ?></div>
                 </div>

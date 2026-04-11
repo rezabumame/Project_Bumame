@@ -756,10 +756,6 @@ function submitStatusUpdate(id, status, reason) {
     // Disable any action buttons in the modal footer to prevent double click
     $('#detailModal .modal-footer button').prop('disabled', true);
     
-    Swal.fire({
-        title: 'Processing...',
-        didOpen: () => Swal.showLoading()
-    });
     $.post('index.php?page=update_project_status', { project_id: id, status: status, reason: reason }, function (res) {
         try {
             if (typeof res === 'string') {
@@ -836,7 +832,7 @@ function loadBaData(projectId) {
                             <input type="hidden" name="project_id" id="direct_upload_project_id">
                             <input type="hidden" name="date" id="direct_upload_date">
                             <input type="hidden" name="original_date" id="direct_upload_original_date">
-                            <input type="file" name="ba_file" id="direct_upload_file" accept=".pdf" onchange="document.getElementById('directUploadForm').submit()">
+                            <input type="file" name="ba_file" id="direct_upload_file" accept=".pdf" onchange="$('#directUploadForm').submit()">
                         </form>
                         <div class="table-responsive mt-3">
                             <table class="table table-bordered table-sm table-striped align-middle">

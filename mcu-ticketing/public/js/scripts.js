@@ -94,20 +94,83 @@ $(document).ready(function () {
     // Mark all read
     $('.mark-all-read-btn').click(function (e) {
         e.preventDefault();
-        $.post('index.php?page=mark_all_notifications_read', function (response) {
-            loadNotifications();
+        $.ajax({
+            url: 'index.php?page=mark_all_notifications_read',
+            type: 'POST',
+            showLoader: false,
+            success: function (response) {
+                loadNotifications();
+            }
         });
     });
 
     window.handleNotificationClick = function (e, id, link) {
         e.preventDefault();
         e.stopPropagation(); // Prevent dropdown from closing immediately if needed, though redirect will happen
-        $.post('index.php?page=mark_notification_read', { id: id }, function (response) {
-            if (link && link !== 'null') {
-                window.location.href = link;
-            } else {
-                loadNotifications();
+        $.ajax({
+            url: 'index.php?page=mark_notification_read',
+            type: 'POST',
+            data: { id: id },
+            showLoader: false,
+            success: function (response) {
+                if (link && link !== 'null') {
+                    window.location.href = link;
+                } else {
+                    loadNotifications();
+                }
             }
         });
     }
+
+    // --- Global Loading Handling ---
+    
+    // 1. Global AJAX Loading for POST requests
+    $(document).on('ajaxSend', function(e, xhr, options) {
+        // Show loader only for state-changing requests (POST, PUT, DELETE)
+        // And if options.showLoader is not explicitly false
+        if (options.type === 'POST' && options.showLoader !== false) {
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Please wait while we process your request.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+    });
+
+    $(document).on('ajaxComplete', function(e, xhr, options) {
+        // Only close if it's a loader and NOT a success/error alert that was just shown
+        if (options.type === 'POST' && options.showLoader !== false) {
+            // We usually don't close here because success/error handlers will show their own alerts
+            // But if there's no success alert, we should close it.
+            // Swal.close() here might race with success alerts.
+            // So we rely on success/error handlers to override the loading Swal.
+        }
+    });
+
+    // 2. Global Form Submission Loading (for non-AJAX forms)
+    $(document).on('submit', 'form', function(e) {
+        const $form = $(this);
+        
+        // Skip for specific forms if needed (e.g. search filters)
+        if ($form.attr('id') === 'searchForm' || $form.hasClass('no-loader')) {
+            return;
+        }
+
+        // Delay slightly to check if e.isDefaultPrevented() (meaning handled by AJAX)
+        setTimeout(() => {
+            if (!e.isDefaultPrevented()) {
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Bringing your data to life...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+        }, 50);
+    });
 });

@@ -416,6 +416,15 @@ class ProjectController extends BaseController {
             $allocations_stmt = $this->project->getVendorAllocations($project_id);
             $allocations = $allocations_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Extract unique assigned vendor names
+            $vendor_names = [];
+            foreach ($allocations as $alloc) {
+                if (!empty($alloc['assigned_vendor_name'])) {
+                    $vendor_names[] = $alloc['assigned_vendor_name'];
+                }
+            }
+            $assigned_vendor_display = !empty($vendor_names) ? implode(', ', array_unique($vendor_names)) : '-';
+
             if (empty($allocations)) {
                 die("Error: No vendors assigned to this project. Cannot generate Vendor Memo.");
             }
