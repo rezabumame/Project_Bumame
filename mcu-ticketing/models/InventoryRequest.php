@@ -262,14 +262,13 @@ class InventoryRequest {
         $query = "SELECT wr.*, ir.request_number, ir.project_id, p.nama_project, p.tanggal_mcu, p.korlap_id, 
                          u.full_name as requester_name, u.role as requester_role, u.jabatan as requester_jabatan,
                          uk.full_name as korlap_name, uk.role as korlap_role, uk.jabatan as korlap_jabatan,
-                         up.full_name as preparer_name, uc.full_name as picker_name
+                         up.full_name as preparer_name
                   FROM " . $this->warehouse_table . " wr
                   JOIN " . $this->table_name . " ir ON wr.inventory_request_id = ir.id
                   JOIN projects p ON ir.project_id = p.project_id
                   JOIN users u ON ir.created_by = u.user_id
                   LEFT JOIN users uk ON p.korlap_id = uk.user_id
                   LEFT JOIN users up ON wr.prepared_by = up.user_id
-                  LEFT JOIN users uc ON wr.picked_up_by = uc.user_id
                   WHERE wr.id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $warehouse_request_id);
@@ -306,9 +305,6 @@ class InventoryRequest {
             if ($status == 'READY' && $user_id) {
                 $query .= ", prepared_by = :user_id, prepared_at = NOW()";
             }
-            if ($status == 'COMPLETED' && $user_id) {
-                $query .= ", picked_up_by = :user_id, picked_up_at = NOW()";
-            }
             
             $query .= " WHERE id = :id";
             
@@ -318,8 +314,7 @@ class InventoryRequest {
             
             if ($proof_path) $stmt->bindParam(":proof_file", $proof_path);
             
-            // Only bind user_id if it's used in the query
-            if (($status == 'READY' || $status == 'COMPLETED') && $user_id) {
+            if ($status == 'READY' && $user_id) {
                 $stmt->bindParam(":user_id", $user_id);
             }
             

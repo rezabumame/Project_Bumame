@@ -6,7 +6,7 @@ class Database {
     // Script ini akan otomatis memilih database Local atau Hosting berdasarkan servernya.
     
     // 1. KREDENSIAL LOKAL (XAMPP Laptop)
-    private $local_host = "localhost";
+    private $local_host = "127.0.0.1:3307";
     private $local_db_name = "mcu_ticketing";
     private $local_username = "root";
     private $local_password = "";
@@ -35,21 +35,32 @@ class Database {
             $is_localhost = true;
         }
 
-        // Pilih kredensial yang sesuai
+        $env = function ($key) {
+            $g = $GLOBALS['_APP_ENV'] ?? null;
+            if (!empty($g[$key])) return $g[$key];
+            $v = getenv($key);
+            if ($v !== false && $v !== '') return $v;
+            return $_ENV[$key] ?? null;
+        };
+
+        $port = null;
         if ($is_localhost) {
-            $host = $this->local_host;
-            $db_name = $this->local_db_name;
-            $username = $this->local_username;
-            $password = $this->local_password;
+            $host = $env('DB_HOST') ?: $this->local_host;
+            $db_name = $env('DB_NAME') ?: $this->local_db_name;
+            $username = $env('DB_USER') ?: $this->local_username;
+            $password = $env('DB_PASSWORD') ?: ($env('DB_PASS') ?: $this->local_password);
+            $port = $env('DB_PORT') ?: null;
         } else {
-            $host = $this->live_host;
-            $db_name = $this->live_db_name;
-            $username = $this->live_username;
-            $password = $this->live_password;
+            $host = $env('DB_HOST') ?: $this->live_host;
+            $port = $env('DB_PORT') ?: null;
+            $db_name = $env('DB_NAME') ?: $this->live_db_name;
+            $username = $env('DB_USER') ?: $this->live_username;
+            $password = $env('DB_PASSWORD') ?: ($env('DB_PASS') ?: $this->live_password);
         }
 
         try {
-            $this->conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
+            $dsn = "mysql:host=" . $host . ($port ? ";port=" . $port : "") . ";dbname=" . $db_name;
+            $this->conn = new PDO($dsn, $username, $password);
             $this->conn->exec("set names utf8");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $exception) {

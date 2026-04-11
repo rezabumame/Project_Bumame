@@ -70,7 +70,7 @@
                                 <input type="file" class="form-control" name="tm_file" accept=".pdf" <?php echo isset($existing_tm['tm_file_path']) ? '' : 'required'; ?>>
                                 <?php if (isset($existing_tm['tm_file_path'])): ?>
                                     <div class="mt-2">
-                                        <small class="text-success"><i class="fas fa-check-circle"></i> File uploaded: <a href="../public/uploads/tm/<?php echo $existing_tm['tm_file_path']; ?>" target="_blank">View File</a></small>
+                                        <small class="text-success"><i class="fas fa-check-circle"></i> File uploaded: <a href="<?php echo file_url('uploads/tm/' . $existing_tm['tm_file_path']); ?>" target="_blank">View File</a></small>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -79,7 +79,7 @@
                                 <input type="file" class="form-control" name="layout_file" accept=".pdf, .jpg, .jpeg, .png, .ppt, .pptx">
                                 <?php if (isset($existing_tm['layout_file_path']) && $existing_tm['layout_file_path']): ?>
                                     <div class="mt-2">
-                                        <small class="text-success"><i class="fas fa-check-circle"></i> File uploaded: <a href="../public/uploads/tm/<?php echo $existing_tm['layout_file_path']; ?>" target="_blank">View File</a></small>
+                                        <small class="text-success"><i class="fas fa-check-circle"></i> File uploaded: <a href="<?php echo file_url('uploads/tm/' . $existing_tm['layout_file_path']); ?>" target="_blank">View File</a></small>
                                     </div>
                                 <?php endif; ?>
                             </div>

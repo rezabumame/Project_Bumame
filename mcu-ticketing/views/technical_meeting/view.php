@@ -66,7 +66,7 @@
                             <label class="form-label fw-bold">Dokumen Technical Meeting</label>
                             <div>
                                 <?php if (isset($tm['tm_file_path'])): ?>
-                                    <a href="../public/uploads/tm/<?php echo $tm['tm_file_path']; ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <a href="<?php echo file_url('uploads/tm/' . $tm['tm_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-file-pdf me-1"></i> View Document
                                     </a>
                                 <?php else: ?>
@@ -78,7 +78,7 @@
                             <label class="form-label fw-bold">Layout Area MCU</label>
                             <div>
                                 <?php if (isset($tm['layout_file_path']) && $tm['layout_file_path']): ?>
-                                    <a href="../public/uploads/tm/<?php echo $tm['layout_file_path']; ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <a href="<?php echo file_url('uploads/tm/' . $tm['layout_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-image me-1"></i> View Layout
                                     </a>
                                 <?php else: ?>

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+deploy.env
+*.log
+.DS_Store
+Thumbs.db
+node_modules
+vendor
+Dockerfile
+docker-compose.yaml
+.dockerignore
+build_deploy.sh
+deploy.sh
+deploy.env.format

@@ -383,14 +383,28 @@ class RabRealizationController extends BaseController {
             exit;
         }
         
-        // Upload
         $upload_dir = '../uploads/settlements/';
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-        
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0777, true);
+            }
+            if (!is_dir($upload_dir) || !is_writable($upload_dir)) {
+                header("Location: index.php?page=realization_comparison&rab_id=" . $rab_id . "&err=Upload directory is not writable. Configure GCS or fix permissions.");
+                exit;
+            }
+        }
         $filename = 'SETTLEMENT_' . $rab_id . '_' . time() . '.' . $ext;
         $target_path = $upload_dir . $filename;
-        
-        if (move_uploaded_file($file['tmp_name'], $target_path)) {
+        $ok = false;
+        if (GcsUpload::isEnabled()) {
+            try {
+                GcsUpload::upload($file['tmp_name'], 'uploads/settlements/' . $filename);
+                $ok = true;
+            } catch (\Exception $e) { }
+        } else {
+            $ok = move_uploaded_file($file['tmp_name'], $target_path);
+        }
+        if ($ok) {
             // Update DB
             // We need to update RAB status to 'completed' and save file path
             // Using transfer_proof_path as the common column for proofs
@@ -1108,7 +1122,7 @@ class RabRealizationController extends BaseController {
         
         // Inject into realization array for view compatibility
         if ($current_ba && !empty($current_ba['file_path'])) {
-            $realization['ba_file_url'] = 'uploads/ba/' . $current_ba['file_path']; // Public path
+            $realization['ba_file_url'] = file_url('uploads/ba/' . $current_ba['file_path']);
             $realization['ba_status'] = $current_ba['status'];
         } else {
             $realization['ba_file_url'] = null;
@@ -1301,8 +1315,13 @@ class RabRealizationController extends BaseController {
 
         // Use standard project BA directory
         $uploadDir = '../public/uploads/ba/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
+            if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+                throw new \Exception("Upload directory is not writable. Configure GCS or fix uploads folder permissions.");
+            }
         }
 
         $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
@@ -1349,8 +1368,13 @@ class RabRealizationController extends BaseController {
 
                 $filename = "BA_{$rab_id}_" . str_replace('-', '', $date) . "_" . time() . ".{$ext}";
                 $targetPath = $uploadDir . $filename;
-
-                if (move_uploaded_file($_FILES['ba_file']['tmp_name'][$i], $targetPath)) {
+                $tmp = $_FILES['ba_file']['tmp_name'][$i];
+                if (GcsUpload::isEnabled()) {
+                    try {
+                        GcsUpload::upload($tmp, 'uploads/ba/' . $filename);
+                        return $filename;
+                    } catch (\Exception $e) { }
+                } elseif (move_uploaded_file($tmp, $targetPath)) {
                     return $filename;
                 }
             } else {
@@ -1366,12 +1390,18 @@ class RabRealizationController extends BaseController {
                 foreach ($validFiles as $i) {
                     $fileInfo = pathinfo($_FILES['ba_file']['name'][$i]);
                     $ext = strtolower($fileInfo['extension']);
-                    
                     if (in_array($ext, $allowed)) {
                         $zip->addFile($_FILES['ba_file']['tmp_name'][$i], $_FILES['ba_file']['name'][$i]);
                     }
                 }
                 $zip->close();
+                if (GcsUpload::isEnabled()) {
+                    try {
+                        GcsUpload::upload($zipPath, 'uploads/ba/' . $zipFilename);
+                        @unlink($zipPath);
+                        return $zipFilename;
+                    } catch (\Exception $e) { }
+                }
                 return $zipFilename;
             }
 
@@ -1390,12 +1420,16 @@ class RabRealizationController extends BaseController {
 
             $filename = "BA_{$rab_id}_" . str_replace('-', '', $date) . "_" . time() . ".{$ext}";
             $targetPath = $uploadDir . $filename;
-
-            if (move_uploaded_file($_FILES['ba_file']['tmp_name'], $targetPath)) {
+            $tmp = $_FILES['ba_file']['tmp_name'];
+            if (GcsUpload::isEnabled()) {
+                try {
+                    GcsUpload::upload($tmp, 'uploads/ba/' . $filename);
+                    return $filename;
+                } catch (\Exception $e) { }
+            } elseif (move_uploaded_file($tmp, $targetPath)) {
                 return $filename;
             }
         }
-        
         throw new Exception("Failed to upload BA file.");
     }
 

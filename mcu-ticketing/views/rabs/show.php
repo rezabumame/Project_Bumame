@@ -299,7 +299,7 @@
                                                     <div class="small text-muted mb-2">
                                                         <i class="fas fa-clock me-1"></i> <?php echo !empty($rab['finance_paid_at']) ? DateHelper::formatIndonesianDate($rab['finance_paid_at']) : '-'; ?>
                                                     </div>
-                                                    <a href="<?php echo htmlspecialchars($rab['transfer_proof_path']); ?>" target="_blank" class="btn btn-sm btn-success w-100">
+                                                    <a href="<?php echo htmlspecialchars(file_url($rab['transfer_proof_path'])); ?>" target="_blank" class="btn btn-sm btn-success w-100">
                                                         <i class="fas fa-receipt me-1"></i> Lihat Bukti Advance
                                                     </a>
                                                 </div>
@@ -316,7 +316,7 @@
                                                     <div class="small text-muted mb-2">
                                                         <i class="fas fa-check-double me-1"></i> Status: Completed
                                                     </div>
-                                                    <a href="<?php echo htmlspecialchars($rab['settlement_proof_path']); ?>" target="_blank" class="btn btn-sm btn-info text-white w-100">
+                                                    <a href="<?php echo htmlspecialchars(file_url($rab['settlement_proof_path'])); ?>" target="_blank" class="btn btn-sm btn-info text-white w-100">
                                                         <i class="fas fa-file-download me-1"></i> Lihat Bukti Selisih
                                                     </a>
                                                 </div>

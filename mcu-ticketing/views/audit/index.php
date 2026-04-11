@@ -607,25 +607,7 @@
                                                 </a>
                                                 <?php 
                                                     $proof = isset($rab['transfer_proof_path']) ? $rab['transfer_proof_path'] : '';
-                                                    $proof_url = '';
-                                                    
-                                                    if (!empty($proof)) {
-                                                        // Clean path to get standard relative path (e.g. uploads/finance_proofs/file.jpg)
-                                                        $clean_path = str_replace('../', '', $proof);
-                                                        $clean_path = str_replace('public/', '', $clean_path);
-                                                        
-                                                        // Check where the file actually is
-                                                        if (file_exists($clean_path)) {
-                                                            // It exists in public/uploads (standard view path)
-                                                            $proof_url = $clean_path;
-                                                        } elseif (file_exists('../' . $clean_path)) {
-                                                            // It exists in root uploads (mcu-ticketing/uploads)
-                                                            $proof_url = '../' . $clean_path;
-                                                        } else {
-                                                            // Fallback to cleaned path (link might be 404 but we tried)
-                                                            $proof_url = $clean_path;
-                                                        }
-                                                    }
+                                                    $proof_url = !empty($proof) ? file_url($proof) : '';
                                                 ?>
                                                 <?php if (!empty($proof)): ?>
                                                     <a href="<?php echo htmlspecialchars($proof_url); ?>" target="_blank" class="btn btn-sm btn-outline-success" title="Bukti Transfer Finance">
@@ -649,16 +631,8 @@
                             $settlement_url = '';
                             
                             if (!empty($settlement)) {
-                                // Settlement is stored in settlements dir
-                                $base_path = 'uploads/settlements/' . $settlement;
-                                
-                                if (file_exists($base_path)) {
-                                    $settlement_url = $base_path;
-                                } elseif (file_exists('../' . $base_path)) {
-                                    $settlement_url = '../' . $base_path;
-                                } else {
-                                    $settlement_url = $base_path;
-                                }
+                                $path = (strpos($settlement, 'uploads/') === 0) ? $settlement : 'uploads/settlements/' . $settlement;
+                                $settlement_url = file_url($path);
                             }
                         ?>
                                                 <?php if (!empty($settlement)): ?>
@@ -724,12 +698,12 @@
                                         </div>
                                         <div class="d-flex flex-column gap-1">
                                             <?php if (!empty($tm_data['tm_file_path'])): ?>
-                                                <a href="uploads/tm/<?php echo htmlspecialchars($tm_data['tm_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="View TM Doc">
+                                                <a href="<?php echo file_url('uploads/tm/' . $tm_data['tm_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="View TM Doc">
                                                     <i class="fas fa-file-pdf me-1"></i> Doc
                                                 </a>
                                             <?php endif; ?>
                                             <?php if (!empty($tm_data['layout_file_path'])): ?>
-                                                <a href="uploads/tm/<?php echo htmlspecialchars($tm_data['layout_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View Layout">
+                                                <a href="<?php echo file_url('uploads/tm/' . $tm_data['layout_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View Layout">
                                                     <i class="fas fa-map me-1"></i> Layout
                                                 </a>
                                             <?php endif; ?>

@@ -1,14 +1,26 @@
 # Ignore uploads
 mcu-ticketing/public/uploads/*
 mcu-ticketing/uploads/*
-
-# Keep .htaccess in uploads but ignore files
 !mcu-ticketing/public/uploads/.htaccess
 !mcu-ticketing/uploads/.htaccess
 
-# Ignore OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Ignore XAMPP/PHP specific
+# PHP / XAMPP
 php_errors.log
+vendor/
+*.log
+
+# Env and secrets
+.env
+.env.*
+!*.env.format
+mcu-ticketing/deploy.env# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+bumame-credentials.json
+CLAUDE.md

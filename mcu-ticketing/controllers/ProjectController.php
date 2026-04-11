@@ -325,8 +325,14 @@ class ProjectController extends BaseController {
 
             if (isset($_FILES['ba_file']) && $_FILES['ba_file']['error'] == 0) {
                 $target_dir = "../public/uploads/ba/";
-                if (!file_exists($target_dir)) {
-                    mkdir($target_dir, 0777, true);
+                if (!GcsUpload::isEnabled()) {
+                    if (!is_dir($target_dir)) {
+                        @mkdir($target_dir, 0777, true);
+                    }
+                    if (!is_dir($target_dir) || !is_writable($target_dir)) {
+                        $_SESSION['error_message'] = "Upload directory is not writable. Configure GCS or fix uploads folder permissions.";
+                        $this->redirect('projects_show', ['id' => $project_id]);
+                    }
                 }
                 
                 $file_extension = strtolower(pathinfo($_FILES["ba_file"]["name"], PATHINFO_EXTENSION));
@@ -354,8 +360,17 @@ class ProjectController extends BaseController {
 
                 $new_filename = $project_id . "_BA_" . date('Ymd', strtotime($date)) . "_" . time() . ".pdf";
                 $target_file = $target_dir . $new_filename;
-                
-                if (move_uploaded_file($_FILES["ba_file"]["tmp_name"], $target_file)) {
+                $tmp = $_FILES["ba_file"]["tmp_name"];
+                $uploaded = false;
+                if (GcsUpload::isEnabled()) {
+                    try {
+                        GcsUpload::upload($tmp, "uploads/ba/" . $new_filename);
+                        $uploaded = true;
+                    } catch (\Exception $e) { }
+                } else {
+                    $uploaded = move_uploaded_file($tmp, $target_file);
+                }
+                if ($uploaded) {
                     if ($this->project->uploadBeritaAcara($project_id, $date, $new_filename, $_SESSION['user_id'])) {
                         // Check completion status (Auto-complete logic)
                         $status = $this->project->checkCompletionStatus($project_id, $_SESSION['user_id']);
@@ -1402,18 +1417,56 @@ class ProjectController extends BaseController {
         foreach ($paths as $p) {
             if (is_file($p)) { $found = $p; break; }
         }
+        if (!$found && GcsUpload::isEnabled()) {
+            $signedUrl = GcsUpload::getSignedUrl('uploads/ba/' . $file);
+            if ($signedUrl) {
+                header('Location: ' . $signedUrl);
+                exit;
+            }
+        }
         if (!$found) {
             http_response_code(404);
             echo "Not Found";
             return;
         }
-        
-        // Detect MIME type
         $mime = mime_content_type($found);
-        if ($mime === false) $mime = 'application/pdf'; // Fallback
-        
+        if ($mime === false) $mime = 'application/pdf';
         header('Content-Type: ' . $mime);
         header('Content-Disposition: inline; filename="' . basename($file) . '"');
+        header('Content-Length: ' . filesize($found));
+        readfile($found);
+        exit;
+    }
+
+    public function download_file() {
+        $path = isset($_GET['path']) ? trim($_GET['path']) : '';
+        if ($path === '' || strpos($path, 'uploads/') !== 0 || strpos($path, '..') !== false) {
+            http_response_code(400);
+            echo "Bad Request";
+            return;
+        }
+        if (GcsUpload::isEnabled()) {
+            $signedUrl = GcsUpload::getSignedUrl($path);
+            if ($signedUrl) {
+                header('Location: ' . $signedUrl);
+                exit;
+            }
+        }
+        $base = __DIR__ . '/../';
+        $localPaths = [$base . 'public/' . $path, $base . $path];
+        $found = null;
+        foreach ($localPaths as $p) {
+            if (is_file($p)) { $found = $p; break; }
+        }
+        if (!$found) {
+            http_response_code(404);
+            echo "Not Found";
+            return;
+        }
+        $mime = mime_content_type($found);
+        if ($mime === false) $mime = 'application/octet-stream';
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: inline; filename="' . basename($path) . '"');
         header('Content-Length: ' . filesize($found));
         readfile($found);
         exit;

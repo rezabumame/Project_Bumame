@@ -1,0 +1,10 @@
+{
+    "name": "bumame/mcu-ticketing",
+    "require": {
+        "php": ">=8.0",
+        "google/cloud-storage": "^1.30"
+    },
+    "autoload": {
+        "classmap": ["helpers/"]
+    }
+}

@@ -13,13 +13,11 @@ class RabMedicalResult {
             $this->conn->beginTransaction();
 
             $query = "INSERT INTO " . $this->table . " 
-                      (project_id, needs_hardcopy, send_whatsapp, send_email, notes, status, created_by)
-                      VALUES (:pid, :hardcopy, :whatsapp, :email, :notes, 'draft', :uid)";
+                      (project_id, needs_hardcopy, notes, status, created_by)
+                      VALUES (:pid, :hardcopy, :notes, 'draft', :uid)";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":pid", $data['project_id']);
             $stmt->bindParam(":hardcopy", $data['needs_hardcopy']);
-            $stmt->bindParam(":whatsapp", $data['send_whatsapp']);
-            $stmt->bindParam(":email", $data['send_email']);
             $stmt->bindParam(":notes", $data['notes']);
             $stmt->bindParam(":uid", $data['created_by']);
             $stmt->execute();
@@ -52,7 +50,7 @@ class RabMedicalResult {
             $this->conn->beginTransaction();
 
             $query = "UPDATE " . $this->table . " 
-                      SET project_id = :pid, needs_hardcopy = :hardcopy, send_whatsapp = :whatsapp, send_email = :email, notes = :notes, updated_at = NOW()";
+                      SET project_id = :pid, needs_hardcopy = :hardcopy, notes = :notes, updated_at = NOW()";
             
             if (isset($data['status'])) {
                 $query .= ", status = :status";
@@ -63,8 +61,6 @@ class RabMedicalResult {
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":pid", $data['project_id']);
             $stmt->bindParam(":hardcopy", $data['needs_hardcopy']);
-            $stmt->bindParam(":whatsapp", $data['send_whatsapp']);
-            $stmt->bindParam(":email", $data['send_email']);
             $stmt->bindParam(":notes", $data['notes']);
             if (isset($data['status'])) {
                 $stmt->bindParam(":status", $data['status']);
@@ -242,7 +238,7 @@ class RabMedicalResult {
     }
 
     public function markAsCompleted($id) {
-        $query = "UPDATE " . $this->table . " SET status = 'completed', updated_at = NOW() WHERE id = :id";
+        $query = "UPDATE " . $this->table . " SET status = 'approved_head', updated_at = NOW() WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
         return $stmt->execute();

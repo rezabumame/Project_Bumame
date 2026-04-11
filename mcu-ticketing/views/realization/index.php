@@ -166,9 +166,9 @@
                                     ?>
                                     <!-- Parent Row -->
                                     <tr class="clickable-row">
-                                        <td class="fw-bold" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars($group['rab_number']); ?></td>
-                                        <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars($group['project_name']); ?></td>
-                                        <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars($group['korlap_name']); ?></td>
+                                        <td class="fw-bold" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars((string)($group['rab_number'] ?? '')); ?></td>
+                                        <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars((string)($group['project_name'] ?? '')); ?></td>
+                                        <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>"><?php echo htmlspecialchars((string)($group['korlap_name'] ?? '')); ?></td>
                                         <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>">Rp <?php echo number_format($group['rab_grand_total']); ?></td>
                                         <td style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>">Rp <?php echo number_format($group['total_realized_sum']); ?></td>
                                         <td class="fw-bold <?php echo $sisa_class; ?>" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>">Rp <?php echo number_format($sisa); ?></td>

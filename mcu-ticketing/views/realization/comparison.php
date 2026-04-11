@@ -112,12 +112,12 @@
                             <i class="fas fa-file-pdf me-2"></i>Download LPUM
                         </a>
                         <?php if (!empty($rab['transfer_proof_path'])): ?>
-                            <a href="<?php echo htmlspecialchars($rab['transfer_proof_path']); ?>" target="_blank" class="btn btn-outline-light text-info fw-bold me-2">
+                            <a href="<?php echo htmlspecialchars(file_url($rab['transfer_proof_path'])); ?>" target="_blank" class="btn btn-outline-light text-info fw-bold me-2">
                                 <i class="fas fa-money-check-alt me-2"></i>Bukti Advance
                             </a>
                         <?php endif; ?>
                         <?php if ($rab['status'] == 'completed' && !empty($rab['settlement_proof_path'])): ?>
-                            <a href="<?php echo htmlspecialchars($rab['settlement_proof_path']); ?>" target="_blank" class="btn btn-outline-light text-success fw-bold">
+                            <a href="<?php echo htmlspecialchars(file_url($rab['settlement_proof_path'])); ?>" target="_blank" class="btn btn-outline-light text-success fw-bold">
                                 <i class="fas fa-file-invoice-dollar me-2"></i>Bukti Selisih
                             </a>
                         <?php endif; ?>

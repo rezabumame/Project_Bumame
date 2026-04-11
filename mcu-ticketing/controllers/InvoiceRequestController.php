@@ -539,7 +539,8 @@ class InvoiceRequestController extends BaseController {
                     $finance_emails = [];
                     
                     foreach ($finance_users as $u) {
-                        if (stripos($u['jabatan'], 'AR') !== false) {
+                        $jabatan = $u['jabatan'] ?? '';
+                        if (stripos((string) $jabatan, 'AR') !== false) {
                             if (!empty($u['username'])) $finance_emails[] = $u['username'];
                         }
                     }

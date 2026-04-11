@@ -28,6 +28,14 @@ class Rab {
     
     public $rejection_reason;
     public $rejection_stage;
+
+    public $total_days;
+    public $sph_file;
+    public $lunch_status;
+    public $snack_status;
+    public $procurement_lunch_qty;
+    public $procurement_snack_qty;
+    public $total_vendor;
     
     // Cost (Manager)
     public $cost_value;
@@ -101,6 +109,7 @@ class Rab {
                 SET
                     rab_number = :rab_number,
                     project_id = :project_id,
+                    created_date = :created_date,
                     created_by = :created_by,
                     status = :status,
                     total_personnel = :total_personnel,
@@ -119,9 +128,10 @@ class Rab {
         $this->location_type = htmlspecialchars(strip_tags($this->location_type));
         $this->personnel_notes = htmlspecialchars(strip_tags($this->personnel_notes));
         
-        // Bind
+        $created_date = date('Y-m-d');
         $stmt->bindParam(":rab_number", $this->rab_number);
         $stmt->bindParam(":project_id", $this->project_id);
+        $stmt->bindParam(":created_date", $created_date);
         $stmt->bindParam(":created_by", $this->created_by);
         $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":total_personnel", $this->total_personnel);
@@ -556,6 +566,23 @@ class Rab {
     }
 
     public function updateApproval($data) {
+        $allowedColumns = [
+            'status', 'rejection_reason', 'rejection_stage',
+            'approved_by_manager', 'approved_date_manager',
+            'approved_by_head', 'approved_date_head',
+            'approved_by_ceo', 'approved_date_ceo',
+            'cost_value', 'cost_percentage'
+        ];
+        $data = array_intersect_key($data, array_flip($allowedColumns));
+        $decimalColumns = ['cost_value', 'cost_percentage'];
+        foreach ($decimalColumns as $col) {
+            if (array_key_exists($col, $data) && $data[$col] === '') {
+                $data[$col] = null;
+            }
+            if (array_key_exists($col, $data) && $data[$col] !== null && $data[$col] !== '' && !is_numeric($data[$col])) {
+                $data[$col] = null;
+            }
+        }
         $fields = [];
         $params = [':id' => $this->id];
         
@@ -564,7 +591,9 @@ class Rab {
             $params[":$key"] = $value;
         }
         
-        // Always update updated_at
+        if (empty($fields)) {
+            return true;
+        }
         $fields[] = "updated_at = NOW()";
         
         $query = "UPDATE " . $this->table_name . " SET " . implode(', ', $fields) . " WHERE id = :id";

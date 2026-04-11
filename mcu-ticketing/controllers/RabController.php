@@ -274,7 +274,7 @@ class RabController extends BaseController {
         $exclude_rab_id = $_GET['exclude_rab_id'] ?? null;
         
         // Get Project Dates
-        $query = "SELECT tanggal_mcu, total_peserta, sph_file, lunch, snack, procurement_lunch_qty, procurement_snack_qty, lunch_items, snack_items FROM projects WHERE project_id = :id";
+        $query = "SELECT tanggal_mcu, total_peserta, sph_file, lunch, snack, procurement_lunch_qty, procurement_snack_qty FROM projects WHERE project_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":id", $project_id);
         $stmt->execute();
@@ -564,48 +564,52 @@ class RabController extends BaseController {
         
         $this->rab->grand_total = $total_personnel + $total_transport + $total_consumption + $total_vendor;
 
-        if ($this->rab->create()) {
-            $this->rab->addItems($items);
-            
-            // Log Action
-            $action_log = ($this->rab->status == 'draft') ? 'RAB Draft Created' : 'RAB Submitted';
-            $this->project->logAction($project_id, $action_log, $_SESSION['user_id'], "RAB Number: " . $this->rab->rab_number);
-
-            // Trigger Project Status Update
-            if ($this->rab->status != 'draft') {
-                $this->project->checkAndSetInProgressOps($project_id, 'Auto-update triggered by RAB creation');
+        try {
+            if ($this->rab->create()) {
+                $this->rab->addItems($items);
                 
-                // Email Notification to Manager
-                try {
-                    $emails = $this->user->getEmailsByRole('manager_ops');
-                    if (!empty($emails)) {
-                        $projectData = $this->project->getProjectById($project_id);
-                        $salesName = $projectData['sales_name'] ?? '-';
-                        $totalPeserta = $projectData['total_peserta'] ?? '-';
-                        $tanggalMcu = isset($projectData['tanggal_mcu']) ? DateHelper::formatSmartDateIndonesian($projectData['tanggal_mcu']) : '-';
+                $action_log = ($this->rab->status == 'draft') ? 'RAB Draft Created' : 'RAB Submitted';
+                $this->project->logAction($project_id, $action_log, $_SESSION['user_id'], "RAB Number: " . $this->rab->rab_number);
 
-                        $subject = "[Action Required] Approval RAB: " . $this->rab->rab_number;
-                        $content = "RAB baru telah diajukan dan memerlukan persetujuan Anda.<br><br>";
-                        $content .= "<b>No. RAB:</b> " . $this->rab->rab_number . "<br>";
-                        $content .= "<b>Nama Project:</b> " . $projectData['nama_project'] . "<br>";
-                        $content .= "<b>Total Peserta:</b> " . $totalPeserta . " Peserta<br>";
-                        $content .= "<b>Tanggal MCU:</b> " . $tanggalMcu . "<br>";
+                if ($this->rab->status != 'draft') {
+                    $this->project->checkAndSetInProgressOps($project_id, 'Auto-update triggered by RAB creation');
+                    
+                    try {
+                        $emails = $this->user->getEmailsByRole('manager_ops');
+                        if (!empty($emails)) {
+                            $projectData = $this->project->getProjectById($project_id);
+                            $salesName = $projectData['sales_name'] ?? '-';
+                            $totalPeserta = $projectData['total_peserta'] ?? '-';
+                            $tanggalMcu = isset($projectData['tanggal_mcu']) ? DateHelper::formatSmartDateIndonesian($projectData['tanggal_mcu']) : '-';
+
+                            $subject = "[Action Required] Approval RAB: " . $this->rab->rab_number;
+                            $content = "RAB baru telah diajukan dan memerlukan persetujuan Anda.<br><br>";
+                            $content .= "<b>No. RAB:</b> " . $this->rab->rab_number . "<br>";
+                            $content .= "<b>Nama Project:</b> " . $projectData['nama_project'] . "<br>";
+                            $content .= "<b>Total Peserta:</b> " . $totalPeserta . " Peserta<br>";
+                            $content .= "<b>Tanggal MCU:</b> " . $tanggalMcu . "<br>";
                         $content .= "<b>Nama Sales:</b> " . $salesName . "<br>";
                         $content .= "<b>Total:</b> Rp " . number_format($this->rab->grand_total, 0, ',', '.') . "<br>";
                         
                         $link = MailHelper::getBaseUrl() . "?page=rabs_show&id=" . $this->rab->id;
                         $html = MailHelper::getTemplate("Pengajuan RAB Baru", $content, $link);
                         MailHelper::send($emails, $subject, $html);
+                        }
+                    } catch (Exception $e) {
+                        error_log("Email notification failed on RAB creation: " . $e->getMessage());
                     }
-                } catch (Exception $e) {
-                    error_log("Email notification failed on RAB creation: " . $e->getMessage());
                 }
-            }
 
-            $msg = ($this->rab->status == 'draft') ? 'RAB berhasil disimpan sebagai draft.' : 'RAB berhasil diajukan.';
-            $this->redirect('rabs_show', ['id' => $this->rab->id, 'msg' => $msg]);
-        } else {
-            die("Error creating RAB.");
+                $msg = ($this->rab->status == 'draft') ? 'RAB berhasil disimpan sebagai draft.' : 'RAB berhasil diajukan.';
+                $this->redirect('rabs_show', ['id' => $this->rab->id, 'msg' => $msg]);
+            } else {
+                die("Error creating RAB.");
+            }
+        } catch (PDOException $e) {
+            $msg = (strpos($e->getMessage(), 'created_date') !== false || strpos($e->getMessage(), "doesn't have a default value") !== false)
+                ? 'Database schema out of date. Run mcu_ticketing_full_install.sql or add created_date to rabs table.'
+                : 'Database error. Check server error log.';
+            $this->redirect('rabs_create', ['project_id' => $project_id, 'err' => $msg]);
         }
     }
 
@@ -792,8 +796,9 @@ class RabController extends BaseController {
                         $finance_emails = [];
                         
                         foreach ($finance_users as $u) {
-                            if (stripos($u['jabatan'], 'AP') !== false) {
-                                if (!empty($u['username'])) $finance_emails[] = $u['username']; // username is email
+                            $jabatan = $u['jabatan'] ?? '';
+                            if (stripos((string)$jabatan, 'AP') !== false) {
+                                if (!empty($u['username'])) $finance_emails[] = $u['username'];
                             }
                         }
                         
@@ -983,15 +988,25 @@ class RabController extends BaseController {
         $proof_path = null;
         if (isset($_FILES['transfer_proof']) && $_FILES['transfer_proof']['error'] == 0) {
             $target_dir = "../public/uploads/finance_proofs/";
-            if (!file_exists($target_dir)) {
-                mkdir($target_dir, 0777, true);
+            if (!GcsUpload::isEnabled()) {
+                if (!is_dir($target_dir)) {
+                    @mkdir($target_dir, 0777, true);
+                }
+                if (!is_dir($target_dir) || !is_writable($target_dir)) {
+                    $_SESSION['error_message'] = "Upload directory is not writable. Configure GCS or fix uploads folder permissions.";
+                    $this->redirect('rabs_show', ['id' => $id]);
+                }
             }
-            
             $file_extension = pathinfo($_FILES["transfer_proof"]["name"], PATHINFO_EXTENSION);
             $new_filename = "proof_" . $id . "_" . time() . "." . $file_extension;
             $target_file = $target_dir . $new_filename;
-            
-            if (move_uploaded_file($_FILES["transfer_proof"]["tmp_name"], $target_file)) {
+            $tmp = $_FILES["transfer_proof"]["tmp_name"];
+            if (GcsUpload::isEnabled()) {
+                try {
+                    GcsUpload::upload($tmp, "uploads/finance_proofs/" . $new_filename);
+                    $proof_path = "uploads/finance_proofs/" . $new_filename;
+                } catch (\Exception $e) { }
+            } elseif (move_uploaded_file($tmp, $target_file)) {
                 $proof_path = "uploads/finance_proofs/" . $new_filename;
             }
         }

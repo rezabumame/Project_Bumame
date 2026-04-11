@@ -836,7 +836,7 @@ CREATE TABLE `rab_medical_results` (
   `project_id` varchar(50) NOT NULL,
   `needs_hardcopy` tinyint(1) DEFAULT 0,
   `notes` text DEFAULT NULL,
-  `status` enum('draft','submitted','approved_manager','approved_head','rejected') DEFAULT 'draft',
+  `status` enum('draft','submitted','approved_manager','approved_head','rejected','completed') DEFAULT 'draft',
   `created_by` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -974,6 +974,7 @@ CREATE TABLE `rabs` (
   `finance_paid_at` datetime DEFAULT NULL,
   `finance_paid_by` int(11) DEFAULT NULL,
   `transfer_proof_path` varchar(255) DEFAULT NULL,
+  `settlement_proof_path` varchar(255) DEFAULT NULL,
   `finance_note` text DEFAULT NULL,
   `personnel_notes` text DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -994,7 +995,7 @@ CREATE TABLE `rabs` (
 
 LOCK TABLES `rabs` WRITE;
 /*!40000 ALTER TABLE `rabs` DISABLE KEYS */;
-INSERT INTO `rabs` VALUES (1,'RAB/II/2026/001','341','2026-02-04',16,'completed','SETTLEMENT_1_1770267304.png',1400000.00,200000.00,12500.00,1612500.00,0.00,'dalam_kota','[\"2026-02-07\"]',62,13,'2026-02-04 16:27:51',14,'2026-02-04 16:28:13',NULL,NULL,'makan siangnya petugas tolong hilangkan aja (Oleh: Iqbal Adhika - Manager Ops pada 04/02/2026 16:26)',NULL,1700000.00,12.00,'2026-02-04 09:22:48','2026-02-05 04:55:04',NULL,NULL,NULL,NULL,NULL,NULL,'Petugas TTV sebagai petugas Visus juga');
+-- INSERT INTO `rabs` VALUES (1,'RAB/II/2026/001','341','2026-02-04',16,'completed','SETTLEMENT_1_1770267304.png',1400000.00,200000.00,12500.00,1612500.00,0.00,'dalam_kota','[\"2026-02-07\"]',62,13,'2026-02-04 16:27:51',14,'2026-02-04 16:28:13',NULL,NULL,'makan siangnya petugas tolong hilangkan aja (Oleh: Iqbal Adhika - Manager Ops pada 04/02/2026 16:26)',NULL,1700000.00,12.00,'2026-02-04 09:22:48','2026-02-05 04:55:04',NULL,NULL,NULL,NULL,NULL,NULL,'Petugas TTV sebagai petugas Visus juga');
 /*!40000 ALTER TABLE `rabs` ENABLE KEYS */;
 UNLOCK TABLES;
 

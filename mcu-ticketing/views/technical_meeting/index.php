@@ -61,12 +61,12 @@
                                         </td>
                                         <td class="pe-4 text-end">
                                             <?php if (!empty($tm['tm_file_path'])): ?>
-                                                <a href="uploads/tm/<?php echo htmlspecialchars($tm['tm_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="TM Document">
+                                                <a href="<?php echo file_url('uploads/tm/' . $tm['tm_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="TM Document">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
                                             <?php endif; ?>
                                             <?php if (!empty($tm['layout_file_path'])): ?>
-                                                <a href="uploads/tm/<?php echo htmlspecialchars($tm['layout_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="Layout Document">
+                                                <a href="<?php echo file_url('uploads/tm/' . $tm['layout_file_path']); ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="Layout Document">
                                                     <i class="fas fa-map"></i>
                                                 </a>
                                             <?php endif; ?>

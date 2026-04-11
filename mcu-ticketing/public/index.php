@@ -62,6 +62,7 @@ $router->add('cancel_berita_acara', 'ProjectController', 'cancel_berita_acara');
 $router->add('import_projects_excel_json', 'ProjectController', 'importProjectsExcelJson');
 $router->add('download_ba', 'ProjectController', 'download_ba');
 $router->add('download_sph', 'ProjectController', 'download_sph');
+$router->add('download_file', 'ProjectController', 'download_file');
 $router->add('generate_vendor_memo', 'ProjectController', 'generate_vendor_memo');
 
 // Technical Meeting

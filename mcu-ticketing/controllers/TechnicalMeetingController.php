@@ -139,10 +139,15 @@ class TechnicalMeetingController extends BaseController {
         $notes = $_POST['notes'];
         $created_by = $_SESSION['user_id'];
 
-        // File Uploads
         $target_dir = "../public/uploads/tm/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
+        if (!GcsUpload::isEnabled()) {
+            if (!is_dir($target_dir)) {
+                @mkdir($target_dir, 0777, true);
+            }
+            if (!is_dir($target_dir) || !is_writable($target_dir)) {
+                $_SESSION['error_message'] = "Upload directory is not writable. Configure GCS or fix uploads folder permissions.";
+                $this->redirect('technical_meeting_create', ['project_id' => $project_id]);
+            }
         }
 
         $tm_file_path = "";
@@ -150,7 +155,19 @@ class TechnicalMeetingController extends BaseController {
              $file_extension = strtolower(pathinfo($_FILES["tm_file"]["name"], PATHINFO_EXTENSION));
              if ($file_extension == "pdf") {
                  $new_filename = $project_id . "_TM_" . time() . ".pdf";
-                 if (move_uploaded_file($_FILES["tm_file"]["tmp_name"], $target_dir . $new_filename)) {
+                 $tmp = $_FILES["tm_file"]["tmp_name"];
+                 if (GcsUpload::isEnabled()) {
+                     try {
+                         GcsUpload::upload($tmp, "uploads/tm/" . $new_filename);
+                         $tm_file_path = $new_filename;
+                     } catch (\Exception $e) {
+                         error_log("GCS upload failed for TM file: " . $e->getMessage());
+                         // Fallback to local upload
+                         if (move_uploaded_file($tmp, $target_dir . $new_filename)) {
+                             $tm_file_path = $new_filename;
+                         }
+                     }
+                 } elseif (move_uploaded_file($tmp, $target_dir . $new_filename)) {
                      $tm_file_path = $new_filename;
                  }
              }
@@ -161,7 +178,19 @@ class TechnicalMeetingController extends BaseController {
              $file_extension = strtolower(pathinfo($_FILES["layout_file"]["name"], PATHINFO_EXTENSION));
              if (in_array($file_extension, ['pdf', 'jpg', 'jpeg', 'png', 'ppt', 'pptx'])) {
                  $new_filename = $project_id . "_LAYOUT_" . time() . "." . $file_extension;
-                 if (move_uploaded_file($_FILES["layout_file"]["tmp_name"], $target_dir . $new_filename)) {
+                 $tmp = $_FILES["layout_file"]["tmp_name"];
+                 if (GcsUpload::isEnabled()) {
+                     try {
+                         GcsUpload::upload($tmp, "uploads/tm/" . $new_filename);
+                         $layout_file_path = $new_filename;
+                     } catch (\Exception $e) {
+                         error_log("GCS upload failed for layout file: " . $e->getMessage());
+                         // Fallback to local upload
+                         if (move_uploaded_file($tmp, $target_dir . $new_filename)) {
+                             $layout_file_path = $new_filename;
+                         }
+                     }
+                 } elseif (move_uploaded_file($tmp, $target_dir . $new_filename)) {
                      $layout_file_path = $new_filename;
                  }
              }

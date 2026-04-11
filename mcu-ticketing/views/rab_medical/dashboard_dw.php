@@ -109,8 +109,8 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <i class="fab fa-whatsapp <?php echo $r['send_whatsapp'] ? 'text-success' : 'text-muted opacity-25'; ?>" title="WhatsApp"></i>
-                                        <i class="fas fa-envelope <?php echo $r['send_email'] ? 'text-primary' : 'text-muted opacity-25'; ?>" title="Email"></i>
+                                        <i class="fab fa-whatsapp <?php echo !empty($r['send_whatsapp']) ? 'text-success' : 'text-muted opacity-25'; ?>" title="WhatsApp"></i>
+                                        <i class="fas fa-envelope <?php echo !empty($r['send_email']) ? 'text-primary' : 'text-muted opacity-25'; ?>" title="Email"></i>
                                     </div>
                                 </td>
                                 <td>

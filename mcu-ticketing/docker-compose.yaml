@@ -1,0 +1,13 @@
+services:
+  app:
+    container_name: mcu-ticketing-app-v2
+    build: .
+    ports:
+      - "8082:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
