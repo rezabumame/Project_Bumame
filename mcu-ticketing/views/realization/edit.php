@@ -1,3 +1,4 @@
+<!-- Realization Edit View - Synchronized Steps (1-6) -->
 <?php include '../views/layouts/header.php'; ?>
 <?php include '../views/layouts/sidebar.php'; ?>
 
@@ -498,8 +499,8 @@
                     </div>
                 </div>
 
-                <!-- STEP 4: KONSUMSI -->
-                <div id="step-4" class="step-section">
+                <!-- STEP 5: KONSUMSI -->
+                <div id="step-5" class="step-section">
                     <!-- SECTION: KONSUMSI -->
                     <div class="medical-card mb-4">
                         <div class="medical-card-header d-flex align-items-center justify-content-between">
@@ -565,8 +566,8 @@
                     </div>
                 </div>
 
-                <!-- STEP 5: FINALISASI -->
-                <div id="step-5" class="step-section">
+                <!-- STEP 6: FINALISASI -->
+                <div id="step-6" class="step-section">
                     <div class="medical-card mb-4">
                         <div class="medical-card-header d-flex align-items-center">
                             <div class="section-icon"><i class="fas fa-check-double"></i></div>
@@ -822,7 +823,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Stepper Logic
         let currentStep = 1;
-        const totalSteps = 5;
+        const totalSteps = 6;
 
         function showStep(step) {
             $('.step-section').removeClass('active');
