@@ -294,5 +294,46 @@ class InventoryRequestController extends BaseController {
              $this->redirect('inventory_request_edit', ['id' => $id]);
         }
     }
+
+    public function delete() {
+        $this->checkRole(['korlap', 'superadmin', 'manager_ops', 'admin_ops']);
+        
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->redirect('inventory_request_index');
+            return;
+        }
+
+        $request = $this->inventoryRequest->getById($id);
+        if (!$request) {
+            $this->redirect('inventory_request_index');
+            return;
+        }
+
+        // Permission check: Only owner or admin can delete
+        if ($_SESSION['role'] == 'korlap' && $request['created_by'] != $_SESSION['user_id']) {
+            $this->redirect('inventory_request_index');
+            return;
+        }
+
+        // Status check: Can only delete if still in PENDING status in all warehouses
+        if (!$this->inventoryRequest->canEdit($id)) {
+            $this->redirect('inventory_request_index', ['msg' => 'cannot_delete_processed']);
+            return;
+        }
+
+        if ($this->inventoryRequest->delete($id)) {
+            // Log Action
+            $this->project->logAction(
+                $request['project_id'], 
+                'Inventory Request Deleted', 
+                $_SESSION['user_id'], 
+                "Request Number: " . $request['request_number']
+            );
+            $this->redirect('inventory_request_index', ['msg' => 'deleted']);
+        } else {
+            $this->redirect('inventory_request_index', ['msg' => 'delete_failed']);
+        }
+    }
 }
 ?>

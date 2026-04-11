@@ -798,11 +798,14 @@ class ProjectController extends BaseController {
             $project_data = $this->project->getProjectById($id);
             if ($project_data) {
                 // Check if project is editable
-                // If status is 'need_approval_head' and it was approved by manager (meaning it was promoted), it cannot be edited.
-                // If status is 'need_approval_head' but approved_by_manager is null (meaning it went directly to head), it CAN be edited.
-                // Exception: Superadmin can always edit
-                if ($_SESSION['role'] != 'superadmin' && $project_data['status_project'] == 'need_approval_head' && !empty($project_data['approved_by_manager'])) {
-                    echo "<script>alert('Project cannot be edited because it has already been approved by Manager.'); window.location.href='index.php?page=all_projects';</script>";
+                // Pre-ops statuses allowed for editing by Admin Sales/Superadmin
+                $pre_ops_statuses = [
+                    're-nego', 'rejected', 'need_approval_manager', 'need_approval_head', 
+                    'approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'vendor_requested'
+                ];
+                
+                if ($_SESSION['role'] != 'superadmin' && !in_array(trim($project_data['status_project']), $pre_ops_statuses)) {
+                    echo "<script>alert('Project cannot be edited because it has already entered Operation stage.'); window.location.href='index.php?page=all_projects';</script>";
                     return;
                 }
 

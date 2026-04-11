@@ -16,6 +16,18 @@ class InventoryRequest {
         $this->conn = $db;
     }
 
+    public function getById($id) {
+        $query = "SELECT ir.*, p.nama_project, p.tanggal_mcu, u.full_name as requester_name 
+                  FROM " . $this->table_name . " ir
+                  JOIN projects p ON ir.project_id = p.project_id
+                  JOIN users u ON ir.created_by = u.user_id
+                  WHERE ir.id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function create($items) {
         try {
             $this->conn->beginTransaction();
@@ -319,6 +331,36 @@ class InventoryRequest {
             }
             
             $stmt->execute();
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
+
+    public function delete($id) {
+        try {
+            $this->conn->beginTransaction();
+
+            // 1. Delete Items
+            $queryItems = "DELETE FROM " . $this->items_table . " WHERE request_id = :id";
+            $stmtItems = $this->conn->prepare($queryItems);
+            $stmtItems->bindParam(":id", $id);
+            $stmtItems->execute();
+
+            // 2. Delete Warehouse Requests
+            $queryWarehouse = "DELETE FROM " . $this->warehouse_table . " WHERE inventory_request_id = :id";
+            $stmtWarehouse = $this->conn->prepare($queryWarehouse);
+            $stmtWarehouse->bindParam(":id", $id);
+            $stmtWarehouse->execute();
+
+            // 3. Delete Main Request
+            $queryMain = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+            $stmtMain = $this->conn->prepare($queryMain);
+            $stmtMain->bindParam(":id", $id);
+            $stmtMain->execute();
 
             $this->conn->commit();
             return true;

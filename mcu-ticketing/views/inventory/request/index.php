@@ -104,6 +104,9 @@
                                             <a href="index.php?page=inventory_request_edit&id=<?php echo $r['id']; ?>" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-edit"></i> Edit
                                             </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-request" data-id="<?php echo $r['id']; ?>" data-number="<?php echo $r['request_number']; ?>">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -116,5 +119,41 @@
             </div>
 
 </div>
+
+<script>
+$(document).ready(function() {
+    // Check for messages
+    const urlParams = new URLSearchParams(window.location.search);
+    const msg = urlParams.get('msg');
+    
+    if (msg === 'deleted') {
+        Swal.fire('Berhasil', 'Inventory Request telah dihapus.', 'success');
+    } else if (msg === 'cannot_delete_processed') {
+        Swal.fire('Gagal', 'Request tidak dapat dihapus karena sudah mulai diproses oleh gudang.', 'error');
+    } else if (msg === 'delete_failed') {
+        Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
+    }
+
+    $('.delete-request').on('click', function() {
+        let id = $(this).data('id');
+        let number = $(this).data('number');
+        
+        Swal.fire({
+            title: 'Hapus Request?',
+            text: "Apakah Anda yakin ingin menghapus request " + number + "? Tindakan ini tidak dapat dibatalkan.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'index.php?page=inventory_request_delete&id=' + id;
+            }
+        });
+    });
+});
+</script>
 
 <?php include '../views/layouts/footer.php'; ?>
