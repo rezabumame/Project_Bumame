@@ -10,8 +10,8 @@
             </div>
             <!-- Link to All Projects to create new TM -->
             <?php if (in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])): ?>
-            <a href="index.php?page=technical_meeting_select_project" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                <i class="fas fa-plus-circle me-2"></i>New Technical Meeting
+            <a href="index.php?page=technical_meeting_create" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="fas fa-plus me-2"></i> New Technical Meeting
             </a>
             <?php endif; ?>
         </div>

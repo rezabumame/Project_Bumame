@@ -7,11 +7,18 @@ class ApiController extends BaseController {
         // Clear any previous output (headers, notices)
         while (ob_get_level()) ob_end_clean();
         
-        parent::__construct();
+        // Skip session_start if called from constructor but BaseController handles it
+        // We need to bypass checkAuth if we want public access
+        $database = new Database();
+        $this->db = $database->getConnection();
+        
         // Check API Key
         $header_key = $_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? null;
         if ($header_key !== $this->api_key) {
-            $this->jsonResponse(['status' => 'error', 'message' => 'Unauthorized API Access'], 401);
+            header('Content-Type: application/json');
+            http_response_code(401);
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized API Access']);
+            exit;
         }
     }
 
@@ -44,6 +51,16 @@ class ApiController extends BaseController {
         } catch (Exception $e) {
             $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
+    }
+
+    private function jsonResponse($data, $statusCode = 200) {
+        // Clear buffer again just in case
+        while (ob_get_level()) ob_end_clean();
+        
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+        echo json_encode($data);
+        exit;
     }
 
     private function export_rabs() {

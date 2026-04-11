@@ -98,32 +98,62 @@ class TechnicalMeetingController extends BaseController {
 
     public function create() {
         $this->checkCreateAccess();
-        if (!isset($_GET['project_id'])) {
-            $this->redirect('projects_list');
+        
+        $project_id = $_GET['project_id'] ?? null;
+        $project = null;
+        $existing_tm = null;
+
+        if ($project_id) {
+            $project = $this->project->getProjectById($project_id);
+            if ($project) {
+                // Check if TM already exists
+                $query = "SELECT * FROM technical_meetings WHERE project_id = :project_id LIMIT 1";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':project_id', $project_id);
+                $stmt->execute();
+                $existing_tm = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
         }
 
-        $project_id = $_GET['project_id'];
-        $project = $this->project->getProjectById($project_id);
-
-        if (!$project) {
-            die("Project not found.");
+        // Get list of available projects for dropdown
+        // Filters: 
+        // 1. Must have korlap assigned
+        // 2. Status: approved, in_progress_ops, process_vendor, vendor_assigned, no_vendor_needed, vendor_requested
+        // 3. Must NOT have TM already (except if editing current)
+        // 4. Role based filtering
+        
+        $available_projects_query = "SELECT p.project_id, p.nama_project, p.tanggal_mcu, p.alamat 
+                                    FROM projects p 
+                                    LEFT JOIN technical_meetings tm ON p.project_id = tm.project_id
+                                    WHERE p.korlap_id IS NOT NULL 
+                                    AND p.status_project IN ('approved', 'in_progress_ops', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'vendor_requested')";
+        
+        if ($_SESSION['role'] == 'korlap') {
+            $available_projects_query .= " AND p.korlap_id = :user_id";
         }
 
-        // Rule: TM hanya bisa dibuat setelah Korlap sudah di-assign
-        if (empty($project['korlap_id'])) {
-             // Redirect or show error
-             echo "<script>alert('Error: Korlap must be assigned before creating Technical Meeting.'); window.location.href='index.php?page=all_projects';</script>";
-             exit;
+        // Exclude projects that already have TM, unless it's the one we're currently viewing/editing
+        if ($project_id) {
+            $available_projects_query .= " AND (tm.id IS NULL OR p.project_id = :current_pid)";
+        } else {
+            $available_projects_query .= " AND tm.id IS NULL";
         }
 
-        // Check if TM already exists
-        $query = "SELECT * FROM technical_meetings WHERE project_id = :project_id LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':project_id', $project_id);
-        $stmt->execute();
-        $existing_tm = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmtAvail = $this->conn->prepare($available_projects_query);
+        if ($_SESSION['role'] == 'korlap') {
+            $stmtAvail->bindValue(':user_id', $_SESSION['user_id']);
+        }
+        if ($project_id) {
+            $stmtAvail->bindValue(':current_pid', $project_id);
+        }
+        $stmtAvail->execute();
+        $available_projects = $stmtAvail->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->view('technical_meeting/create', ['project' => $project, 'existing_tm' => $existing_tm]);
+        $this->view('technical_meeting/create', [
+            'project' => $project, 
+            'existing_tm' => $existing_tm,
+            'available_projects' => $available_projects
+        ]);
     }
 
     public function store() {

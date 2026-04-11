@@ -121,13 +121,13 @@
             const value = $(this).val().toLowerCase().trim();
             
             if (value === "") {
-                // Reset to initial state: show all categories, open only the first one
+                // Reset to initial state
                 $('.accordion-item').show();
+                $('.accordion-header').show(); // Show headers back
                 $('.accordion-item tbody tr').show();
                 $('.accordion-collapse').removeClass('show');
                 $('.accordion-button').addClass('collapsed');
                 
-                // Re-open the first category
                 const $firstItem = $('.accordion-item').first();
                 $firstItem.find('.accordion-collapse').addClass('show');
                 $firstItem.find('.accordion-button').removeClass('collapsed');
@@ -140,7 +140,6 @@
 
                 $category.find('tbody tr').each(function() {
                     const $row = $(this);
-                    // Search in the entire row text for better results
                     const rowText = $row.text().toLowerCase();
                     
                     if (rowText.indexOf(value) > -1) {
@@ -153,7 +152,7 @@
 
                 if (categoryMatches > 0) {
                     $category.show();
-                    // Always expand categories that have matching items
+                    $category.find('.accordion-header').hide(); // HIDE CATEGORY HEADER WHEN SEARCHING
                     $category.find('.accordion-collapse').addClass('show');
                     $category.find('.accordion-button').removeClass('collapsed');
                 } else {

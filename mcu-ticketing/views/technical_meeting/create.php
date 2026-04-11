@@ -7,34 +7,49 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
                     <h4 class="mb-3 text-primary"><i class="fas fa-handshake me-2"></i>Technical Meeting Form</h4>
-                    <p class="text-muted">Catat hasil persiapan Technical Meeting untuk Project ID: <strong><?php echo $project['project_id']; ?></strong></p>
+                    <p class="text-muted">Silakan pilih project dan catat hasil persiapan Technical Meeting.</p>
                     
                     <form action="index.php?page=technical_meeting_store" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="project_id" value="<?php echo $project['project_id']; ?>">
-                        
                         <!-- 1. Info Dasar -->
                         <h5 class="mt-4 mb-3 border-bottom pb-2">1. Info Dasar</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Nama Project</label>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($project['nama_project']); ?>" readonly>
+                                <label class="form-label">Pilih Project <span class="text-danger">*</span></label>
+                                <select class="form-select select2-tm" name="project_id" required onchange="updateProjectInfo(this)">
+                                    <option value="">-- Cari Project --</option>
+                                    <?php foreach ($available_projects as $ap): ?>
+                                        <option value="<?php echo $ap['project_id']; ?>" 
+                                                data-alamat="<?php echo htmlspecialchars($ap['alamat']); ?>"
+                                                data-tanggal="<?php 
+                                                    $dts = json_decode($ap['tanggal_mcu'], true);
+                                                    if (is_array($dts)) {
+                                                        echo implode(", ", array_map(function($d) { return date('d M Y', strtotime($d)); }, $dts));
+                                                    } else {
+                                                        echo date('d M Y', strtotime($ap['tanggal_mcu']));
+                                                    }
+                                                ?>"
+                                                <?php echo (isset($project) && $project['project_id'] == $ap['project_id']) ? 'selected' : ''; ?>>
+                                            <?php echo $ap['project_id'] . ' - ' . htmlspecialchars($ap['nama_project']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Lokasi MCU</label>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($project['alamat']); ?>" readonly>
+                                <input type="text" id="mcu_location" class="form-control bg-light" value="<?php echo isset($project) ? htmlspecialchars($project['alamat']) : ''; ?>" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal MCU</label>
-                                <div class="form-control bg-light">
-                                    <?php 
+                                <input type="text" id="mcu_date_display" class="form-control bg-light" value="<?php 
+                                    if (isset($project)) {
                                         $dates = json_decode($project['tanggal_mcu'], true);
                                         if (is_array($dates)) {
                                             echo implode(", ", array_map(function($d) { return date('d M Y', strtotime($d)); }, $dates));
                                         } else {
                                             echo date('d M Y', strtotime($project['tanggal_mcu']));
                                         }
-                                    ?>
-                                </div>
+                                    }
+                                ?>" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal Technical Meeting <span class="text-danger">*</span></label>
@@ -95,5 +110,26 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('.select2-tm').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Cari Project --',
+        width: '100%'
+    });
+});
+
+function updateProjectInfo(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption.value) {
+        document.getElementById('mcu_location').value = selectedOption.getAttribute('data-alamat') || '';
+        document.getElementById('mcu_date_display').value = selectedOption.getAttribute('data-tanggal') || '';
+    } else {
+        document.getElementById('mcu_location').value = '';
+        document.getElementById('mcu_date_display').value = '';
+    }
+}
+</script>
 
 <?php include '../views/layouts/footer.php'; ?>
