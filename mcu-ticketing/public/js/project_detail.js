@@ -1,26 +1,6 @@
+// Function removed as we use server-side rendering for matrix
 function formatJenisPemeriksaan(text) {
-    if (!text) return '<span class="text-muted fst-italic">No exam packages defined</span>';
-    
-    // Split by dash if it's a long string of packages
-    const items = text.split(' - ');
-    if (items.length <= 1) return `<div class="p-2 border rounded bg-light" style="color: #204EAB;">${text}</div>`;
-    
-    return `
-        <div class="d-flex flex-wrap gap-2">
-            ${items.map(item => {
-                // Trim and check if it has a code (e.g., "910016 - Name")
-                const trimmed = item.trim();
-                if (!trimmed) return '';
-                
-                const parts = trimmed.split(' - ');
-                const content = parts.length > 1 
-                    ? `<span class="fw-bold me-1">${parts[0]}</span><span class="opacity-75">${parts.slice(1).join(' - ')}</span>`
-                    : trimmed;
-                    
-                return `<span class="badge" style="background-color: #f0f4ff; color: #204EAB; border: 1px solid #204EAB; font-weight: 500; padding: 0.5rem 0.8rem; border-radius: 8px; font-size: 0.75rem; text-align: left; white-space: normal; display: inline-block;">${content}</span>`;
-            }).join('')}
-        </div>
-    `;
+    return text; // Fallback
 }
 
 function showUploadModal(projectId, date, formattedDate) {

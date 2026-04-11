@@ -47,6 +47,10 @@ try {
     // Fetch Technical Meeting
     $technical_meeting = $tmModel->getByProject($id);
 
+    // Exam Matrix HTML
+    require_once __DIR__ . '/../helpers/PackageHelper.php';
+    $exam_matrix_html = PackageHelper::renderMatrix($project_data['jenis_pemeriksaan'], $project_data['company_name']);
+
     // Return only public-safe fields with robust defaults
     $safe_data = [
         'project_id' => $project_data['project_id'] ?? 0,
@@ -72,6 +76,7 @@ try {
         'header_footer' => $project_data['header_footer'] ?? 'Tidak',
         'foto_peserta' => $project_data['foto_peserta'] ?? 'Tidak',
         'jenis_pemeriksaan' => $project_data['jenis_pemeriksaan'] ?? '',
+        'exam_matrix_html' => $exam_matrix_html,
         'status_project' => $project_data['status_project'] ?? '',
         'technical_meeting' => $technical_meeting ? $technical_meeting : null,
         'rabs' => [],

@@ -1477,6 +1477,10 @@ class ProjectController extends BaseController {
         require_once __DIR__ . '/../helpers/DateHelper.php';
         $project['tanggal_mcu_formatted'] = DateHelper::formatSmartDateIndonesian($project['tanggal_mcu']);
 
+        // Exam Matrix HTML
+        require_once __DIR__ . '/../helpers/PackageHelper.php';
+        $project['exam_matrix_html'] = PackageHelper::renderMatrix($project['jenis_pemeriksaan'], $project['company_name']);
+
         echo json_encode($project);
     }
 
