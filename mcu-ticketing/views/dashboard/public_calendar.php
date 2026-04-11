@@ -107,26 +107,27 @@
 
         /* Event Card Style */
         .custom-event {
-            background: var(--soft-blue) !important;
-            border: 1px solid var(--border-blue) !important;
-            border-radius: 6px !important;
-            padding: 4px 8px !important;
-            margin: 2px 4px 4px 4px !important;
+            background: #F8FAFC !important;
+            border: none !important;
+            border-left: 4px solid var(--border-blue) !important;
+            border-radius: 4px !important;
+            padding: 3px 8px !important;
+            margin: 1px 4px 2px 4px !important;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
 
         .custom-event:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-            background: #E0E7FF !important;
+            transform: translateX(2px);
+            background: #F1F5F9 !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
 
         .event-title {
             font-size: 11px;
-            font-weight: 700;
-            color: var(--primary-blue);
+            font-weight: 600;
+            color: var(--text-dark);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
