@@ -117,9 +117,9 @@
                     <th width="5%">QTY</th>
                     <th width="8%">SATUAN</th>
                     <th width="10%">CEK FISIK</th>
-                    <th width="12%">PENGEMBALIAN</th>
+                    <th width="12%">PENGEMBALIAN BARANG</th>
                     <?php if ($data['header']['warehouse_type'] == 'GUDANG_KONSUMABLE'): ?>
-                    <th width="10%">SISA BARANG</th>
+                    <th width="10%">BARANG TERPAKAI</th>
                     <?php endif; ?>
                 </tr>
             </thead>
