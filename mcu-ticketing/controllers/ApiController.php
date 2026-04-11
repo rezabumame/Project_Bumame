@@ -64,16 +64,16 @@ class ApiController extends BaseController {
     }
 
     private function export_rabs() {
-        $query = "SELECT r.rab_number, r.status, r.location_type, r.grand_total, r.total_participants,
+        $query = "SELECT r.rab_number, r.status, r.location_type, r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage, r.total_participants,
                          p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
                          sp.sales_name, u_korlap.full_name as korlap_name, u_creator.full_name as creator_name,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' x ', days, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, (CASE WHEN days > 0 THEN CONCAT(' x ', days) ELSE '' END), ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_items WHERE rab_id = r.id AND category = 'personnel') as personnel_details,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_items WHERE rab_id = r.id AND category = 'transport') as transport_details,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_items WHERE rab_id = r.id AND category = 'consumption') as consumption_details,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as vendor_details
                   FROM rabs r
                   LEFT JOIN projects p ON r.project_id = p.project_id
@@ -86,14 +86,20 @@ class ApiController extends BaseController {
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Post-process JSON dates for readability
+        // Post-process for readability
         foreach ($data as &$row) {
+            // Format dates
             if (!empty($row['tanggal_mcu'])) {
                 $dates = json_decode($row['tanggal_mcu'], true);
                 if (is_array($dates)) {
                     $row['tanggal_mcu'] = implode(', ', $dates);
                 }
             }
+            
+            // Format Currency columns with Dot (Indonesian Style)
+            $row['grand_total'] = number_format($row['grand_total'], 0, ',', '.');
+            $row['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
+            $row['budget_percentage'] = number_format($row['budget_percentage'], 2, ',', '.') . '%';
         }
         
         $this->jsonResponse(['status' => 'success', 'data' => $data]);
@@ -101,16 +107,18 @@ class ApiController extends BaseController {
 
     private function export_realizations() {
         $query = "SELECT rr.date as realization_date, rr.actual_participants, rr.total_amount as realization_total, rr.status as realization_status,
-                         r.rab_number, r.grand_total as rab_total,
+                         r.rab_number, r.grand_total as rab_total, r.cost_value as budget_ops,
+                         (r.cost_value - rr.total_amount) as variance,
+                         (rr.total_amount / r.cost_value * 100) as realization_percentage,
                          p.nama_project, p.company_name,
                          u_creator.full_name as creator_name,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_realization_items WHERE realization_id = rr.id AND category = 'personnel') as personnel_realization,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_realization_items WHERE realization_id = rr.id AND category = 'transport') as transport_realization,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_realization_items WHERE realization_id = rr.id AND category = 'consumption') as consumption_realization,
-                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', price) SEPARATOR '\n') 
+                         (SELECT GROUP_CONCAT(CONCAT(item_name, ': ', qty, ' @ ', FORMAT(price, 0, 'id_ID')) SEPARATOR '\n') 
                           FROM rab_realization_items WHERE realization_id = rr.id AND category = 'vendor') as vendor_realization
                   FROM rab_realizations rr
                   LEFT JOIN rabs r ON rr.rab_id = r.id
@@ -121,6 +129,18 @@ class ApiController extends BaseController {
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($data as &$row) {
+            // Format Currency
+            $row['realization_total'] = number_format($row['realization_total'], 0, ',', '.');
+            $row['rab_total'] = number_format($row['rab_total'], 0, ',', '.');
+            $row['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
+            $row['variance'] = number_format($row['variance'], 0, ',', '.');
+            $row['realization_percentage'] = number_format($row['realization_percentage'], 2, ',', '.') . '%';
+            
+            // Add Under/Over Budget label
+            $row['budget_status'] = ($row['variance'] >= 0) ? 'Under Budget' : 'Over Budget';
+        }
         
         $this->jsonResponse(['status' => 'success', 'data' => $data]);
     }
