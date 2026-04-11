@@ -531,7 +531,7 @@ if (!class_exists('DateHelper')) {
                                         </button>
                                     <?php endif; ?>
 
-                                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin_ops' && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'in_progress_ops'])): ?>
+                                        <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'in_progress_ops'])): ?>
                                             <?php if (empty($row['korlap_id'])): ?>
                                                 <button class="btn btn-sm btn-outline-info btn-assign-korlap" data-id="<?php echo $row['project_id']; ?>" title="Assign Korlap">
                                                     <i class="fas fa-user-check"></i> Assign Korlap
@@ -543,7 +543,7 @@ if (!class_exists('DateHelper')) {
                                             <?php endif; ?>
                                         <?php endif; ?>
 
-                                        <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && ($_SESSION['role'] == 'korlap' || $_SESSION['role'] == 'admin_ops')) && empty($row['tm_id'])): ?>
+                                        <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])) && empty($row['tm_id'])): ?>
                                             <a href="index.php?page=technical_meeting_create&project_id=<?php echo $row['project_id']; ?>" class="btn btn-sm btn-outline-info shadow-sm" title="Technical Meeting">
                                                 <i class="fas fa-handshake"></i> TM
                                             </a>

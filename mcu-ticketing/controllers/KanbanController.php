@@ -216,8 +216,12 @@ class KanbanController extends BaseController {
 
         // Strict Rule: Projects in 'approved' status can ONLY be modified by 'superadmin'
         // (Superadmin is already handled at the top of this function)
+        // UPDATE: Head Ops can also Reject or Cancel approved projects
         if ($current == 'approved') {
-            return "Alert: Status 'Approved' cannot be changed (Only Superadmin can modify this).";
+            if ($role == 'head_ops' && in_array($new, ['rejected', 'cancelled'])) {
+                return true;
+            }
+            return "Alert: Status 'Approved' cannot be changed (Only Superadmin or Head Ops can modify this to Reject/Cancel).";
         }
 
         // Allow anything to rejected/re-nego/cancelled for authorized roles
