@@ -1377,30 +1377,8 @@ class ProjectController extends BaseController {
 
         // Include RAB Info if exists and approved
         $rabModel = $this->loadModel('Rab');
-        
-        // Debugging: Log project ID
-        error_log("Checking RAB for project ID: " . $id);
-        
-        // TRY MAPPING PROJECT ID TO RAB ID (LIKE IN BUDGET REQUEST)
-        // If $id starts with 'PRJ', it might be a project_id. 
-        // We need to find the latest approved RAB for this project.
         $rab = $rabModel->getByProject($id);
         
-        // If not found by project_id directly, maybe it's stored differently
-        if (!$rab) {
-            // Fallback: search by name or other identifier if needed, 
-            // but usually getByProject should work if project_id is correct.
-            error_log("No RAB found for project " . $id . " using getByProject");
-        }
-        
-        // FOR DEBUGGING ONLY - RETURN RAW RAB DATA
-        $project['debug_rab_found'] = $rab ? true : false;
-        if ($rab) {
-            $project['debug_rab_status'] = $rab['status'];
-            $project['debug_rab_id'] = $rab['id'];
-            $project['debug_rab_number'] = $rab['rab_number'];
-        }
-
         // Statuses that are considered "Approved" and ready for printing
         $approved_statuses = [
             'approved', 'submitted_to_finance', 'advance_paid', 
@@ -1408,10 +1386,11 @@ class ProjectController extends BaseController {
             'completed', 'realization_rejected', 'closed'
         ];
 
-        if ($rab && in_array($rab['status'], $approved_statuses)) {
+        // Always provide the RAB ID if found, even if not fully approved yet for korlap/admin
+        if ($rab) {
             $project['approved_rab_id'] = $rab['id'];
             $project['approved_rab_number'] = $rab['rab_number'];
-            error_log("Setting approved_rab_id: " . $rab['id'] . " for project " . $id);
+            $project['is_rab_approved'] = in_array($rab['status'], $approved_statuses);
         }
 
         // Include history, staff, realizations etc as needed by JS
