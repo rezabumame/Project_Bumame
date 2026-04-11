@@ -216,6 +216,10 @@ class DashboardController extends BaseController {
             'status_project' => $project_data['status_project'],
             'technical_meeting' => $technical_meeting,
             'rabs' => [], // Empty to hide docs
+            'approved_rab_id' => null,
+            'approved_rab_number' => null,
+            'is_rab_approved' => false,
+            'rab_status' => null,
             'vendor_allocations' => [], // Empty to hide vendor info
             'history' => [], // Empty to hide history
             'staff_assignments' => [],

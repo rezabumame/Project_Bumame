@@ -105,29 +105,35 @@
             text-decoration: none !important;
         }
 
-        /* Event Card Style */
+        /* Event Card Style - Ultra Minimalist Dot Style */
         .custom-event {
-            background: #F8FAFC !important;
+            background: transparent !important;
             border: none !important;
-            border-left: 4px solid var(--border-blue) !important;
-            border-radius: 4px !important;
-            padding: 3px 8px !important;
-            margin: 1px 4px 2px 4px !important;
+            padding: 2px 4px !important;
+            margin: 1px 0 !important;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .custom-event:hover {
-            transform: translateX(2px);
-            background: #F1F5F9 !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.03) !important;
+            border-radius: 4px;
+        }
+
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
 
         .event-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-dark);
+            font-size: 11.5px;
+            font-weight: 500;
+            color: #334155;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -219,14 +225,19 @@
             events: 'index.php?page=get_public_calendar_events',
             
             eventContent: function(arg) {
-                // Truncation logic (Ellipsis)
                 let title = arg.event.title;
-                // Simplified PT truncation example: "PT. Sillomaritime Perdana Tbk" -> "PT. Sillomaritime..."
                 if (title.length > 25) title = title.substring(0, 22) + '...';
                 
                 let el = document.createElement('div');
                 el.className = 'custom-event';
-                el.innerHTML = `<span class="event-title">${title}</span>`;
+                
+                // Get color from event or default
+                let dotColor = arg.event.backgroundColor || '#204EAB';
+                
+                el.innerHTML = `
+                    <div class="event-dot" style="background-color: ${dotColor}"></div>
+                    <span class="event-title">${title}</span>
+                `;
                 
                 // Tooltip info
                 const props = arg.event.extendedProps;
