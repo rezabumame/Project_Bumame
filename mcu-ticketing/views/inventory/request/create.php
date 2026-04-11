@@ -119,11 +119,12 @@
         // Search items within accordion
         $('#itemSearch').on('input keyup', function() {
             const value = $(this).val().toLowerCase().trim();
+            console.log('Searching for:', value); // Debug log
             
             if (value === "") {
                 // Reset to initial state
                 $('.accordion-item').show();
-                $('.accordion-header').show(); // Show headers back
+                $('.accordion-header').show(); 
                 $('.accordion-item tbody tr').show();
                 $('.accordion-collapse').removeClass('show');
                 $('.accordion-button').addClass('collapsed');
@@ -140,9 +141,11 @@
 
                 $category.find('tbody tr').each(function() {
                     const $row = $(this);
+                    // Search in the <strong> tag first, then fallback to entire row text
+                    const itemName = $row.find('strong').text().toLowerCase();
                     const rowText = $row.text().toLowerCase();
                     
-                    if (rowText.indexOf(value) > -1) {
+                    if (itemName.indexOf(value) > -1 || rowText.indexOf(value) > -1) {
                         $row.show();
                         categoryMatches++;
                     } else {

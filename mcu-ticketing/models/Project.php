@@ -1191,54 +1191,14 @@ class Project {
 
     // Admin Ops: Vendor and Korlap Assignments
     public function getKorlaps($project_id = null) {
-        $korlaps = [];
-        // Changed to use users table with role = 'korlap'
         $query = "SELECT user_id as korlap_id, full_name as name FROM users WHERE role = 'korlap' ORDER BY full_name ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $all_korlaps = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($project_id) {
-            // Check availability
-            // 1. Get current project dates
-            $query = "SELECT tanggal_mcu FROM " . $this->table_name . " WHERE project_id = :project_id";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":project_id", $project_id);
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $current_dates = $row ? json_decode($row['tanggal_mcu'], true) : [];
-            if (!is_array($current_dates)) $current_dates = [];
-
-            foreach ($all_korlaps as &$k) {
-                $k['is_available'] = true;
-                $k['conflict_info'] = '';
-
-                // Get other projects this korlap is assigned to
-                $query = "SELECT project_id, nama_project, tanggal_mcu FROM " . $this->table_name . " 
-                          WHERE korlap_id = :korlap_id 
-                          AND project_id != :project_id 
-                          AND status_project NOT IN ('rejected', 'cancelled', 'completed')";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(":korlap_id", $k['korlap_id']);
-                $stmt->bindParam(":project_id", $project_id);
-                $stmt->execute();
-                
-                while ($p = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    $p_dates = json_decode($p['tanggal_mcu'], true);
-                    if (!is_array($p_dates)) continue;
-
-                    $overlap = array_intersect($current_dates, $p_dates);
-                    if (!empty($overlap)) {
-                        $k['is_available'] = false;
-                        $k['conflict_info'] = "Busy on " . implode(', ', $overlap) . " (Project: " . $p['nama_project'] . ")";
-                        break; // Found conflict, no need to check more
-                    }
-                }
-            }
-        } else {
-             foreach ($all_korlaps as &$k) {
-                $k['is_available'] = true;
-             }
+        foreach ($all_korlaps as &$k) {
+            $k['is_available'] = true;
+            $k['conflict_info'] = '';
         }
 
         return $all_korlaps;

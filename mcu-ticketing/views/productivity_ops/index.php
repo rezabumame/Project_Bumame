@@ -728,7 +728,7 @@ $filtered_projects = $filtered_projects ?? [];
 
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="js/project_detail.js"></script>
+<script src="js/project_detail.js?v=<?php echo time(); ?>"></script>
 
 <script>
 // Helper function to set date range
