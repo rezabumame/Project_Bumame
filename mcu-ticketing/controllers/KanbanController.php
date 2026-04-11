@@ -359,6 +359,19 @@ class KanbanController extends BaseController {
                          }
                      }
 
+                     // Fetch RABs and LPUM status
+                     $rabModel = $this->loadModel('Rab');
+                     $rabRealizationModel = $this->loadModel('RabRealization');
+                     $project['rabs'] = $rabModel->isProjectHasRab($_GET['id']);
+                     if (!empty($project['rabs'])) {
+                         foreach ($project['rabs'] as &$rab) {
+                             // Check if this RAB has any realization (LPUM)
+                             $rab_realizations = $rabRealizationModel->getAll(null, null, null, 1, 0, ['rab_id' => $rab['id']]);
+                             // Note: getAll returns a PDOStatement
+                             $rab['has_lpum'] = $rab_realizations->rowCount() > 0;
+                         }
+                     }
+
                      $this->jsonResponse($project);
                  } else {
                      $this->jsonResponse(['error' => 'Project not found'], 404);

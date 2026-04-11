@@ -51,6 +51,17 @@ class RabRealization {
             $params[':start_date'] = $filters['start_date'];
             $params[':end_date'] = $filters['end_date'];
         }
+
+        // Additional Filters
+        if (!empty($filters['rab_id'])) {
+            $conditions[] = "r.rab_id = :rab_id";
+            $params[':rab_id'] = $filters['rab_id'];
+        }
+
+        if (!empty($filters['status']) && $filters['status'] != 'all') {
+            $conditions[] = "r.status = :status";
+            $params[':status'] = $filters['status'];
+        }
         
         if (!empty($conditions)) {
             $query .= " WHERE " . implode(" AND ", $conditions);
