@@ -40,6 +40,10 @@ try {
         exit;
     }
 
+    // DateHelper for formatted date
+    require_once __DIR__ . '/../helpers/DateHelper.php';
+    $tanggal_mcu_formatted = DateHelper::formatSmartDateIndonesian($project_data['tanggal_mcu']);
+
     // Fetch Technical Meeting
     $technical_meeting = $tmModel->getByProject($id);
 
@@ -58,7 +62,7 @@ try {
         'snack_notes' => $project_data['snack_notes'] ?? '',
         'snack_items' => $project_data['snack_items'] ?? '',
         'tanggal_mcu' => $project_data['tanggal_mcu'] ?? '',
-        'tanggal_mcu_formatted' => $project_data['tanggal_mcu_formatted'] ?? ($project_data['tanggal_mcu'] ?? ''),
+        'tanggal_mcu_formatted' => $tanggal_mcu_formatted,
         'alamat' => $project_data['alamat'] ?? '',
         'total_peserta' => $project_data['total_peserta'] ?? 0,
         'sales_name' => $project_data['sales_name'] ?? '',

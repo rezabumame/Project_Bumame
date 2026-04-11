@@ -1473,6 +1473,10 @@ class ProjectController extends BaseController {
         // Fetch Vendor Allocations
         $project['vendor_allocations'] = $this->project->getVendorAllocations($id)->fetchAll(PDO::FETCH_ASSOC);
 
+        // DateHelper for formatted date
+        require_once __DIR__ . '/../helpers/DateHelper.php';
+        $project['tanggal_mcu_formatted'] = DateHelper::formatSmartDateIndonesian($project['tanggal_mcu']);
+
         echo json_encode($project);
     }
 

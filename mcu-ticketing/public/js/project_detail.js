@@ -193,17 +193,38 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                 // Details Tab Content
                 let detailsHtml = `
                     ${alertHtml}
+                    <style>
+                        #detailModal .badge-bumame {
+                            background-color: #f0f4ff;
+                            color: #204EAB;
+                            border: 1px solid #204EAB;
+                            font-weight: 500;
+                            padding: 0.5rem 0.8rem;
+                            border-radius: 8px;
+                            font-size: 0.8rem;
+                        }
+                        #detailModal .section-header-bumame {
+                            color: #204EAB;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            font-size: 0.9rem;
+                            letter-spacing: 0.5px;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        }
+                    </style>
                     <div class="row g-3">
                         <div class="col-md-8">
                             <div class="card border-0 shadow-sm h-100 rounded-3">
                                 <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
-                                    <h6 class="text-uppercase fw-bold mb-0" style="color: #204EAB;"><i class="fas fa-info-circle me-2"></i>Project Information</h6>
-                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.2;">
+                                    <h6 class="section-header-bumame mb-0"><i class="fas fa-info-circle"></i>Project Information</h6>
+                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.1;">
                                 </div>
                                 <div class="card-body pt-3">
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Project Name</div>
-                                        <div class="col-sm-8 fw-medium text-dark">${p.nama_project}</div>
+                                        <div class="col-sm-8 fw-bold text-dark" style="color: #204EAB !important;">${p.nama_project}</div>
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Company / Client</div>
@@ -211,7 +232,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">SPH Number</div>
-                                        <div class="col-sm-8 fw-medium text-primary">${p.sph_number || '-'}</div>
+                                        <div class="col-sm-8 fw-bold" style="color: #204EAB;">${p.sph_number || '-'}</div>
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Consumption</div>
@@ -229,7 +250,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Date of MCU</div>
                                         <div class="col-sm-8">
-                                            <span class="badge bg-light text-dark border"><i class="far fa-calendar-alt me-2"></i>
+                                            <span class="badge badge-bumame"><i class="far fa-calendar-alt me-2"></i>
                                                 ${p.tanggal_mcu_formatted || p.tanggal_mcu}
                                             </span>
                                         </div>
@@ -240,13 +261,13 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Participants</div>
-                                        <div class="col-sm-8"><span class="badge bg-primary rounded-pill px-3">${p.total_peserta} Pax</span></div>
+                                        <div class="col-sm-8"><span class="badge bg-primary rounded-pill px-3" style="background-color: #204EAB !important;">${p.total_peserta} Pax</span></div>
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Sales Person</div>
                                         <div class="col-sm-8">
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-circle bg-light text-primary me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                                <div class="avatar-circle bg-light me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #204EAB; border: 1px solid #204EAB;">
                                                     <i class="fas fa-user-tie"></i>
                                                 </div>
                                                 ${p.sales_name || '-'}
@@ -257,7 +278,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Koordinator Lapangan</div>
                                         <div class="col-sm-8">
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-circle bg-light text-info me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                                <div class="avatar-circle bg-light me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #204EAB; border: 1px solid #204EAB;">
                                                     <i class="fas fa-user-shield"></i>
                                                 </div>
                                                 ${p.korlap_name || '-'}
@@ -268,7 +289,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">Koordinator Hasil</div>
                                         <div class="col-sm-8">
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-circle bg-light text-primary me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                                <div class="avatar-circle bg-light me-2" style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #204EAB; border: 1px solid #204EAB;">
                                                     <i class="fas fa-poll-h"></i>
                                                 </div>
                                                 ${p.koordinator_hasil || '-'}
@@ -285,8 +306,8 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                         <div class="col-md-4">
                             <div class="card border-0 shadow-sm h-100 rounded-3">
                                 <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
-                                    <h6 class="text-uppercase fw-bold mb-0" style="color: #204EAB;"><i class="fas fa-cog me-2"></i>Preferences</h6>
-                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.2;">
+                                    <h6 class="section-header-bumame mb-0"><i class="fas fa-cog"></i>Preferences</h6>
+                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.1;">
                                 </div>
                                 <div class="card-body pt-3">
                                     <div class="mb-4">
@@ -297,7 +318,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <div class="d-flex align-items-center">
                                                     <div class="rounded-circle me-3 d-flex align-items-center justify-content-center" 
-                                                         style="width: 40px; height: 40px; ${p.lunch === 'Ya' ? 'background-color: #e7f1ff; color: #0d6efd;' : 'background-color: #e9ecef; color: #6c757d;'}">
+                                                         style="width: 40px; height: 40px; ${p.lunch === 'Ya' ? 'background-color: #f0f4ff; color: #204EAB; border: 1px solid #204EAB;' : 'background-color: #e9ecef; color: #6c757d;'}">
                                                         <i class="fas fa-utensils"></i>
                                                     </div>
                                                     <div>
@@ -307,11 +328,11 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                                         </small>
                                                     </div>
                                                 </div>
-                                                ${p.lunch === 'Ya' && p.lunch_qty ? `<span class="badge bg-primary rounded-pill">${p.lunch_qty} Pax</span>` : ''}
+                                                ${p.lunch === 'Ya' && p.lunch_qty ? `<span class="badge rounded-pill" style="background-color: #204EAB;">${p.lunch_qty} Pax</span>` : ''}
                                             </div>
                                             
                                             ${p.lunch === 'Ya' ? `
-                                                ${p.lunch_notes ? `<div class="small text-muted fst-italic mb-2 ps-2 border-start border-3 border-primary bg-light p-1 rounded">${p.lunch_notes}</div>` : ''}
+                                                ${p.lunch_notes ? `<div class="small text-muted fst-italic mb-2 ps-2 border-start border-3 bg-light p-1 rounded" style="border-color: #204EAB !important;">${p.lunch_notes}</div>` : ''}
                                                 
                                                 ${(() => {
                             try {
@@ -322,7 +343,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                                                     <div class="d-flex flex-wrap gap-2">
                                                                         ${lunchItems.map(item => `
                                                                             <span class="badge bg-light text-dark border fw-normal">
-                                                                                ${item.item} <span class="fw-bold ms-1 text-primary">x${item.qty}</span>
+                                                                                ${item.item} <span class="fw-bold ms-1" style="color: #204EAB;">x${item.qty}</span>
                                                                             </span>
                                                                         `).join('')}
                                                                     </div>
@@ -383,11 +404,11 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                         <label class="text-muted small text-uppercase fw-bold mb-2">Report Settings</label>
                                         <div class="d-flex justify-content-between mb-2 small">
                                             <span>Header/Footer</span>
-                                            <span class="fw-bold">${p.header_footer === 'Ya' ? 'Yes' : 'No'}</span>
+                                            <span class="fw-bold" style="color: #204EAB;">${p.header_footer === 'Ya' ? 'Yes' : 'No'}</span>
                                         </div>
                                         <div class="d-flex justify-content-between small">
                                             <span>Participant Photos</span>
-                                            <span class="fw-bold">${p.foto_peserta === 'Ya' ? 'Yes' : 'No'}</span>
+                                            <span class="fw-bold" style="color: #204EAB;">${p.foto_peserta === 'Ya' ? 'Yes' : 'No'}</span>
                                         </div>
                                     </div>
 
@@ -397,7 +418,7 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                             ${sphLink}
                                             ${p.sph_number ? `
                                                 <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-center text-muted small">
-                                                    <i class="fas fa-hashtag me-2"></i>SPH: <span class="fw-bold ms-1 text-dark">${p.sph_number}</span>
+                                                    <i class="fas fa-hashtag me-2"></i>SPH: <span class="fw-bold ms-1 text-dark" style="color: #204EAB !important;">${p.sph_number}</span>
                                                 </div>
                                             ` : ''}
                                             ${(() => {
@@ -450,8 +471,8 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                         <div class="col-12">
                             <div class="card border-0 shadow-sm rounded-3">
                                 <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
-                                    <h6 class="text-uppercase fw-bold mb-0" style="color: #204EAB;"><i class="fas fa-vial me-2"></i>Exam Packages / Types</h6>
-                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.2;">
+                                    <h6 class="section-header-bumame mb-0"><i class="fas fa-vial"></i>Exam Packages / Types</h6>
+                                    <hr class="mt-2 mb-0" style="color: #204EAB; opacity: 0.1;">
                                 </div>
                                 <div class="card-body pt-3">
                                     ${p.exam_matrix_html || formatJenisPemeriksaan(p.jenis_pemeriksaan)}
