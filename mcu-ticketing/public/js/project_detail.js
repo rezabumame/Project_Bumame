@@ -394,17 +394,15 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                                     <i class="fas fa-hashtag me-2"></i>SPH: <span class="fw-bold ms-1 text-dark">${p.sph_number}</span>
                                                 </div>
                                             ` : ''}
-                                            ${p.approved_rab_id ? `
-                                                <a href="index.php?page=rabs_export_pdf&id=${p.approved_rab_id}" target="_blank" class="btn btn-primary w-100 p-2 d-flex align-items-center justify-content-between shadow-sm rounded-3 mt-1" style="background-color: #204EAB; border: none; font-size: 0.85rem;">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="fas fa-file-pdf me-2"></i>
-                                                        <div class="text-start">
-                                                            <div class="fw-bold">Export PDF RAB</div>
-                                                        </div>
+                                            <a href="index.php?page=rabs_export_pdf&id=${p.approved_rab_id}" target="_blank" class="btn btn-primary w-100 p-2 d-flex align-items-center justify-content-between shadow-sm rounded-3 mt-1 export-rab-btn" style="background-color: #204EAB; border: none; font-size: 0.85rem; display: ${p.approved_rab_id ? 'flex' : 'none'} !important;">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-file-pdf me-2"></i>
+                                                    <div class="text-start">
+                                                        <div class="fw-bold">Export PDF RAB</div>
                                                     </div>
-                                                    <i class="fas fa-download small"></i>
-                                                </a>
-                                            ` : ''}
+                                                </div>
+                                                <i class="fas fa-download small"></i>
+                                            </a>
                                         </div>
                                     </div>
                                     

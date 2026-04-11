@@ -1377,7 +1377,17 @@ class ProjectController extends BaseController {
 
         // Include RAB Info if exists and approved
         $rabModel = $this->loadModel('Rab');
+        
+        // Debugging: Log project ID
+        error_log("Checking RAB for project ID: " . $id);
+        
         $rab = $rabModel->getByProject($id);
+        
+        if ($rab) {
+            error_log("Found RAB for project " . $id . ": ID=" . $rab['id'] . ", Status=" . $rab['status']);
+        } else {
+            error_log("No RAB found for project " . $id);
+        }
         
         // Statuses that are considered "Approved" and ready for printing
         $approved_statuses = [
@@ -1388,6 +1398,7 @@ class ProjectController extends BaseController {
 
         if ($rab && in_array($rab['status'], $approved_statuses)) {
             $project['approved_rab_id'] = $rab['id'];
+            error_log("Setting approved_rab_id: " . $rab['id']);
         }
 
         // Include history, staff, realizations etc as needed by JS
