@@ -4,19 +4,25 @@
  * This file handles project detail requests for the public calendar bypasses session auth
  */
 
-// Error handling to prevent HTML in JSON output
+// Disable error display to prevent HTML in JSON output
 ini_set('display_errors', 0);
 error_reporting(0);
 
 header('Content-Type: application/json');
 
 try {
-    require_once __DIR__ . '/../config/database.php';
-    require_once __DIR__ . '/../models/Project.php';
-    require_once __DIR__ . '/../models/TechnicalMeeting.php';
+    // Include autoloader to handle class loading and environment variables
+    require_once __DIR__ . '/../config/autoload.php';
+    
+    // We don't need session here, but if something requires it, it's already started in autoload or we can start it
+    // if (session_status() == PHP_SESSION_NONE) session_start();
 
     $database = new Database();
     $db = $database->getConnection();
+
+    if (!$db) {
+        throw new Exception("Database connection failed");
+    }
 
     $projectModel = new Project($db);
     $tmModel = new TechnicalMeeting($db);
@@ -78,6 +84,8 @@ try {
     echo json_encode($safe_data);
 
 } catch (Exception $e) {
-    echo json_encode(['error' => 'Internal Server Error: ' . $e->getMessage()]);
+    // Log error internally
+    error_log("Public Project Detail Error: " . $e->getMessage());
+    echo json_encode(['error' => 'Server Error', 'message' => $e->getMessage()]);
 }
 exit;

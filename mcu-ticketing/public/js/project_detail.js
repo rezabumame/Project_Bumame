@@ -704,11 +704,22 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                     footer.html(`<button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>`);
                 }
 
-                // Load other tabs data
-                loadVendorData(projectId);
-                loadBaData(projectId);
-                renderStaffAssignments(p.staff_assignments);
-                renderDWRealizations(p.realizations);
+                // Load other tabs data only if not public
+                if (!options.isPublic) {
+                    loadVendorData(projectId);
+                    loadBaData(projectId);
+                    renderStaffAssignments(p.staff_assignments);
+                    renderDWRealizations(p.realizations);
+                } else {
+                    // For public view, we might want to clear or show simple placeholders
+                    $('#vendor').html('<div class="p-4 text-center text-muted border rounded bg-light">Vendor information is private.</div>');
+                    $('#staff-content').html('<div class="p-4 text-center text-muted border rounded bg-light">Staff assignments are private.</div>');
+                    $('#realization-content').html('<div class="p-4 text-center text-muted border rounded bg-light">Realization details are private.</div>');
+                    
+                    // BA data might be public safe if filtered, but for now let's hide
+                    var container = $('#ba-content').length ? $('#ba-content') : $('#ba');
+                    container.html('<div class="p-4 text-center text-muted border rounded bg-light">Berita Acara documents are private.</div>');
+                }
 
             } catch (e) {
                 console.error("Project Detail Parse Error:", e);
