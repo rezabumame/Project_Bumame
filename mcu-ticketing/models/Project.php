@@ -1265,8 +1265,8 @@ class Project {
         try {
             $this->conn->beginTransaction();
 
-            // Handle updates and insertions smartly to preserve existing assignments
-            // 1. Get existing IDs to know what to keep
+            // Handle updates, insertions, and deletions
+            // 1. Get existing IDs to know what to keep or delete
             $existing_ids = [];
             foreach ($allocations as $row) {
                 if (isset($row['id']) && !empty($row['id'])) {
@@ -1274,23 +1274,22 @@ class Project {
                 }
             }
 
-            // 2. Delete rows not in the new list (if any were removed in UI)
-            // If the list is empty, existing_ids is empty, so we might delete all? 
-            // Only if allocations is NOT empty. If it is empty, maybe user deleted all.
-            // CAUTION: If user adds new rows, they don't have IDs yet.
-            // Safe approach: Delete ONLY if we are sure. 
-            // For now, let's assume we don't delete unless explicit (UI doesn't support delete yet).
-            // Actually, simply appending is safer for "masih bisa d tambahkan".
-            
-            // However, if we re-save the whole list from UI, we need to sync.
-            // The UI currently sends EVERYTHING in the table.
-            
-            // Let's rely on the IDs sent from Frontend.
+            // 2. Delete rows not in the new list
             if (!empty($existing_ids)) {
-                 $placeholders = implode(',', array_fill(0, count($existing_ids), '?'));
-                 // We only delete if we want to support deletion. 
-                 // If we strictly want to SUPPORT ADDING, we can just UPSERT.
-                 // But let's stick to: "don't lock".
+                $placeholders = implode(',', array_fill(0, count($existing_ids), '?'));
+                $query = "DELETE FROM project_vendor_requirements WHERE project_id = ? AND id NOT IN ($placeholders)";
+                $stmt = $this->conn->prepare($query);
+                $params = array_merge([$project_id], $existing_ids);
+                $stmt->execute($params);
+            } else {
+                // If no IDs provided but we have allocations, it might mean they are all new.
+                // But if the list is completely empty, it means user deleted all rows.
+                if (empty($allocations)) {
+                    $query = "DELETE FROM project_vendor_requirements WHERE project_id = :project_id";
+                    $stmt = $this->conn->prepare($query);
+                    $stmt->bindParam(":project_id", $project_id);
+                    $stmt->execute();
+                }
             }
 
             foreach ($allocations as $row) {
@@ -1315,26 +1314,28 @@ class Project {
                 }
             }
 
-            // Update status_vendor to requested ONLY if not already further along?
-            // If it's already 'requested' or 'assigned', it stays.
-            
+            // Update status_vendor to requested if it was pending or no_vendor_needed
             $query = "SELECT status_vendor FROM " . $this->table_name . " WHERE project_id = :project_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":project_id", $project_id);
             $stmt->execute();
             $curr = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($curr && ($curr['status_vendor'] == 'pending')) {
-                 $query = "UPDATE " . $this->table_name . " SET status_vendor = 'requested' WHERE project_id = :project_id";
-                 $stmt = $this->conn->prepare($query);
-                 $stmt->bindParam(":project_id", $project_id);
-                 $stmt->execute();
+            if ($curr && ($curr['status_vendor'] == 'pending' || $curr['status_vendor'] == 'no_vendor_needed')) {
+                 // Only update if there are actually allocations
+                 if (!empty($allocations)) {
+                     $query = "UPDATE " . $this->table_name . " SET status_vendor = 'requested' WHERE project_id = :project_id";
+                     $stmt = $this->conn->prepare($query);
+                     $stmt->bindParam(":project_id", $project_id);
+                     $stmt->execute();
+                 }
             }
 
             $this->conn->commit();
             return true;
         } catch (Exception $e) {
             $this->conn->rollBack();
+            error_log("saveVendorAllocations failed: " . $e->getMessage());
             return false;
         }
     }

@@ -1214,7 +1214,7 @@ $(document).ready(function() {
                         $('#vendorTable tbody').empty();
                         if(res.data && res.data.length > 0) {
                             res.data.forEach(function(item) {
-                                addVendorRow(item.exam_type, item.participant_count, item.notes);
+                                addVendorRow(item.exam_type, item.participant_count, item.notes, item.id);
                             });
                         } else {
                             addVendorRow();
@@ -1468,7 +1468,7 @@ function saveProcurementVendor() {
     });
 }
 
-function addVendorRow(type = '', count = '', notes = '') {
+function addVendorRow(type = '', count = '', notes = '', id = '') {
     const examOptions = [
         'Rontgen', 'EKG', 'Audiometri', 'Spirometri', 
         'USG Abdomen', 'USG Mammae', 'Papsmear', 
@@ -1491,7 +1491,7 @@ function addVendorRow(type = '', count = '', notes = '') {
     let otherValue = isOther ? type : '';
 
     var html = `
-        <tr>
+        <tr data-id="${id}">
             <td>
                 ${selectHtml}
                 <input type="text" class="form-control form-control-sm mt-1 exam_type_other" value="${otherValue}" placeholder="Specify other..." style="display:${displayOther}">
@@ -1559,6 +1559,7 @@ function saveVendorAllocations() {
 
     var allocations = [];
     $('#vendorTable tbody tr').each(function() {
+        var id = $(this).data('id');
         var selectVal = $(this).find('.exam_type_select').val();
         var otherVal = $(this).find('.exam_type_other').val();
         var type = (selectVal === 'Other') ? otherVal : selectVal;
@@ -1567,6 +1568,7 @@ function saveVendorAllocations() {
         
         if(type && count) {
             allocations.push({
+                id: id,
                 exam_type: type,
                 participant_count: count,
                 notes: notes
