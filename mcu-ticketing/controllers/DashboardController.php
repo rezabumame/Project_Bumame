@@ -106,6 +106,7 @@ class DashboardController extends BaseController {
                             'total_pax' => $row['total_peserta'],
                             'exam_types' => $row['jenis_pemeriksaan'],
                             'sales_name' => $row['sales_name'],
+                            'location' => $row['alamat'],
                             'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
@@ -163,6 +164,7 @@ class DashboardController extends BaseController {
                             'total_pax' => $row['total_peserta'],
                             'exam_types' => $row['jenis_pemeriksaan'],
                             'sales_name' => $row['sales_name'],
+                            'location' => $row['alamat'],
                             'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
@@ -171,5 +173,49 @@ class DashboardController extends BaseController {
         }
 
         $this->jsonResponse($events);
+    }
+    public function getPublicProjectDetailAjax() {
+        if (!isset($_GET['id'])) {
+            $this->jsonResponse(['error' => 'No ID provided'], 400);
+        }
+
+        $project_data = $this->project->getProjectById($_GET['id']);
+        if (!$project_data) {
+            $this->jsonResponse(['error' => 'Project not found'], 404);
+        }
+
+        // Return only public-safe fields (similar to the Detail tab in local view)
+        // We exclude documents, chat, vendor list, costings, etc.
+        $safe_data = [
+            'project_id' => $project_data['project_id'],
+            'nama_project' => $project_data['nama_project'],
+            'company_name' => $project_data['company_name'],
+            'sph_number' => $project_data['sph_number'],
+            'lunch' => $project_data['lunch'],
+            'lunch_qty' => $project_data['lunch_qty'],
+            'lunch_notes' => $project_data['lunch_notes'],
+            'lunch_items' => $project_data['lunch_items'],
+            'snack' => $project_data['snack'],
+            'snack_qty' => $project_data['snack_qty'],
+            'snack_notes' => $project_data['snack_notes'],
+            'snack_items' => $project_data['snack_items'],
+            'tanggal_mcu' => $project_data['tanggal_mcu'],
+            'tanggal_mcu_formatted' => $project_data['tanggal_mcu_formatted'] ?? $project_data['tanggal_mcu'],
+            'alamat' => $project_data['alamat'],
+            'total_peserta' => $project_data['total_peserta'],
+            'sales_name' => $project_data['sales_name'],
+            'korlap_name' => $project_data['korlap_name'],
+            'koordinator_hasil' => $project_data['koordinator_hasil'],
+            'notes' => $project_data['notes'],
+            'header_footer' => $project_data['header_footer'],
+            'foto_peserta' => $project_data['foto_peserta'],
+            'jenis_pemeriksaan' => $project_data['jenis_pemeriksaan'],
+            'status_project' => $project_data['status_project'],
+            'rabs' => [], // Empty to hide docs
+            'vendor_allocations' => [], // Empty to hide vendor info
+            'history' => [] // Empty to hide history
+        ];
+
+        $this->jsonResponse($safe_data);
     }
 }

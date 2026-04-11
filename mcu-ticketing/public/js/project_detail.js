@@ -45,8 +45,10 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
     $('#detailModal').modal('show');
     $('#modal-content-body').html('<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>');
 
+    const detailUrl = options.isPublic ? 'index.php?page=get_public_project_detail_ajax' : 'index.php?page=get_project_detail_ajax';
+
     $.ajax({
-        url: 'index.php?page=get_project_detail_ajax',
+        url: detailUrl,
         data: { id: projectId },
         success: function (response) {
             try {

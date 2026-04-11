@@ -22,7 +22,7 @@ $router->add('qr_verify_lpum', 'RabRealizationController', 'qr_verify');
 $router->add('qr_verify_internal_memo', 'ProjectController', 'qr_verify_memo');
 
 // Auth Guard
-$public_pages = ['login', 'auth_login', 'qr_verify_invoice_request', 'qr_verify_rab', 'qr_verify_lpum', 'qr_verify_internal_memo', 'api_fetch_data', 'public_calendar', 'get_public_calendar_events'];
+$public_pages = ['login', 'auth_login', 'qr_verify_invoice_request', 'qr_verify_rab', 'qr_verify_lpum', 'qr_verify_internal_memo', 'api_fetch_data', 'public_calendar', 'get_public_calendar_events', 'get_public_project_detail_ajax'];
 if (!in_array($page, $public_pages)) {
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: index.php?page=login");
@@ -37,6 +37,7 @@ $router->add('admin_sales_dashboard', 'DashboardController', 'index');
 $router->add('get_calendar_events', 'DashboardController', 'getCalendarEvents');
 $router->add('public_calendar', 'DashboardController', 'publicCalendar');
 $router->add('get_public_calendar_events', 'DashboardController', 'getPublicCalendarEvents');
+$router->add('get_public_project_detail_ajax', 'DashboardController', 'getPublicProjectDetailAjax');
 
 // Kanban
 $router->add('manager_ops_kanban', 'KanbanController', 'index');
