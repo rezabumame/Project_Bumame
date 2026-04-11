@@ -399,7 +399,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                                     <i class="fas fa-file-pdf me-2"></i>
                                                     <div class="text-start">
                                                         <div class="fw-bold">Export PDF RAB</div>
-                                                        <div class="small opacity-75">ID: ${p.approved_rab_id || 'Not Found'}</div>
+                                                        <div class="small opacity-75">ID: ${p.approved_rab_id || 'Not Found'} (Debug: Found=${p.debug_rab_found}, Status=${p.debug_rab_status})</div>
                                                     </div>
                                                 </div>
                                                 <i class="fas fa-download small"></i>

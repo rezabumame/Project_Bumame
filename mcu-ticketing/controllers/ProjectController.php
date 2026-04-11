@@ -1383,12 +1383,13 @@ class ProjectController extends BaseController {
         
         $rab = $rabModel->getByProject($id);
         
+        // FOR DEBUGGING ONLY - RETURN RAW RAB DATA
+        $project['debug_rab_found'] = $rab ? true : false;
         if ($rab) {
-            error_log("Found RAB for project " . $id . ": ID=" . $rab['id'] . ", Status=" . $rab['status']);
-        } else {
-            error_log("No RAB found for project " . $id);
+            $project['debug_rab_status'] = $rab['status'];
+            $project['debug_rab_id'] = $rab['id'];
         }
-        
+
         // Statuses that are considered "Approved" and ready for printing
         $approved_statuses = [
             'approved', 'submitted_to_finance', 'advance_paid', 
