@@ -400,7 +400,7 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                                         <i class="fas fa-file-pdf me-2"></i>
                                                         <div class="text-start">
                                                             <div class="fw-bold">Export PDF RAB</div>
-                                                            <div class="small opacity-75">${p.approved_rab_number || 'Download Document'}</div>
+                                                            <div class="small opacity-75">${p.approved_rab_number || 'Download Document'} ${!p.is_rab_approved ? `(${p.rab_status.replace(/_/g, ' ').toUpperCase()})` : ''}</div>
                                                         </div>
                                                     </div>
                                                     <i class="fas fa-download small"></i>

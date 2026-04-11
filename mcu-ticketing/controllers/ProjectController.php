@@ -1393,6 +1393,7 @@ class ProjectController extends BaseController {
             $project['approved_rab_id'] = $rab['id'];
             $project['approved_rab_number'] = $rab['rab_number'];
             $project['is_rab_approved'] = in_array($rab['status'], $approved_statuses);
+            $project['rab_status'] = $rab['status'];
         }
 
         // Include history, staff, realizations etc as needed by JS
