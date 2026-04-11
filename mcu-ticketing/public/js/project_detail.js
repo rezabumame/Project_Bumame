@@ -387,25 +387,38 @@ function loadProjectDetail(projectId, activeTab = 'details') {
 
                                     <div class="mb-3">
                                         <label class="text-muted small text-uppercase fw-bold mb-2">Documents</label>
-                                        <div class="d-grid gap-2">
+                                        <div class="d-grid gap-2" id="project-documents-container">
                                             ${sphLink}
                                             ${p.sph_number ? `
                                                 <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-center text-muted small">
                                                     <i class="fas fa-hashtag me-2"></i>SPH: <span class="fw-bold ms-1 text-dark">${p.sph_number}</span>
                                                 </div>
                                             ` : ''}
-                                            ${p.approved_rab_id ? `
-                                                <a href="index.php?page=rabs_export_pdf&id=${p.approved_rab_id}" target="_blank" class="btn btn-primary w-100 p-2 d-flex align-items-center justify-content-between shadow-sm rounded-3 mt-1 export-rab-btn" style="background-color: #204EAB; border: none; font-size: 0.85rem;">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="fas fa-file-pdf me-2"></i>
-                                                        <div class="text-start">
-                                                            <div class="fw-bold">Export PDF RAB</div>
-                                                            <div class="small opacity-75">${p.approved_rab_number || 'Download Document'} ${!p.is_rab_approved ? `(${p.rab_status.replace(/_/g, ' ').toUpperCase()})` : ''}</div>
-                                                        </div>
-                                                    </div>
-                                                    <i class="fas fa-download small"></i>
-                                                </a>
-                                            ` : ''}
+                                            ${(() => {
+                            if (p.rabs && p.rabs.length > 0) {
+                                return p.rabs.map(rab => {
+                                    const isApproved = [
+                                        'approved', 'submitted_to_finance', 'advance_paid',
+                                        'need_approval_realization', 'realization_approved',
+                                        'completed', 'realization_rejected', 'closed'
+                                    ].includes(rab.status);
+
+                                    return `
+                                                        <a href="index.php?page=rabs_export_pdf&id=${rab.id}" target="_blank" class="btn btn-primary w-100 p-2 d-flex align-items-center justify-content-between shadow-sm rounded-3 mt-1 export-rab-btn" style="background-color: #204EAB; border: none; font-size: 0.85rem;">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="fas fa-file-pdf me-2"></i>
+                                                                <div class="text-start">
+                                                                    <div class="fw-bold">Export PDF RAB</div>
+                                                                    <div class="small opacity-75">${rab.rab_number || 'Download Document'} ${!isApproved ? `(${rab.status.replace(/_/g, ' ').toUpperCase()})` : ''}</div>
+                                                                </div>
+                                                            </div>
+                                                            <i class="fas fa-download small"></i>
+                                                        </a>
+                                                    `;
+                                }).join('');
+                            }
+                            return '';
+                        })()}
                                         </div>
                                     </div>
                                     

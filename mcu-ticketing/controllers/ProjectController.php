@@ -1377,9 +1377,13 @@ class ProjectController extends BaseController {
             return;
         }
 
-        // Include RAB Info if exists and approved
+        // Include RAB Info - Fetch all non-rejected RABs for this project
         $rabModel = $this->loadModel('Rab');
-        $rab = $rabModel->getByProject($id);
+        $rabs_query = "SELECT id, rab_number, status FROM rabs WHERE project_id = :project_id AND status != 'rejected' ORDER BY created_at DESC";
+        $stmtRabs = $this->db->prepare($rabs_query);
+        $stmtRabs->bindParam(':project_id', $id);
+        $stmtRabs->execute();
+        $project['rabs'] = $stmtRabs->fetchAll(PDO::FETCH_ASSOC);
         
         // Statuses that are considered "Approved" and ready for printing
         $approved_statuses = [
@@ -1388,12 +1392,13 @@ class ProjectController extends BaseController {
             'completed', 'realization_rejected', 'closed'
         ];
 
-        // Always provide the RAB ID if found, even if not fully approved yet for korlap/admin
-        if ($rab) {
-            $project['approved_rab_id'] = $rab['id'];
-            $project['approved_rab_number'] = $rab['rab_number'];
-            $project['is_rab_approved'] = in_array($rab['status'], $approved_statuses);
-            $project['rab_status'] = $rab['status'];
+        // For backward compatibility with JS, also set the first RAB as "approved_rab" if it exists
+        if (!empty($project['rabs'])) {
+            $latest_rab = $project['rabs'][0];
+            $project['approved_rab_id'] = $latest_rab['id'];
+            $project['approved_rab_number'] = $latest_rab['rab_number'];
+            $project['is_rab_approved'] = in_array($latest_rab['status'], $approved_statuses);
+            $project['rab_status'] = $latest_rab['status'];
         }
 
         // Include history, staff, realizations etc as needed by JS
