@@ -314,11 +314,7 @@ if (!class_exists('DateHelper')) {
                                                 <?php endif; ?>
                                             <?php endif; ?>
 
-                                            <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])) && empty($row['tm_id'])): ?>
-                                                <a href="index.php?page=technical_meeting_create&project_id=<?php echo $row['project_id']; ?>" class="btn btn-sm btn-outline-info" title="Technical Meeting">
-                                                    <i class="fas fa-handshake"></i>
-                                                </a>
-                                            <?php endif; ?>
+
 
                                             <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'procurement'): ?>
                                                 <?php 
@@ -544,11 +540,7 @@ if (!class_exists('DateHelper')) {
                                             <?php endif; ?>
                                         <?php endif; ?>
 
-                                        <?php if (!empty($row['korlap_id']) && (isset($_SESSION['role']) && in_array($_SESSION['role'], ['korlap', 'admin_ops', 'superadmin'])) && empty($row['tm_id'])): ?>
-                                            <a href="index.php?page=technical_meeting_create&project_id=<?php echo $row['project_id']; ?>" class="btn btn-sm btn-outline-info shadow-sm" title="Technical Meeting">
-                                                <i class="fas fa-handshake"></i> TM
-                                            </a>
-                                        <?php endif; ?>
+
 
                                         <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'procurement'): ?>
                                             <?php 
