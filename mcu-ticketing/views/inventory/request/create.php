@@ -19,7 +19,7 @@
                                 <h5 class="card-title mb-3">1. Pilih Project</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Project</label>
-                                    <select class="form-select select2" name="project_id" required>
+                                    <select class="form-select select2-inventory" name="project_id" required>
                                         <option value="">-- Pilih Project --</option>
                                         <?php foreach ($projects as $p): ?>
                                             <option value="<?php echo $p['project_id']; ?>">
@@ -41,7 +41,15 @@
                     <div class="col-lg-8">
                         <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title mb-3">2. Input Kebutuhan Barang</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">2. Input Kebutuhan Barang</h5>
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <i class="fas fa-search text-muted"></i>
+                                        </span>
+                                        <input type="text" id="itemSearch" class="form-control border-start-0" placeholder="Cari Nama Barang...">
+                                    </div>
+                                </div>
                                 
                                 <div class="accordion" id="accordionItems">
                                     <?php $i=0; foreach ($items_by_category as $category => $items): $i++; ?>
@@ -100,6 +108,49 @@
 </div>
 
 <script>
+    $(document).ready(function() {
+        // Initialize Select2 for Project Selection
+        $('.select2-inventory').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Pilih Project --',
+            width: '100%'
+        });
+
+        // Search items within accordion
+        $('#itemSearch').on('keyup', function() {
+            let value = $(this).val().toLowerCase();
+            let hasResults = false;
+
+            $('.accordion-item').each(function() {
+                let $accordionItem = $(this);
+                let $tableRows = $accordionItem.find('tbody tr');
+                let matchesInCategory = 0;
+
+                $tableRows.each(function() {
+                    let text = $(this).text().toLowerCase();
+                    if (text.indexOf(value) > -1) {
+                        $(this).show();
+                        matchesInCategory++;
+                        hasResults = true;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                if (matchesInCategory > 0) {
+                    $accordionItem.show();
+                    // If searching, open the accordion
+                    if (value.length > 0) {
+                        $accordionItem.find('.accordion-collapse').addClass('show');
+                        $accordionItem.find('.accordion-button').removeClass('collapsed');
+                    }
+                } else {
+                    $accordionItem.hide();
+                }
+            });
+        });
+    });
+
     document.getElementById('inventoryRequestForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
