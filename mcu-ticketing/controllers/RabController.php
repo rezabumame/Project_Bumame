@@ -346,6 +346,17 @@ class RabController extends BaseController {
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
         
+        // Anti-Double Submit Protection (Server Side)
+        $submit_token = $_POST['submit_token'] ?? '';
+        if ($submit_token) {
+            if (isset($_SESSION['last_rab_submit_token']) && $_SESSION['last_rab_submit_token'] === $submit_token) {
+                // Already processed this token, redirect to list or show warning
+                $this->redirect('rabs_list', ['msg' => 'Pengajuan RAB sedang diproses atau sudah berhasil dikirim.']);
+                return;
+            }
+            $_SESSION['last_rab_submit_token'] = $submit_token;
+        }
+
         // CSRF Protection
         if (!$this->validateCsrfToken()) {
             die("Invalid CSRF token. Possible CSRF attack detected!");

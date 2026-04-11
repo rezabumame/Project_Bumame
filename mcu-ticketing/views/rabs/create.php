@@ -228,6 +228,9 @@
     </div>
 
     <form action="index.php?page=rabs_store" method="POST" id="formRab">
+        <!-- Anti-Double Submit Token -->
+        <input type="hidden" name="submit_token" value="<?php echo bin2hex(random_bytes(16)); ?>">
+        
         <!-- Hidden Fields for Submission -->
         <input type="hidden" name="selected_dates" id="selected_dates" value="[]">
         <input type="hidden" name="status" id="status_field" value="draft">
@@ -1397,6 +1400,15 @@ $(document).ready(function() {
 
     // Form Submit Handler - Prepare data before submission
     $('#formRab').on('submit', function(e) {
+        const btnSubmit = $('#btn_submit');
+        const btnDraft = $('#btn_draft');
+
+        // Prevent double submission
+        if (btnSubmit.prop('disabled')) {
+            e.preventDefault();
+            return false;
+        }
+
         // Collect selected dates from checkboxes (project dates)
         const projectDates = [];
         $('.project-date-check:checked').each(function() {
@@ -1426,6 +1438,10 @@ $(document).ready(function() {
             });
             return false;
         }
+        
+        // Disable buttons and show loading state
+        btnSubmit.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
+        btnDraft.prop('disabled', true);
         
         // Allow form to submit
         return true;
