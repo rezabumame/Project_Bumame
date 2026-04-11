@@ -8,8 +8,9 @@ class InventoryMasterController extends BaseController {
     }
 
     private function checkPermission() {
-        // Allow ONLY Superadmin to manage master data
-        if ($_SESSION['role'] != 'superadmin') {
+        // Allow Superadmin, Korlap, and Admin Ops to manage master data
+        $allowedRoles = ['superadmin', 'korlap', 'admin_ops'];
+        if (!in_array($_SESSION['role'], $allowedRoles)) {
             die("Access Denied");
         }
     }

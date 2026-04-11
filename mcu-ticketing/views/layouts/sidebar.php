@@ -309,8 +309,9 @@
             $isSuper = ($role == 'superadmin');
             $canSeeSalesMgmt = in_array($role, ['superadmin', 'admin_sales', 'ceo', 'sales_support_supervisor', 'sales_performance_manager']);
             $canSeeStaffMgmt = in_array($role, ['superadmin', 'admin_ops', 'manager_ops', 'head_ops']);
+            $canSeeInventoryMaster = in_array($role, ['superadmin', 'korlap', 'admin_ops']);
             
-            if ($isSuper || $canSeeSalesMgmt || $canSeeStaffMgmt):
+            if ($isSuper || $canSeeSalesMgmt || $canSeeStaffMgmt || $canSeeInventoryMaster):
             ?>
             <div class="sidebar-category-header">Administration</div>
             <?php if ($isSuper): ?>
@@ -335,6 +336,9 @@
             <a href="index.php?page=cost_codes_index" class="list-group-item list-group-item-action <?php echo ($currentPage == 'cost_codes_index') ? 'active' : ''; ?>">
                 <i class="fas fa-tags me-2"></i>Expense Code
             </a>
+            <?php endif; ?>
+
+            <?php if ($canSeeInventoryMaster): ?>
             <a href="index.php?page=inventory_master_index" class="list-group-item list-group-item-action <?php echo (strpos($currentPage, 'inventory_master') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-database me-2"></i>Master Inventory
             </a>
