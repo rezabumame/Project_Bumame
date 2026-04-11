@@ -467,8 +467,8 @@ class RabRealizationController extends BaseController {
                 }
             } else {
                 // For others, show only advance_paid RABs + those in realization workflow
-                // Exclude 'approved' - only show after advance is paid
-                if (in_array($r['status'], ['advance_paid', 'submitted_to_finance', 'need_approval_realization'])) {
+                // Exclude 'approved' and 'submitted_to_finance' - only show after advance is paid
+                if (in_array($r['status'], ['advance_paid', 'need_approval_realization'])) {
                     $candidate_rabs[] = $r;
                 }
             }
@@ -767,6 +767,13 @@ class RabRealizationController extends BaseController {
 
         $rab_id = $_GET['rab_id'];
         $rab = $this->verifyRabAccess($rab_id);
+        
+        // Safety Check: RAB must be in advance_paid or need_approval_realization status
+        // Except for manager_ops who might be viewing/approving
+        if ($_SESSION['role'] != 'manager_ops' && $_SESSION['role'] != 'superadmin' && !in_array($rab['status'], ['advance_paid', 'need_approval_realization'])) {
+            header("Location: index.php?page=realization_list&err=RAB must be in 'Advance Paid' status before creating realization.");
+            exit;
+        }
         
         // Get RAB Items as template
         $rab_items = $this->rab->getItems($rab_id);
