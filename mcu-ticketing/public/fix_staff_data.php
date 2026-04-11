@@ -1,20 +1,31 @@
 <?php
 /**
- * Standalone Repair Script - REFINED
+ * Standalone Repair Script - PUBLIC VERSION
  * Purpose: Fix casing inconsistency in man_powers table based on Official Acuan
- * Usage: Run via browser: http://localhost/bumame/mcu-ticketing/scripts/fix_staff_data.php
+ * Usage: Run via browser: http://[domain]/fix_staff_data.php
  */
+
+// 1. Enable Error Reporting for Debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require_once __DIR__ . '/../config/database.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
+echo "<h1>Man Power Data Repair Script (Public Debug)</h1>";
+
 if (!$db) {
-    die("Database connection failed. Please check config/database.php");
+    echo "<div style='color: red; padding: 10px; border: 1px solid red;'>";
+    echo "<h3>Database connection failed!</h3>";
+    echo "Please check <b>config/database.php</b>. ";
+    echo "If you are on a live server, ensure the 'live' credentials match your hosting setup.";
+    echo "</div>";
+    exit;
 }
 
-echo "<h1>Man Power Data Repair Script (Refined)</h1>";
 echo "<pre>";
 
 /**
@@ -84,7 +95,6 @@ foreach ($all_staff as $staff) {
             }
         }
         if (!$matched) {
-            // Jika tidak ada di acuan, tetap simpan tapi bersihkan spasi
             $newSkills[] = $s; 
         }
     }
@@ -118,13 +128,12 @@ echo "------------------------------------------------\n";
 echo "</pre>";
 
 /**
- * BONUS: Update System Setting agar ke depannya ejaan sesuai acuan
+ * Update System Setting
  */
 echo "<h3>Sinkronisasi Pengaturan Sistem...</h3>";
 $codes = [];
 $i = 1;
 foreach ($officialSkills as $os) {
-    $code = str_replace(' ', '_', strtoupper($os));
     $codes[] = "SKILL_$i=$os";
     $i++;
 }
@@ -135,7 +144,7 @@ $updateSettingStmt = $db->prepare($updateSettingQuery);
 $updateSettingStmt->bindParam(":val", $newSettingValue);
 
 if ($updateSettingStmt->execute()) {
-    echo "<p style='color: green;'>Pengaturan RAB Personnel Codes telah disinkronkan dengan acuan resmi!</p>";
+    echo "<p style='color: green;'>Pengaturan RAB Personnel Codes telah disinkronkan!</p>";
 } else {
     echo "<p style='color: red;'>Gagal sinkronisasi pengaturan sistem.</p>";
 }
