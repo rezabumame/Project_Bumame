@@ -997,16 +997,15 @@ class ProjectController extends BaseController {
             $limit = 10;
             $offset = ($page - 1) * $limit;
 
-            $stmt = $this->project->readForProcurement($limit, $offset);
+            $search = isset($_GET['search']) ? $_GET['search'] : '';
+            $status = isset($_GET['status']) ? $_GET['status'] : '';
+            $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
+            $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
+
+            $stmt = $this->project->readForProcurement($limit, $offset, $search, $status, $date_from, $date_to);
             $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $total_rows = $this->project->countForProcurement();
+            $total_rows = $this->project->countForProcurement($search, $status, $date_from, $date_to);
             $total_pages = ceil($total_rows / $limit);
-            
-            // Initialize filter variables to empty as they are not yet supported in procurement view
-            $search = '';
-            $status = '';
-            $date_from = '';
-            $date_to = '';
 
             include '../views/projects/list.php';
             return;
@@ -1063,7 +1062,7 @@ class ProjectController extends BaseController {
     }
 
     public function assign_vendor_ajax() {
-        if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'korlap') {
+        if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'korlap' && $_SESSION['role'] != 'superadmin') {
              echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
              exit;
         }
@@ -1151,7 +1150,7 @@ class ProjectController extends BaseController {
     }
 
     public function assign_korlap_ajax() {
-         if ($_SESSION['role'] != 'admin_ops') {
+         if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'superadmin') {
              echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
              exit;
         }
@@ -1245,9 +1244,9 @@ class ProjectController extends BaseController {
     }
 
     public function mark_no_vendor_needed_ajax() {
-        if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'korlap') {
+        if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'korlap' && $_SESSION['role'] != 'superadmin') {
             echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-            exit;
+             exit;
         }
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // CSRF Protection

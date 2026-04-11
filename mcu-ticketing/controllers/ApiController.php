@@ -53,7 +53,7 @@ class ApiController extends BaseController {
         }
     }
 
-    private function jsonResponse($data, $statusCode = 200) {
+    protected function jsonResponse($data, $statusCode = 200) {
         // Clear buffer again just in case
         while (ob_get_level()) ob_end_clean();
         

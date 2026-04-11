@@ -518,7 +518,7 @@ if (!class_exists('DateHelper')) {
                                         <?php endif; ?>
                                     <?php endif; ?>
 
-                                    <?php if (isset($_SESSION['role']) && ($_SESSION['role'] == 'admin_ops' || $_SESSION['role'] == 'korlap') && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'no_vendor_needed', 'in_progress_ops'])): ?>
+                                    <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'korlap', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'no_vendor_needed', 'in_progress_ops'])): ?>
                                         <button class="btn btn-sm btn-outline-warning btn-assign-vendor" 
                                                 data-id="<?php echo $row['project_id']; ?>" 
                                                 data-project-name="<?php echo htmlspecialchars($row['nama_project']); ?>"

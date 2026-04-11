@@ -1546,7 +1546,7 @@ class Project {
         return $stmt->execute();
     }
 
-    public function readForProcurement($limit = null, $offset = null) {
+    public function readForProcurement($limit = null, $offset = null, $search = '', $status = '', $date_from = '', $date_to = '') {
         $query = "SELECT p.*, sp.sales_name, k.full_name as korlap_name,
                          (SELECT GROUP_CONCAT(DISTINCT u_kohas.full_name SEPARATOR ', ')
                           FROM medical_result_items mri_sub
@@ -1562,8 +1562,22 @@ class Project {
                       OR (p.snack = 'Ya')
                       OR (p.status_vendor = 'pending' AND p.status_project IN ('approved', 'in_progress_ops'))
                   )
-                  AND p.status_project NOT IN ('rejected', 'cancelled')
-                  ORDER BY p.created_at DESC";
+                  AND p.status_project NOT IN ('rejected', 'cancelled')";
+
+        if (!empty($search)) {
+            $query .= " AND (p.nama_project LIKE :search OR p.company_name LIKE :search OR p.project_id LIKE :search)";
+        }
+        if (!empty($status)) {
+            $query .= " AND p.status_project = :status";
+        }
+        if (!empty($date_from)) {
+            $query .= " AND DATE(p.created_at) >= :date_from";
+        }
+        if (!empty($date_to)) {
+            $query .= " AND DATE(p.created_at) <= :date_to";
+        }
+
+        $query .= " ORDER BY p.created_at DESC";
         
         if ($limit !== null && $offset !== null) {
             $query .= " LIMIT :limit OFFSET :offset";
@@ -1571,6 +1585,20 @@ class Project {
 
         $stmt = $this->conn->prepare($query);
         
+        if (!empty($search)) {
+            $search_term = "%{$search}%";
+            $stmt->bindParam(":search", $search_term);
+        }
+        if (!empty($status)) {
+            $stmt->bindParam(":status", $status);
+        }
+        if (!empty($date_from)) {
+            $stmt->bindParam(":date_from", $date_from);
+        }
+        if (!empty($date_to)) {
+            $stmt->bindParam(":date_to", $date_to);
+        }
+
         if ($limit !== null && $offset !== null) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
@@ -1580,7 +1608,7 @@ class Project {
         return $stmt;
     }
 
-    public function countForProcurement() {
+    public function countForProcurement($search = '', $status = '', $date_from = '', $date_to = '') {
         $query = "SELECT COUNT(*) as count 
                   FROM " . $this->table_name . " p 
                   WHERE (
@@ -1591,7 +1619,35 @@ class Project {
                   )
                   AND p.status_project NOT IN ('rejected', 'cancelled')";
         
+        if (!empty($search)) {
+            $query .= " AND (p.nama_project LIKE :search OR p.company_name LIKE :search OR p.project_id LIKE :search)";
+        }
+        if (!empty($status)) {
+            $query .= " AND p.status_project = :status";
+        }
+        if (!empty($date_from)) {
+            $query .= " AND DATE(p.created_at) >= :date_from";
+        }
+        if (!empty($date_to)) {
+            $query .= " AND DATE(p.created_at) <= :date_to";
+        }
+
         $stmt = $this->conn->prepare($query);
+
+        if (!empty($search)) {
+            $search_term = "%{$search}%";
+            $stmt->bindParam(":search", $search_term);
+        }
+        if (!empty($status)) {
+            $stmt->bindParam(":status", $status);
+        }
+        if (!empty($date_from)) {
+            $stmt->bindParam(":date_from", $date_from);
+        }
+        if (!empty($date_to)) {
+            $stmt->bindParam(":date_to", $date_to);
+        }
+
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['count'];
