@@ -92,21 +92,21 @@ class DashboardController extends BaseController {
             if (is_array($dates)) {
                 foreach ($dates as $date) {
                     $events[] = [
-                        'id' => $row['project_id'], // Add ID for click event
-                        'title' => $row['nama_project'],
+                        'id' => $row['project_id'] ?? null,
+                        'title' => $row['nama_project'] ?? null,
                         'start' => $date,
                         'backgroundColor' => $color,
                         'borderColor' => $color,
                         'extendedProps' => [
-                            'status' => $row['status_project'],
-                            'lunch' => $row['lunch'],
-                            'lunch_notes' => $row['lunch_notes'],
-                            'snack' => $row['snack'],
-                            'snack_notes' => $row['snack_notes'],
-                            'total_pax' => $row['total_peserta'],
-                            'exam_types' => $row['jenis_pemeriksaan'],
-                            'sales_name' => $row['sales_name'],
-                            'location' => $row['alamat'],
+                            'status' => $row['status_project'] ?? null,
+                            'lunch' => $row['lunch'] ?? null,
+                            'lunch_notes' => $row['lunch_notes'] ?? null,
+                            'snack' => $row['snack'] ?? null,
+                            'snack_notes' => $row['snack_notes'] ?? null,
+                            'total_pax' => $row['total_peserta'] ?? null,
+                            'exam_types' => $row['jenis_pemeriksaan'] ?? null,
+                            'sales_name' => $row['sales_name'] ?? null,
+                            'location' => $row['alamat'] ?? null,
                             'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
@@ -150,21 +150,21 @@ class DashboardController extends BaseController {
             if (is_array($dates)) {
                 foreach ($dates as $date) {
                     $events[] = [
-                        'id' => $row['project_id'],
-                        'title' => $row['nama_project'],
+                        'id' => $row['project_id'] ?? null,
+                        'title' => $row['nama_project'] ?? null,
                         'start' => $date,
                         'backgroundColor' => $color,
                         'borderColor' => $color,
                         'extendedProps' => [
-                            'status' => $row['status_project'],
-                            'lunch' => $row['lunch'],
-                            'lunch_notes' => $row['lunch_notes'],
-                            'snack' => $row['snack'],
-                            'snack_notes' => $row['snack_notes'],
-                            'total_pax' => $row['total_peserta'],
-                            'exam_types' => $row['jenis_pemeriksaan'],
-                            'sales_name' => $row['sales_name'],
-                            'location' => $row['alamat'],
+                            'status' => $row['status_project'] ?? null,
+                            'lunch' => $row['lunch'] ?? null,
+                            'lunch_notes' => $row['lunch_notes'] ?? null,
+                            'snack' => $row['snack'] ?? null,
+                            'snack_notes' => $row['snack_notes'] ?? null,
+                            'total_pax' => $row['total_peserta'] ?? null,
+                            'exam_types' => $row['jenis_pemeriksaan'] ?? null,
+                            'sales_name' => $row['sales_name'] ?? null,
+                            'location' => $row['alamat'] ?? null,
                             'formatted_date' => DateHelper::formatIndonesianDate($date)
                         ]
                     ];
