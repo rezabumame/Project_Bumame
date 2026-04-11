@@ -18,6 +18,9 @@ This is a comprehensive ticketing dashboard for managing MCU projects, facilitat
 2. **Database Setup**
    - Open PHPMyAdmin.
    - Create a new database named `mcu_ticketing`.
+
+---
+*Testing Git connection - Bumame AI Assistant*
    - Import the latest backup file (e.g., `mcu_ticketing_backup_YYYYMMDD.sql`) located in the project root.
 
 3. **Configuration**
