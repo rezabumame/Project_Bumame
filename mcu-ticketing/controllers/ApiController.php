@@ -64,12 +64,13 @@ class ApiController extends BaseController {
     }
 
     private function export_rabs() {
-        $query = "SELECT r.id as rab_id_pk, r.rab_number, r.status, r.location_type, r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage, r.total_participants,
+        $query = "SELECT r.id as rab_id_pk, r.rab_number, r.status, r.location_type, r.total_participants,
+                         p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
+                         sp.sales_name, u_korlap.full_name as korlap_name,
                          r.total_personnel, r.total_transport, r.total_consumption,
                          (SELECT SUM(subtotal) FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as total_vendor,
-                         r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at,
-                         p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
-                         sp.sales_name, u_korlap.full_name as korlap_name
+                         r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage,
+                         r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at
                   FROM rabs r
                   LEFT JOIN projects p ON r.project_id = p.project_id
                   LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
@@ -85,41 +86,58 @@ class ApiController extends BaseController {
             require_once $helperPath;
         }
 
-        // Post-process for readability
-        foreach ($data as &$row) {
-            // Fetch Details separately to avoid SQL complexity/locale issues
-            $row['personnel_details'] = $this->getItemDetails($row['rab_id_pk'], 'personnel');
-            $row['transport_details'] = $this->getItemDetails($row['rab_id_pk'], 'transport');
-            $row['consumption_details'] = $this->getItemDetails($row['rab_id_pk'], 'consumption');
-            $row['vendor_details'] = $this->getItemDetails($row['rab_id_pk'], 'vendor');
-
-            // Format MCU Date using Smart Helper
+        $finalData = [];
+        // Post-process for readability and reordering
+        foreach ($data as $row) {
+            $formattedRow = [];
+            
+            // 1. Basic Info
+            $formattedRow['rab_number'] = $row['rab_number'];
+            $formattedRow['status'] = $row['status'];
+            $formattedRow['location_type'] = $row['location_type'];
+            $formattedRow['total_participants'] = $row['total_participants'];
+            $formattedRow['project_id'] = $row['project_id'];
+            $formattedRow['nama_project'] = $row['nama_project'];
+            $formattedRow['company_name'] = $row['company_name'];
+            
             if (class_exists('DateHelper')) {
-                $row['tanggal_mcu'] = DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']);
+                $formattedRow['tanggal_mcu'] = DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']);
+            } else {
+                $formattedRow['tanggal_mcu'] = $row['tanggal_mcu'];
             }
             
-            // Format Timeline Dates
-            $row['tgl_pengajuan'] = $row['tgl_pengajuan'] ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-';
-            $row['approved_date_manager'] = $row['approved_date_manager'] ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-';
-            $row['approved_date_head'] = $row['approved_date_head'] ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-';
-            $row['submitted_to_finance_at'] = $row['submitted_to_finance_at'] ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-';
-            $row['finance_paid_at'] = $row['finance_paid_at'] ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-';
+            $formattedRow['sales_name'] = $row['sales_name'];
+            $formattedRow['korlap_name'] = $row['korlap_name'];
 
-            // Format Currency columns with Dot
-            $row['grand_total'] = number_format($row['grand_total'], 0, ',', '.');
-            $row['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
-            $row['budget_percentage'] = number_format($row['budget_percentage'], 2, ',', '.') . '%';
+            // 2. Details and Totals (Side by Side)
+            $formattedRow['total_personnel'] = number_format($row['total_personnel'], 0, ',', '.');
+            $formattedRow['personnel_details'] = $this->getItemDetails($row['rab_id_pk'], 'personnel');
             
-            $row['total_personnel'] = number_format($row['total_personnel'], 0, ',', '.');
-            $row['total_transport'] = number_format($row['total_transport'], 0, ',', '.');
-            $row['total_consumption'] = number_format($row['total_consumption'], 0, ',', '.');
-            $row['total_vendor'] = number_format($row['total_vendor'] ?? 0, 0, ',', '.');
+            $formattedRow['total_transport'] = number_format($row['total_transport'], 0, ',', '.');
+            $formattedRow['transport_details'] = $this->getItemDetails($row['rab_id_pk'], 'transport');
+            
+            $formattedRow['total_consumption'] = number_format($row['total_consumption'], 0, ',', '.');
+            $formattedRow['consumption_details'] = $this->getItemDetails($row['rab_id_pk'], 'consumption');
+            
+            $formattedRow['total_vendor'] = number_format($row['total_vendor'] ?? 0, 0, ',', '.');
+            $formattedRow['vendor_details'] = $this->getItemDetails($row['rab_id_pk'], 'vendor');
 
-            // Remove internal PK
-            unset($row['rab_id_pk']);
+            // 3. Grand Totals & Budget
+            $formattedRow['grand_total'] = number_format($row['grand_total'], 0, ',', '.');
+            $formattedRow['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
+            $formattedRow['budget_percentage'] = number_format($row['budget_percentage'], 2, ',', '.') . '%';
+
+            // 4. Timestamps (Far Right)
+            $formattedRow['tgl_pengajuan'] = $row['tgl_pengajuan'] ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-';
+            $formattedRow['approved_date_manager'] = $row['approved_date_manager'] ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-';
+            $formattedRow['approved_date_head'] = $row['approved_date_head'] ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-';
+            $formattedRow['submitted_to_finance_at'] = $row['submitted_to_finance_at'] ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-';
+            $formattedRow['finance_paid_at'] = $row['finance_paid_at'] ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-';
+
+            $finalData[] = $formattedRow;
         }
         
-        $this->jsonResponse(['status' => 'success', 'data' => $data]);
+        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
     }
 
     private function getItemDetails($rab_id, $category) {
@@ -145,11 +163,11 @@ class ApiController extends BaseController {
 
     private function export_realizations() {
         $query = "SELECT rr.id as real_id_pk, rr.date as realization_date, rr.actual_participants, rr.total_amount as realization_total, rr.status as realization_status,
-                         rr.created_at as tgl_input_realisasi,
                          r.rab_number, r.grand_total as rab_total, r.cost_value as budget_ops,
                          (r.cost_value - rr.total_amount) as variance,
                          (rr.total_amount / r.cost_value * 100) as realization_percentage,
-                         p.nama_project, p.company_name
+                         p.nama_project, p.company_name,
+                         rr.created_at as tgl_input_realisasi
                   FROM rab_realizations rr
                   LEFT JOIN rabs r ON rr.rab_id = r.id
                   LEFT JOIN projects p ON rr.project_id = p.project_id
@@ -159,32 +177,39 @@ class ApiController extends BaseController {
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($data as &$row) {
-            // Fetch Details separately
-            $row['personnel_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'personnel');
-            $row['transport_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'transport');
-            $row['consumption_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'consumption');
-            $row['vendor_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'vendor');
+        $finalData = [];
+        foreach ($data as $row) {
+            $formattedRow = [];
 
-            // Format Dates
-            $row['realization_date'] = date('d M Y', strtotime($row['realization_date']));
-            $row['tgl_input_realisasi'] = $row['tgl_input_realisasi'] ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-';
+            // 1. Basic Info
+            $formattedRow['realization_date'] = date('d M Y', strtotime($row['realization_date']));
+            $formattedRow['rab_number'] = $row['rab_number'];
+            $formattedRow['nama_project'] = $row['nama_project'];
+            $formattedRow['company_name'] = $row['company_name'];
+            $formattedRow['actual_participants'] = $row['actual_participants'];
+            $formattedRow['realization_status'] = $row['realization_status'];
 
-            // Format Currency
-            $row['realization_total'] = number_format($row['realization_total'], 0, ',', '.');
-            $row['rab_total'] = number_format($row['rab_total'], 0, ',', '.');
-            $row['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
-            $row['variance'] = number_format($row['variance'], 0, ',', '.');
-            $row['realization_percentage'] = number_format($row['realization_percentage'], 2, ',', '.') . '%';
-            
-            // Add Under/Over Budget label
-            $row['budget_status'] = ($row['variance'] >= 0) ? 'Under Budget' : 'Over Budget';
+            // 2. Totals and Details
+            $formattedRow['realization_total'] = number_format($row['realization_total'], 0, ',', '.');
+            $formattedRow['personnel_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'personnel');
+            $formattedRow['transport_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'transport');
+            $formattedRow['consumption_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'consumption');
+            $formattedRow['vendor_realization'] = $this->getRealizationItemDetails($row['real_id_pk'], 'vendor');
 
-            // Remove internal PK
-            unset($row['real_id_pk']);
+            // 3. Comparison & Variance
+            $formattedRow['rab_total'] = number_format($row['rab_total'], 0, ',', '.');
+            $formattedRow['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
+            $formattedRow['variance'] = number_format($row['variance'], 0, ',', '.');
+            $formattedRow['realization_percentage'] = number_format($row['realization_percentage'], 2, ',', '.') . '%';
+            $formattedRow['budget_status'] = ($row['variance'] >= 0) ? 'Under Budget' : 'Over Budget';
+
+            // 4. Timestamps
+            $formattedRow['tgl_input_realisasi'] = $row['tgl_input_realisasi'] ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-';
+
+            $finalData[] = $formattedRow;
         }
         
-        $this->jsonResponse(['status' => 'success', 'data' => $data]);
+        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
     }
 
     private function getRealizationItemDetails($realization_id, $category) {
