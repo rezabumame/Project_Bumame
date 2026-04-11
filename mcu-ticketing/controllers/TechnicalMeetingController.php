@@ -271,13 +271,9 @@ class TechnicalMeetingController extends BaseController {
 
         $projectModel = $this->loadModel('Project');
         
-        // If Korlap, only show their projects. Else show all.
-        if ($_SESSION['role'] === 'korlap') {
-            $projects = $projectModel->getProjectsByKorlap($_SESSION['user_id'])->fetchAll(PDO::FETCH_ASSOC);
-        } else {
-            // For admin/superadmin, show all active projects that need TM
-            $projects = $projectModel->getAllProjects()->fetchAll(PDO::FETCH_ASSOC);
-        }
+        // For admin/superadmin/korlap, show all active projects that need TM
+        // getAllProjects handles role-based filtering correctly
+        $projects = $projectModel->getAllProjects($_SESSION['role'], $_SESSION['user_id'], 1, 1000)->fetchAll(PDO::FETCH_ASSOC);
 
         include '../views/technical_meeting/select_project.php';
     }

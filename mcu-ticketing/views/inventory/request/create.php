@@ -117,21 +117,19 @@
         });
 
         // Search items within accordion
-        $('#itemSearch').on('keyup', function() {
+        $('#itemSearch').on('input', function() {
             let value = $(this).val().toLowerCase();
-            let hasResults = false;
-
-            $('.accordion-item').each(function() {
+            
+            $('.accordion-item').each(function(index) {
                 let $accordionItem = $(this);
                 let $tableRows = $accordionItem.find('tbody tr');
                 let matchesInCategory = 0;
 
                 $tableRows.each(function() {
-                    let text = $(this).text().toLowerCase();
-                    if (text.indexOf(value) > -1) {
+                    let itemName = $(this).find('strong').text().toLowerCase();
+                    if (itemName.indexOf(value) > -1) {
                         $(this).show();
                         matchesInCategory++;
-                        hasResults = true;
                     } else {
                         $(this).hide();
                     }
@@ -143,6 +141,15 @@
                     if (value.length > 0) {
                         $accordionItem.find('.accordion-collapse').addClass('show');
                         $accordionItem.find('.accordion-button').removeClass('collapsed');
+                    } else {
+                        // Reset to initial state: first category open, others closed
+                        if (index === 0) {
+                            $accordionItem.find('.accordion-collapse').addClass('show');
+                            $accordionItem.find('.accordion-button').removeClass('collapsed');
+                        } else {
+                            $accordionItem.find('.accordion-collapse').removeClass('show');
+                            $accordionItem.find('.accordion-button').addClass('collapsed');
+                        }
                     }
                 } else {
                     $accordionItem.hide();
