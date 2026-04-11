@@ -66,8 +66,8 @@
                         <h5 class="mt-4 mb-3 border-bottom pb-2">3. Dokumen</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Upload Dokumen Technical Meeting (PDF) <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" name="tm_file" accept=".pdf" <?php echo isset($existing_tm['tm_file_path']) ? '' : 'required'; ?>>
+                                <label class="form-label">Upload Dokumen Technical Meeting (PDF/JPG/PNG) <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" name="tm_file" accept=".pdf, .jpg, .jpeg, .png" <?php echo isset($existing_tm['tm_file_path']) ? '' : 'required'; ?>>
                                 <?php if (isset($existing_tm['tm_file_path'])): ?>
                                     <div class="mt-2">
                                         <small class="text-success"><i class="fas fa-check-circle"></i> File uploaded: <a href="<?php echo file_url('uploads/tm/' . $existing_tm['tm_file_path']); ?>" target="_blank">View File</a></small>

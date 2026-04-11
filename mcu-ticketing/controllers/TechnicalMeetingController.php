@@ -153,8 +153,8 @@ class TechnicalMeetingController extends BaseController {
         $tm_file_path = "";
         if (isset($_FILES['tm_file']) && $_FILES['tm_file']['error'] == 0) {
              $file_extension = strtolower(pathinfo($_FILES["tm_file"]["name"], PATHINFO_EXTENSION));
-             if ($file_extension == "pdf") {
-                 $new_filename = $project_id . "_TM_" . time() . ".pdf";
+             if (in_array($file_extension, ['pdf', 'jpg', 'jpeg', 'png'])) {
+                 $new_filename = $project_id . "_TM_" . time() . "." . $file_extension;
                  $tmp = $_FILES["tm_file"]["tmp_name"];
                  if (GcsUpload::isEnabled()) {
                      try {
@@ -234,7 +234,7 @@ class TechnicalMeetingController extends BaseController {
         } else {
             // Insert
             if (empty($tm_file_path)) {
-                 echo "<script>alert('Error: Technical Meeting Document (PDF) is mandatory.'); window.history.back();</script>";
+                 echo "<script>alert('Error: Technical Meeting Document (PDF/JPG/PNG) is mandatory.'); window.history.back();</script>";
                  exit;
             }
 
@@ -246,20 +246,9 @@ class TechnicalMeetingController extends BaseController {
             $stmt->bindParam(':setting_alat_date', $setting_alat_date);
             $stmt->bindParam(':notes', $notes);
             $stmt->bindParam(':tm_file_path', $tm_file_path);
-            $stmt->bindParam(':layout_file_path', $layout_file_path); // Can be empty string or null? DB allows NULL for layout_file_path? Let's check schema.
-            // My schema said `layout_file_path` varchar(255) DEFAULT NULL.
-            // If empty string, it stores empty string. That's fine.
-            // But better store NULL if empty.
-            $layout_file_path_param = empty($layout_file_path) ? null : $layout_file_path;
-            // Wait, I bound variable.
-            // Let's re-bind or handle logic before.
-            // Actually, if I bindParam, it binds the variable reference.
-            // So I should set $layout_file_path correctly.
-            if (empty($layout_file_path)) $layout_file_path = null;
+            $stmt->bindParam(':layout_file_path', $layout_file_path);
             
-            // Re-binding logic is tricky with variables.
-            // Let's just use execute array or be careful.
-            // I'll stick to bindParam but ensure variable holds NULL if needed.
+            if (empty($layout_file_path)) $layout_file_path = null;
             
             $stmt->bindParam(':created_by', $created_by);
 
@@ -272,5 +261,24 @@ class TechnicalMeetingController extends BaseController {
                 echo "Error creating TM.";
             }
         }
+    }
+
+    public function select_project() {
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: index.php?page=login");
+            exit;
+        }
+
+        $projectModel = $this->loadModel('Project');
+        
+        // If Korlap, only show their projects. Else show all.
+        if ($_SESSION['role'] === 'korlap') {
+            $projects = $projectModel->getProjectsByKorlap($_SESSION['user_id'])->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            // For admin/superadmin, show all active projects that need TM
+            $projects = $projectModel->getAllProjects()->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        include '../views/technical_meeting/select_project.php';
     }
 }

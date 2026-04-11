@@ -1684,15 +1684,19 @@ class Project {
     }
 
     public function checkAndSetReadyForInvoicing($project_id) {
-        // 1. Check Medical Result Status
-        $query = "SELECT status FROM medical_results WHERE project_id = :pid LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":pid", $project_id);
-        $stmt->execute();
-        $mr = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Validation relaxed per user request: Medical Result Entry and Technical Meeting are no longer mandatory.
+        // We only check if RAB status is completed.
 
-        // Allow COMPLETED or NOT_NEEDED
-        if (!$mr || !in_array($mr['status'], ['COMPLETED', 'NOT_NEEDED'])) {
+        // 1. Check current status to prevent regression
+        $currQuery = "SELECT status_project FROM " . $this->table_name . " WHERE project_id = :pid";
+        $currStmt = $this->conn->prepare($currQuery);
+        $currStmt->bindParam(":pid", $project_id);
+        $currStmt->execute();
+        $currStatus = $currStmt->fetchColumn();
+
+        // Do not update if already in invoicing flow or completed
+        $ignored_statuses = ['ready_for_invoicing', 'invoice_requested', 'invoiced', 'paid', 'completed'];
+        if (in_array($currStatus, $ignored_statuses)) {
             return false;
         }
 
@@ -1706,17 +1710,12 @@ class Project {
 
         if (empty($rabs)) {
             // No RABs? 
-            // If Medical Result is done, and no RAB needed, maybe we can proceed?
-            // But usually project needs RAB.
-            // If empty, return false for safety unless we know for sure.
             return false; 
         }
 
         $all_completed = true;
         foreach ($rabs as $rab) {
             // Check if RAB status is completed (meaning settlement proof uploaded/verified)
-            // Or if it's 'realization_approved' and maybe that's enough?
-            // User requirement: "Status Realisasi jadi completed"
             if ($rab['status'] !== 'completed') {
                 $all_completed = false;
                 break;
@@ -1724,22 +1723,9 @@ class Project {
         }
 
         if ($all_completed) {
-            // Check current status to prevent regression
-            $currQuery = "SELECT status_project FROM " . $this->table_name . " WHERE project_id = :pid";
-            $currStmt = $this->conn->prepare($currQuery);
-            $currStmt->bindParam(":pid", $project_id);
-            $currStmt->execute();
-            $currStatus = $currStmt->fetchColumn();
-
-            // Do not update if already in invoicing flow or completed
-            $ignored_statuses = ['ready_for_invoicing', 'invoice_requested', 'invoiced', 'paid', 'completed'];
-            if (in_array($currStatus, $ignored_statuses)) {
-                return false;
-            }
-
             // Update Project Status
             $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
-            return $this->updateStatus($project_id, 'ready_for_invoicing', $user_id, 'system', 'Auto-update: RAB Realized & Medical Result Completed');
+            return $this->updateStatus($project_id, 'ready_for_invoicing', $user_id, 'system', 'Auto-update: RAB Realized (Result Entry & TM bypassed)');
         }
 
         return false;

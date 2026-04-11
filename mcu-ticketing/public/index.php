@@ -70,6 +70,7 @@ $router->add('technical_meeting_list', 'TechnicalMeetingController', 'index');
 $router->add('technical_meeting_view', 'TechnicalMeetingController', 'detail');
 $router->add('technical_meeting_create', 'TechnicalMeetingController', 'create');
 $router->add('technical_meeting_store', 'TechnicalMeetingController', 'store');
+$router->add('technical_meeting_select_project', 'TechnicalMeetingController', 'select_project');
 
 // RAB
 $router->add('rabs_create', 'RabController', 'create');
