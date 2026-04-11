@@ -4,6 +4,9 @@ class ApiController extends BaseController {
     private $api_key = "277b03b07f2b7f9a7924929d33129799"; // Default API Key for AppScript
 
     public function __construct() {
+        // Clear any previous output (headers, notices)
+        while (ob_get_level()) ob_end_clean();
+        
         parent::__construct();
         // Check API Key
         $header_key = $_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? null;
@@ -13,29 +16,33 @@ class ApiController extends BaseController {
     }
 
     public function fetch_data() {
-        $type = $_GET['type'] ?? 'rabs';
-        
-        switch ($type) {
-            case 'rabs':
-                $this->export_rabs();
-                break;
-            case 'realizations':
-                $this->export_realizations();
-                break;
-            case 'projects':
-                $this->export_projects();
-                break;
-            case 'inventory':
-                $this->export_inventory();
-                break;
-            case 'medical':
-                $this->export_medical();
-                break;
-            case 'invoices':
-                $this->export_invoices();
-                break;
-            default:
-                $this->jsonResponse(['status' => 'error', 'message' => 'Invalid data type requested'], 400);
+        try {
+            $type = $_GET['type'] ?? 'rabs';
+            
+            switch ($type) {
+                case 'rabs':
+                    $this->export_rabs();
+                    break;
+                case 'realizations':
+                    $this->export_realizations();
+                    break;
+                case 'projects':
+                    $this->export_projects();
+                    break;
+                case 'inventory':
+                    $this->export_inventory();
+                    break;
+                case 'medical':
+                    $this->export_medical();
+                    break;
+                case 'invoices':
+                    $this->export_invoices();
+                    break;
+                default:
+                    $this->jsonResponse(['status' => 'error', 'message' => 'Invalid data type requested'], 400);
+            }
+        } catch (Exception $e) {
+            $this->jsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 

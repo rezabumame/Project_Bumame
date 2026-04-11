@@ -117,42 +117,47 @@
         });
 
         // Search items within accordion
-        $('#itemSearch').on('input', function() {
-            let value = $(this).val().toLowerCase();
+        $('#itemSearch').on('input keyup', function() {
+            const value = $(this).val().toLowerCase().trim();
             
-            $('.accordion-item').each(function(index) {
-                let $accordionItem = $(this);
-                let $tableRows = $accordionItem.find('tbody tr');
-                let matchesInCategory = 0;
+            if (value === "") {
+                // Reset to initial state: show all categories, open only the first one
+                $('.accordion-item').show();
+                $('.accordion-item tbody tr').show();
+                $('.accordion-collapse').removeClass('show');
+                $('.accordion-button').addClass('collapsed');
+                
+                // Re-open the first category
+                const $firstItem = $('.accordion-item').first();
+                $firstItem.find('.accordion-collapse').addClass('show');
+                $firstItem.find('.accordion-button').removeClass('collapsed');
+                return;
+            }
 
-                $tableRows.each(function() {
-                    let itemName = $(this).find('strong').text().toLowerCase();
-                    if (itemName.indexOf(value) > -1) {
-                        $(this).show();
-                        matchesInCategory++;
+            $('.accordion-item').each(function() {
+                const $category = $(this);
+                let categoryMatches = 0;
+
+                $category.find('tbody tr').each(function() {
+                    const $row = $(this);
+                    // Search in the entire row text for better results
+                    const rowText = $row.text().toLowerCase();
+                    
+                    if (rowText.indexOf(value) > -1) {
+                        $row.show();
+                        categoryMatches++;
                     } else {
-                        $(this).hide();
+                        $row.hide();
                     }
                 });
 
-                if (matchesInCategory > 0) {
-                    $accordionItem.show();
-                    // If searching, open the accordion
-                    if (value.length > 0) {
-                        $accordionItem.find('.accordion-collapse').addClass('show');
-                        $accordionItem.find('.accordion-button').removeClass('collapsed');
-                    } else {
-                        // Reset to initial state: first category open, others closed
-                        if (index === 0) {
-                            $accordionItem.find('.accordion-collapse').addClass('show');
-                            $accordionItem.find('.accordion-button').removeClass('collapsed');
-                        } else {
-                            $accordionItem.find('.accordion-collapse').removeClass('show');
-                            $accordionItem.find('.accordion-button').addClass('collapsed');
-                        }
-                    }
+                if (categoryMatches > 0) {
+                    $category.show();
+                    // Always expand categories that have matching items
+                    $category.find('.accordion-collapse').addClass('show');
+                    $category.find('.accordion-button').removeClass('collapsed');
                 } else {
-                    $accordionItem.hide();
+                    $category.hide();
                 }
             });
         });
