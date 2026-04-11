@@ -225,7 +225,7 @@ class Project {
         $this->snack_notes = htmlspecialchars(strip_tags($this->snack_notes));
         $this->header_footer = htmlspecialchars(strip_tags($this->header_footer));
         $this->total_peserta = htmlspecialchars(strip_tags($this->total_peserta));
-        $this->tanggal_mcu = $this->tanggal_mcu; // JSON encoded
+
         $this->alamat = htmlspecialchars(strip_tags($this->alamat));
         $this->notes = htmlspecialchars(strip_tags($this->notes));
         $this->status_project = htmlspecialchars(strip_tags($this->status_project));
