@@ -1377,8 +1377,16 @@ class ProjectController extends BaseController {
 
         // Include RAB Info if exists and approved
         $rabModel = $this->loadModel('Rab');
-        $rab = $rabModel->getByProject($id); // Assuming this returns latest or all? Usually 1 per project.
-        if ($rab && $rab['status'] === 'approved') {
+        $rab = $rabModel->getByProject($id);
+        
+        // Statuses that are considered "Approved" and ready for printing
+        $approved_statuses = [
+            'approved', 'submitted_to_finance', 'advance_paid', 
+            'need_approval_realization', 'realization_approved', 
+            'completed', 'realization_rejected', 'closed'
+        ];
+
+        if ($rab && in_array($rab['status'], $approved_statuses)) {
             $project['approved_rab_id'] = $rab['id'];
         }
 

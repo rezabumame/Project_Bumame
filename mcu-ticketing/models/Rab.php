@@ -296,6 +296,17 @@ class Rab {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getByProject($project_id) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE project_id = :project_id 
+                  AND status != 'rejected' 
+                  ORDER BY created_at DESC LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":project_id", $project_id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function getItems($rab_id) {
         $query = "SELECT * FROM " . $this->items_table . " WHERE rab_id = :rab_id ORDER BY id ASC";
         $stmt = $this->conn->prepare($query);
