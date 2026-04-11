@@ -398,6 +398,22 @@ function loadProjectDetail(projectId, activeTab = 'details') {
                                     </div>
                                     
                                     ${vendorMemoButton}
+                                    
+                                    ${p.approved_rab_id ? `
+                                        <div class="mt-3">
+                                            <label class="text-muted small text-uppercase fw-bold mb-2">Approved RAB</label>
+                                            <a href="index.php?page=rabs_export_pdf&id=${p.approved_rab_id}" target="_blank" class="btn btn-primary w-100 p-3 d-flex align-items-center justify-content-between shadow-sm rounded-3" style="background-color: #204EAB; border: none;">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-file-pdf fs-3 me-3"></i>
+                                                    <div class="text-start">
+                                                        <div class="fw-medium">Export PDF RAB</div>
+                                                        <div class="small opacity-75">Download approved budget document</div>
+                                                    </div>
+                                                </div>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>

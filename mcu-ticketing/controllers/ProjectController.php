@@ -1352,6 +1352,55 @@ class ProjectController extends BaseController {
         echo json_encode(['status' => 'success', 'data' => $result, 'project_status' => $project['status_project']]);
     }
 
+    public function get_project_detail_ajax() {
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            echo json_encode(['error' => 'Missing Project ID']);
+            return;
+        }
+
+        if (!$this->verifyProjectAccess($id)) {
+            echo json_encode(['error' => 'Access Denied']);
+            return;
+        }
+
+        $project = $this->project->getProjectById($id);
+        if (!$project) {
+            echo json_encode(['error' => 'Project not found']);
+            return;
+        }
+
+        // Include RAB Info if exists and approved
+        $rabModel = $this->loadModel('Rab');
+        $rab = $rabModel->getByProject($id); // Assuming this returns latest or all? Usually 1 per project.
+        if ($rab && $rab['status'] === 'approved') {
+            $project['approved_rab_id'] = $rab['id'];
+        }
+
+        // Include history, staff, realizations etc as needed by JS
+        $project['history'] = $this->project->getHistory($id);
+        $project['staff_assignments'] = $this->project->getStaffAssignments($id);
+        $project['realizations'] = $this->project->getDWRealizations($id);
+        
+        // Fetch Technical Meeting
+        $tmModel = $this->loadModel('TechnicalMeeting');
+        $project['technical_meeting'] = $tmModel->getByProject($id);
+
+        // Fetch Cost Codes for Vendor Memo
+        $costCodeModel = $this->loadModel('CostCode');
+        $project['cost_codes'] = $costCodeModel->getByCategory('Vendor (Internal Memo)')->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch Vendor Allocations
+        $project['vendor_allocations'] = $this->project->getVendorAllocations($id)->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode($project);
+    }
+
     public function uploadSph() {
         if ($_SESSION['role'] != 'admin_sales' && $_SESSION['role'] != 'superadmin') {
             die("Unauthorized");
