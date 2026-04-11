@@ -83,24 +83,7 @@ class Rab {
     }
 
     public function isProjectHasApprovedRabForDates($project_id, $selected_dates) {
-        $query = "SELECT selected_dates FROM " . $this->table_name . " 
-                  WHERE project_id = :project_id 
-                  AND status IN ('approved', 'submitted_to_finance', 'advance_paid', 'need_approval_realization', 'realization_approved', 'completed', 'realization_rejected', 'closed')";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":project_id", $project_id);
-        $stmt->execute();
-        
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $existing_dates = json_decode($row['selected_dates'], true);
-            if (is_array($existing_dates) && is_array($selected_dates)) {
-                $intersection = array_intersect($existing_dates, $selected_dates);
-                if (!empty($intersection)) {
-                    return true;
-                }
-            }
-        }
-        
+        // Validation removed per user request: Allow multiple RABs for the same project/dates
         return false;
     }
 
