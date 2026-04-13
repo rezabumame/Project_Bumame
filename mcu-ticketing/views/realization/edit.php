@@ -970,7 +970,7 @@
             return parseInt(str.toString().replace(/\./g, '')) || 0;
         }
 
-        $(document).on('input', '.qty-input, #actual_participants, #doctor_participants', function() {
+        $(document).on('input', '.qty-input, .price-input, #actual_participants, #doctor_participants', function() {
             calculateAll();
         });
 
@@ -1228,7 +1228,6 @@
         calculateAll();
     }
 
-    // Helper for emergency row update (needed because I added onchange="updateEmergencyRow(this)")
     window.updateEmergencyRow = function(select) {
         let row = select.closest('tr');
         let selectedOption = select.options[select.selectedIndex];
@@ -1244,6 +1243,9 @@
         if (codeBadge) {
             codeBadge.innerText = expenseCode;
         }
+
+        // Trigger calculation for the row
+        calculateAll();
     }
 </script>
 

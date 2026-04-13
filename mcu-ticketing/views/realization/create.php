@@ -1060,6 +1060,9 @@
                 if (codeBadge) {
                     codeBadge.innerText = expenseCode;
                 }
+
+                // Trigger calculation
+                calculateAll();
             }
         });
 
@@ -1257,11 +1260,18 @@
     }
 
     function calculateRow(row) {
-        let qty = parseFloat(row.querySelector('.qty-input').value) || 0;
-        let price = parseCurrency(row.querySelector('.price-input').value);
+        let qtyInput = row.querySelector('.qty-input');
+        let priceInput = row.querySelector('.price-input');
+        if (!qtyInput || !priceInput) return;
+
+        let qty = parseFloat(qtyInput.value) || 0;
+        let price = parseCurrency(priceInput.value);
         let subtotal = qty * price;
         
-        row.querySelector('.subtotal-display').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+        let subtotalDisplay = row.querySelector('.subtotal-display');
+        if (subtotalDisplay) {
+            subtotalDisplay.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal);
+        }
         row.dataset.subtotal = subtotal;
     }
 
