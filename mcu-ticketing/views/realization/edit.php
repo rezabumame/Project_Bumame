@@ -241,6 +241,15 @@
 
     <form action="index.php?page=realization_update" method="POST" id="realizationForm" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?php echo $realization['id']; ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+        
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Gagal Simpan:</strong> <?php echo htmlspecialchars($_GET['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
         
         <div class="row">
             <!-- Main Content -->
@@ -822,7 +831,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // Stepper Logic
-        let currentStep = 1;
+        let currentStep = <?php echo isset($_GET['error']) ? '6' : '1'; ?>;
         const totalSteps = 6;
 
         function showStep(step) {

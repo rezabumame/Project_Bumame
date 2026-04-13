@@ -862,12 +862,19 @@ class RabRealizationController extends BaseController {
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
 
+        // Check if POST data is empty but request is POST (usually means post_max_size exceeded)
+        if (empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
+            header("Location: index.php?page=realization_list&err=Ukuran data/file terlalu besar. Maksimal total upload adalah " . ini_get('post_max_size'));
+            exit;
+        }
+
         try {
-            $rab_id = $_POST['rab_id'];
+            $rab_id = $_POST['rab_id'] ?? null;
+            if (!$rab_id) throw new Exception("RAB ID is missing.");
 
             // CSRF Protection
             if (!$this->validateCsrfToken()) {
-                die("Invalid CSRF token.");
+                throw new Exception("Sesi kadaluarsa atau token tidak valid. Silakan refresh halaman.");
             }
 
             $project_id = $_POST['project_id'];
@@ -1054,8 +1061,9 @@ class RabRealizationController extends BaseController {
             }
 
         } catch (Exception $e) {
-            // Handle error (redirect back with error)
-            echo "Error: " . $e->getMessage();
+            $rab_id = $_POST['rab_id'] ?? '';
+            header("Location: index.php?page=realization_create&rab_id=$rab_id&error=" . urlencode($e->getMessage()));
+            exit;
         }
     }
     public function edit() {
@@ -1151,16 +1159,26 @@ class RabRealizationController extends BaseController {
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
 
+        // Check if POST data is empty but request is POST (usually means post_max_size exceeded)
+        if (empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
+            header("Location: index.php?page=realization_list&err=Ukuran data/file terlalu besar. Maksimal total upload adalah " . ini_get('post_max_size'));
+            exit;
+        }
+
         try {
-            $id = $_POST['id'];
+            $id = $_POST['id'] ?? null;
+            if (!$id) throw new Exception("Realization ID is missing.");
+
             $realization = $this->realization->getById($id);
             
             if (!$realization) {
                 throw new Exception("Realization not found.");
             }
 
-            // Permission Check
-            $this->verifyRabAccess($realization['rab_id']);
+            // CSRF Protection
+            if (!$this->validateCsrfToken()) {
+                throw new Exception("Sesi kadaluarsa atau token tidak valid. Silakan refresh halaman.");
+            }
 
             // Prepare Header Data
             $doctor_max_patient = $this->setting->get('doctor_max_patient') ?? 50;
@@ -1316,7 +1334,7 @@ class RabRealizationController extends BaseController {
         }
     }
     private function handleBaUpload($rab_id, $date) {
-        if (!isset($_FILES['ba_file'])) {
+        if (!isset($_FILES['ba_file']) || $_FILES['ba_file']['error'] == UPLOAD_ERR_NO_FILE) {
             return null;
         }
 
@@ -1335,29 +1353,16 @@ class RabRealizationController extends BaseController {
 
         // Check if multiple files (array)
         if (is_array($_FILES['ba_file']['name'])) {
-            // Multiple files logic
+            // ... (keep multiple files logic but add error checking)
             $fileCount = count($_FILES['ba_file']['name']);
-            $hasFile = false;
-            
-            // Check if at least one file is valid
-            for ($i = 0; $i < $fileCount; $i++) {
-                if ($_FILES['ba_file']['error'][$i] == UPLOAD_ERR_OK) {
-                    $hasFile = true;
-                    break;
-                }
-            }
-
-            if (!$hasFile) return null;
-
-            // If only 1 file is uploaded via multiple input, treating it as single file might be better for preview?
-            // But consistency matters. Let's ZIP if > 1, or if array structure.
-            // Actually, if I zip 1 file, it's annoying to preview.
-            // Let's check count of valid files.
-            
             $validFiles = [];
+            
             for ($i = 0; $i < $fileCount; $i++) {
                 if ($_FILES['ba_file']['error'][$i] == UPLOAD_ERR_OK) {
                     $validFiles[] = $i;
+                } elseif ($_FILES['ba_file']['error'][$i] != UPLOAD_ERR_NO_FILE) {
+                    $errorMsg = $this->getUploadErrorMessage($_FILES['ba_file']['error'][$i]);
+                    throw new Exception("Gagal upload file '{$_FILES['ba_file']['name'][$i]}': $errorMsg");
                 }
             }
 
@@ -1370,7 +1375,7 @@ class RabRealizationController extends BaseController {
                 $ext = strtolower($fileInfo['extension']);
                 
                 if (!in_array($ext, $allowed)) {
-                    throw new Exception("Invalid file type. Only PDF, JPG, PNG allowed.");
+                    throw new Exception("Format file tidak valid. Hanya PDF, JPG, PNG yang diizinkan.");
                 }
 
                 $filename = "BA_{$rab_id}_" . str_replace('-', '', $date) . "_" . time() . ".{$ext}";
@@ -1380,7 +1385,9 @@ class RabRealizationController extends BaseController {
                     try {
                         GcsUpload::upload($tmp, 'uploads/ba/' . $filename);
                         return $filename;
-                    } catch (\Exception $e) { }
+                    } catch (\Exception $e) { 
+                        throw new Exception("GCS Upload failed: " . $e->getMessage());
+                    }
                 } elseif (move_uploaded_file($tmp, $targetPath)) {
                     return $filename;
                 }
@@ -1407,7 +1414,9 @@ class RabRealizationController extends BaseController {
                         GcsUpload::upload($zipPath, 'uploads/ba/' . $zipFilename);
                         @unlink($zipPath);
                         return $zipFilename;
-                    } catch (\Exception $e) { }
+                    } catch (\Exception $e) { 
+                        throw new Exception("GCS ZIP Upload failed: " . $e->getMessage());
+                    }
                 }
                 return $zipFilename;
             }
@@ -1415,14 +1424,15 @@ class RabRealizationController extends BaseController {
         } else {
             // Single file input logic (legacy support)
             if ($_FILES['ba_file']['error'] != UPLOAD_ERR_OK) {
-                return null;
+                $errorMsg = $this->getUploadErrorMessage($_FILES['ba_file']['error']);
+                throw new Exception("Gagal upload BA: $errorMsg");
             }
 
             $fileInfo = pathinfo($_FILES['ba_file']['name']);
-            $ext = strtolower($fileInfo['extension']);
+            $ext = strtolower($fileInfo['extension'] ?? '');
             
             if (!in_array($ext, $allowed)) {
-                throw new Exception("Invalid file type. Only PDF, JPG, PNG allowed.");
+                throw new Exception("Format file tidak valid. Hanya PDF, JPG, PNG yang diizinkan.");
             }
 
             $filename = "BA_{$rab_id}_" . str_replace('-', '', $date) . "_" . time() . ".{$ext}";
@@ -1432,12 +1442,35 @@ class RabRealizationController extends BaseController {
                 try {
                     GcsUpload::upload($tmp, 'uploads/ba/' . $filename);
                     return $filename;
-                } catch (\Exception $e) { }
+                } catch (\Exception $e) { 
+                    throw new Exception("GCS Upload failed: " . $e->getMessage());
+                }
             } elseif (move_uploaded_file($tmp, $targetPath)) {
                 return $filename;
             }
         }
-        throw new Exception("Failed to upload BA file.");
+        throw new Exception("Gagal memindahkan file ke direktori tujuan.");
+    }
+
+    private function getUploadErrorMessage($errorCode) {
+        switch ($errorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+                return "File melebihi batas 'upload_max_filesize' di server (" . ini_get('upload_max_filesize') . ")";
+            case UPLOAD_ERR_FORM_SIZE:
+                return "File melebihi batas MAX_FILE_SIZE di form HTML.";
+            case UPLOAD_ERR_PARTIAL:
+                return "File hanya terupload sebagian.";
+            case UPLOAD_ERR_NO_FILE:
+                return "Tidak ada file yang dipilih.";
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return "Folder temp server hilang.";
+            case UPLOAD_ERR_CANT_WRITE:
+                return "Gagal menulis file ke disk server.";
+            case UPLOAD_ERR_EXTENSION:
+                return "Upload dihentikan oleh ekstensi PHP.";
+            default:
+                return "Error tidak diketahui (code: $errorCode).";
+        }
     }
 
     public function qr_verify() {
