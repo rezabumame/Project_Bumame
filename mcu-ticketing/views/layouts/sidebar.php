@@ -285,7 +285,7 @@
             <!-- 7. Audit & Monitoring -->
             <?php 
             $canSeeAudit = in_array($role, ['manager_ops', 'head_ops', 'superadmin', 'ceo']);
-            $canSeeProductivity = in_array($role, ['superadmin', 'manager_ops', 'head_ops']);
+            $canSeeProductivity = in_array($role, ['superadmin', 'manager_ops', 'head_ops', 'admin_ops', 'spv_ops', 'korlap']);
             
             if ($canSeeAudit || $canSeeProductivity):
             ?>

@@ -144,19 +144,57 @@
 
      .ops-table th,
      .ops-table td {
-         white-space: nowrap;
          vertical-align: top;
+         white-space: normal;
      }
 
      .ops-table .detail-cell {
          white-space: pre-line;
          min-width: 220px;
          max-width: 320px;
+         word-break: break-word;
+     }
+
+     .ops-table .nowrap-cell {
+         white-space: nowrap;
+     }
+
+     .ops-table .amount-col {
+         min-width: 120px;
      }
 
      .ops-tab-panel .card-header {
          border-bottom: 1px solid #eef2f7 !important;
      }
+
+     .ops-table-wrap {
+         max-height: 68vh;
+         overflow: auto;
+         border: 1px solid #eef2f7;
+         border-radius: 0.5rem;
+     }
+
+     .ops-table-wrap .ops-table thead th {
+         position: sticky;
+         top: 0;
+         z-index: 30;
+         background: #f8f9fa !important;
+         box-shadow: inset 0 -1px 0 #e9ecef;
+     }
+
+     /* Freeze leading columns for RAB table */
+     #rabOpsTable th:nth-child(1), #rabOpsTable td:nth-child(1) { position: sticky; left: 0; z-index: 21; background: #fff; min-width: 150px; }
+     #rabOpsTable th:nth-child(2), #rabOpsTable td:nth-child(2) { position: sticky; left: 150px; z-index: 21; background: #fff; min-width: 130px; }
+     #rabOpsTable th:nth-child(3), #rabOpsTable td:nth-child(3) { position: sticky; left: 280px; z-index: 21; background: #fff; min-width: 90px; }
+     #rabOpsTable th:nth-child(4), #rabOpsTable td:nth-child(4) { position: sticky; left: 370px; z-index: 21; background: #fff; min-width: 240px; }
+     #rabOpsTable thead th:nth-child(1), #rabOpsTable thead th:nth-child(2), #rabOpsTable thead th:nth-child(3), #rabOpsTable thead th:nth-child(4) { z-index: 35; background: #eef2f7 !important; }
+
+     /* Freeze leading columns for Realization table */
+     #realizationOpsTable th:nth-child(1), #realizationOpsTable td:nth-child(1) { position: sticky; left: 0; z-index: 21; background: #fff; min-width: 130px; }
+     #realizationOpsTable th:nth-child(2), #realizationOpsTable td:nth-child(2) { position: sticky; left: 130px; z-index: 21; background: #fff; min-width: 150px; }
+     #realizationOpsTable th:nth-child(3), #realizationOpsTable td:nth-child(3) { position: sticky; left: 280px; z-index: 21; background: #fff; min-width: 90px; }
+     #realizationOpsTable th:nth-child(4), #realizationOpsTable td:nth-child(4) { position: sticky; left: 370px; z-index: 21; background: #fff; min-width: 240px; }
+     #realizationOpsTable thead th:nth-child(1), #realizationOpsTable thead th:nth-child(2), #realizationOpsTable thead th:nth-child(3), #realizationOpsTable thead th:nth-child(4) { z-index: 35; background: #eef2f7 !important; }
 </style>
 
 <?php
@@ -346,7 +384,12 @@ $realization_table_rows = $realization_table_rows ?? [];
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="rab-table-tab" data-bs-toggle="tab" data-bs-target="#rab-table-pane" type="button" role="tab" aria-controls="rab-table-pane" aria-selected="false">
-                Tabel RAB & Realisasi RAB
+                Pengajuan RAB
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="realization-table-tab" data-bs-toggle="tab" data-bs-target="#realization-table-pane" type="button" role="tab" aria-controls="realization-table-pane" aria-selected="false">
+                Realisasi RAB
             </button>
         </li>
     </ul>
@@ -780,7 +823,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="rabOpsTable">
                             <thead class="bg-light">
                                 <tr>
@@ -813,30 +856,30 @@ $realization_table_rows = $realization_table_rows ?? [];
                             <tbody>
                                 <?php foreach ($rab_table_rows as $row): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['status'] ?? '-'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['status'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['nama_project'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['company_name'] ?? '-'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['tanggal_mcu'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['tanggal_mcu'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['sales_name'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['korlap_name'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['total_personnel'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['total_personnel'] ?? 0)); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['personnel_details'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['total_transport'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['total_transport'] ?? 0)); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['transport_details'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['total_consumption'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['total_consumption'] ?? 0)); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['consumption_details'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['total_vendor'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['total_vendor'] ?? 0)); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['vendor_details'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['grand_total'] ?? 0)); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['budget_percentage'] ?? 0), 2); ?>%</td>
-                                        <td><?php echo !empty($row['tgl_pengajuan']) ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-'; ?></td>
-                                        <td><?php echo !empty($row['approved_date_manager']) ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-'; ?></td>
-                                        <td><?php echo !empty($row['approved_date_head']) ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-'; ?></td>
-                                        <td><?php echo !empty($row['submitted_to_finance_at']) ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-'; ?></td>
-                                        <td><?php echo !empty($row['finance_paid_at']) ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-'; ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['grand_total'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
+                                        <td class="text-end nowrap-cell"><?php echo number_format((float)($row['budget_percentage'] ?? 0), 2); ?>%</td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['tgl_pengajuan']) ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-'; ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['approved_date_manager']) ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-'; ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['approved_date_head']) ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-'; ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['submitted_to_finance_at']) ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-'; ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['finance_paid_at']) ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-'; ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -844,7 +887,9 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
             </div>
+        </div>
 
+        <div class="tab-pane fade ops-tab-panel" id="realization-table-pane" role="tabpanel" aria-labelledby="realization-table-tab">
             <div class="card border-0 shadow-sm rounded-4 mb-5">
                 <div class="card-header bg-transparent border-0 fw-bold py-3">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -856,7 +901,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="realizationOpsTable">
                             <thead class="bg-light">
                                 <tr>
@@ -883,24 +928,24 @@ $realization_table_rows = $realization_table_rows ?? [];
                             <tbody>
                                 <?php foreach ($realization_table_rows as $row): ?>
                                     <tr>
-                                        <td><?php echo !empty($row['realization_date']) ? date('d M Y', strtotime($row['realization_date'])) : '-'; ?></td>
-                                        <td><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
-                                        <td><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['realization_date']) ? date('d M Y', strtotime($row['realization_date'])) : '-'; ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['nama_project'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['company_name'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['actual_participants'] ?? 0)); ?></td>
-                                        <td><?php echo htmlspecialchars($row['realization_status'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['realization_total'] ?? 0)); ?></td>
+                                        <td class="text-end nowrap-cell"><?php echo number_format((float)($row['actual_participants'] ?? 0)); ?></td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['realization_status'] ?? '-'); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['realization_total'] ?? 0)); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['personnel_realization'] ?? '-'); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['transport_realization'] ?? '-'); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['consumption_realization'] ?? '-'); ?></td>
                                         <td class="detail-cell"><?php echo htmlspecialchars($row['vendor_realization'] ?? '-'); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['rab_total'] ?? 0)); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['variance'] ?? 0)); ?></td>
-                                        <td class="text-end"><?php echo number_format((float)($row['realization_percentage'] ?? 0), 2); ?>%</td>
-                                        <td><?php echo htmlspecialchars($row['budget_status'] ?? '-'); ?></td>
-                                        <td><?php echo !empty($row['tgl_input_realisasi']) ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-'; ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['rab_total'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
+                                        <td class="text-end amount-col nowrap-cell"><?php echo number_format((float)($row['variance'] ?? 0)); ?></td>
+                                        <td class="text-end nowrap-cell"><?php echo number_format((float)($row['realization_percentage'] ?? 0), 2); ?>%</td>
+                                        <td class="nowrap-cell"><?php echo htmlspecialchars($row['budget_status'] ?? '-'); ?></td>
+                                        <td class="nowrap-cell"><?php echo !empty($row['tgl_input_realisasi']) ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-'; ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -1046,14 +1091,20 @@ $(document).ready(function() {
         pageLength: 10,
         order: [[ 19, "desc" ]],
         scrollX: true,
-        autoWidth: false
+        autoWidth: false,
+        fixedHeader: false
     });
 
     $('#realizationOpsTable').DataTable({
         pageLength: 10,
         order: [[ 0, "desc" ]],
         scrollX: true,
-        autoWidth: false
+        autoWidth: false,
+        fixedHeader: false
+    });
+
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function () {
+        $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
     });
 
     // Handle Project Modal
