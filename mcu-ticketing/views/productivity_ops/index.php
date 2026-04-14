@@ -174,9 +174,8 @@
      }
 
      .ops-table-wrap {
-         max-height: none;
-         overflow-x: auto;
-         overflow-y: visible;
+         max-height: 70vh;
+         overflow: auto;
          border: 1px solid #e9edf5;
          border-radius: 0.75rem;
          background: #fff;
@@ -184,7 +183,9 @@
      }
 
      .ops-table-wrap .ops-table thead th {
-         position: static;
+         position: sticky;
+         top: 0;
+         z-index: 40;
          background: #f8fafc !important;
          color: #344054;
          font-weight: 600;
@@ -200,26 +201,45 @@
      /* Freeze first key column (SaaS-style pinned identity column) */
      #rabOpsTable th:nth-child(1), #rabOpsTable td:nth-child(1),
      #realizationOpsTable th:nth-child(1), #realizationOpsTable td:nth-child(1) {
-         position: static;
+         position: sticky;
+         left: 0;
+         z-index: 25;
          background: #fff;
          min-width: 160px;
+         box-shadow: 1px 0 0 #e9edf5;
      }
 
      /* Realization: also pin No RAB beside date */
      #realizationOpsTable th:nth-child(2),
      #realizationOpsTable td:nth-child(2) {
-         position: static;
+         position: sticky;
+         left: 160px;
+         z-index: 25;
          background: #fff;
          min-width: 170px;
+         box-shadow: 1px 0 0 #e9edf5;
      }
 
      #rabOpsTable thead th:nth-child(1),
      #realizationOpsTable thead th:nth-child(1) {
+         z-index: 45;
          background: #eef4ff !important;
      }
 
      #realizationOpsTable thead th:nth-child(2) {
+         z-index: 45;
          background: #eef4ff !important;
+     }
+
+     .dt-toolbar {
+         gap: 0.75rem;
+         margin-bottom: 0.75rem;
+     }
+
+     .dt-toolbar .dataTables_length,
+     .dt-toolbar .dataTables_filter {
+         margin: 0;
+         padding: 0;
      }
 </style>
 
@@ -849,6 +869,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap dt-toolbar" id="rabOpsToolbar"></div>
                     <div class="ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="rabOpsTable">
                             <thead class="bg-light">
@@ -927,6 +948,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap dt-toolbar" id="realizationOpsToolbar"></div>
                     <div class="ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="realizationOpsTable">
                             <thead class="bg-light">
@@ -1113,21 +1135,23 @@ $(document).ready(function() {
         order: [[ 7, "desc" ]] // Sort by utilization desc
     });
 
-    $('#rabOpsTable').DataTable({
+    const rabTable = $('#rabOpsTable').DataTable({
         pageLength: 10,
         order: [[ 19, "desc" ]],
         autoWidth: false,
         fixedHeader: false,
         responsive: false
     });
+    $('#rabOpsTable_wrapper .dataTables_length, #rabOpsTable_wrapper .dataTables_filter').appendTo('#rabOpsToolbar');
 
-    $('#realizationOpsTable').DataTable({
+    const realizationTable = $('#realizationOpsTable').DataTable({
         pageLength: 10,
         order: [[ 0, "desc" ]],
         autoWidth: false,
         fixedHeader: false,
         responsive: false
     });
+    $('#realizationOpsTable_wrapper .dataTables_length, #realizationOpsTable_wrapper .dataTables_filter').appendTo('#realizationOpsToolbar');
 
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function () {
         $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
