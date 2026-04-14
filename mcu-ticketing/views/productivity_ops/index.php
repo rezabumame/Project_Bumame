@@ -209,8 +209,24 @@
          box-shadow: 1px 0 0 #e9edf5;
      }
 
+     /* Realization: also pin No RAB beside date */
+     #realizationOpsTable th:nth-child(2),
+     #realizationOpsTable td:nth-child(2) {
+         position: sticky;
+         left: 160px;
+         z-index: 25;
+         background: #fff;
+         min-width: 170px;
+         box-shadow: 1px 0 0 #e9edf5;
+     }
+
      #rabOpsTable thead th:nth-child(1),
      #realizationOpsTable thead th:nth-child(1) {
+         z-index: 45;
+         background: #eef4ff !important;
+     }
+
+     #realizationOpsTable thead th:nth-child(2) {
          z-index: 45;
          background: #eef4ff !important;
      }

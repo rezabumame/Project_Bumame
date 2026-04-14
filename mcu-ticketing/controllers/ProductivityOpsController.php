@@ -79,7 +79,7 @@ class ProductivityOpsController {
         
         // Projects List for Filter (Only Ops In Progress or later)
         $project_scope_clause = $this->getProjectScopeSqlClause();
-        $query_projects = "SELECT project_id, nama_project FROM projects 
+        $query_projects = "SELECT p.project_id, p.nama_project FROM projects p 
                            WHERE status_project NOT IN ('need_approval_manager', 'need_approval_head', 'rejected', 're-nego', 'cancelled', 'DRAFT')
                            $project_scope_clause
                            ORDER BY created_at DESC";
