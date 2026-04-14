@@ -942,7 +942,7 @@
             <div class="mb-3">
                 <label class="form-label fw-bold">Bukti Transfer (Optional)</label>
                 <input type="file" name="transfer_proof" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                <div class="form-text">Format: PDF, JPG, PNG. Max 5MB.</div>
+                <div class="form-text">Format: PDF, JPG, PNG. Max 10MB.</div>
             </div>
 
             <div class="mb-3">

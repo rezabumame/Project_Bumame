@@ -352,9 +352,9 @@ class ProjectController extends BaseController {
                     return;
                 }
                 
-                // Validate Size (5MB)
-                if ($_FILES["ba_file"]["size"] > 5000000) {
-                    echo "<script>alert('Error: File size exceeds 5MB.'); window.history.back();</script>";
+                // Validate Size (10MB)
+                if ($_FILES["ba_file"]["size"] > 10000000) {
+                    echo "<script>alert('Error: File size exceeds 10MB.'); window.history.back();</script>";
                     return;
                 }
 

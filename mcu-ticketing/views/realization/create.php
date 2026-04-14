@@ -741,7 +741,7 @@
                                 <span class="fw-bold fst-italic">* Jika Anda sudah upload BA di menu Project Details untuk tanggal ini, Anda tidak perlu upload ulang disini (sistem akan mendeteksi otomatis).</span>
                             </div>
                             <input type="file" name="ba_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                            <div class="form-text">Maksimal 5MB. Format: PDF, JPG, PNG.</div>
+                            <div class="form-text">Maksimal 10MB. Format: PDF, JPG, PNG.</div>
                         </div>
                     </div>
                 </div>

@@ -16,6 +16,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY . /var/www/html/
 RUN cd /var/www/html && composer install --no-dev --no-interaction
 
+# Set PHP upload limits for cloud deployment
+RUN echo "upload_max_filesize = 10M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 10M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini
+
 EXPOSE 8080
 
 CMD ["apache2-foreground"]

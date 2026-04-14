@@ -470,7 +470,7 @@
                     <span class="input-group-text bg-light border-end-0"><i class="fas fa-upload text-muted"></i></span>
                     <input type="file" name="transfer_proof" class="form-control border-start-0" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
-                <div class="form-text small">Format: PDF, JPG, PNG. Maksimal 5MB.</div>
+                <div class="form-text small">Format: PDF, JPG, PNG. Maksimal 10MB.</div>
             </div>
 
             <div class="mb-0">

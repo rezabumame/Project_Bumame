@@ -53,7 +53,7 @@
                             <span class="input-group-text bg-white"><i class="fas fa-file-pdf text-danger"></i></span>
                             <input type="file" class="form-control" name="ba_file" accept=".pdf" required>
                         </div>
-                        <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i> Max size: 5MB. Format: PDF only.</div>
+                        <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i> Max size: 10MB. Format: PDF only.</div>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0">

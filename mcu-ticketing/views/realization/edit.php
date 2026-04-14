@@ -605,7 +605,7 @@
                                         <?php endif; ?>
 
                                         <input type="file" name="ba_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-                                        <div class="form-text text-muted small mt-1">Format: PDF, JPG, PNG. Max 5MB.</div>
+                                        <div class="form-text text-muted small mt-1">Format: PDF, JPG, PNG. Max 10MB.</div>
                                     </div>
                                 </div>
                             </div>
