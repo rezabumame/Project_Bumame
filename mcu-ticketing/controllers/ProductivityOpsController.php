@@ -203,8 +203,190 @@ class ProductivityOpsController {
             }
         }
 
+        // 5. Table Data (RAB & Realization style for App Script cross-check)
+        $project_ids = array_values(array_filter(array_map(function ($project) {
+            return $project['project_id'] ?? null;
+        }, $filtered_projects)));
+        $rab_table_rows = $this->getRabOpsTableData($project_ids);
+        $realization_table_rows = $this->getRealizationOpsTableData($project_ids);
+
         // Render View
         include '../views/productivity_ops/index.php';
+    }
+
+    public function export_excel() {
+        $start_date = $_GET['start_date'] ?? date('Y-m-01');
+        $end_date = $_GET['end_date'] ?? date('Y-m-t');
+        $filter_project_id = $_GET['project_id'] ?? '';
+        $filter_sales_id = $_GET['sales_id'] ?? '';
+        $filter_korlap_id = $_GET['korlap_id'] ?? '';
+        $filter_kohas_id = $_GET['kohas_id'] ?? '';
+        $export_type = $_GET['type'] ?? 'rab';
+
+        $query = "SELECT 
+                    p.project_id, p.nama_project, p.tanggal_mcu, p.status_project,
+                    p.sales_person_id, sp.sales_name,
+                    p.korlap_id, k.full_name as korlap_name,
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT u_kohas.full_name SEPARATOR ', ')
+                        FROM medical_results mr_sub
+                        JOIN medical_result_items mri_sub ON mr_sub.id = mri_sub.medical_result_id
+                        JOIN users u_kohas ON mri_sub.assigned_to_user_id = u_kohas.user_id
+                        WHERE mr_sub.project_id = p.project_id
+                    ) as kohas_names,
+                    (
+                        SELECT MIN(rr_sub.created_at)
+                        FROM rab_realizations rr_sub
+                        WHERE rr_sub.project_id = p.project_id
+                    ) as first_realization_created_at,
+                    r.grand_total as rab_total,
+                    r.cost_value,
+                    (SELECT SUM(ri.qty) FROM rab_items ri WHERE ri.rab_id = r.id AND ri.category = 'personnel') as personnel_qty,
+                    rr.total_amount as realization_total,
+                    rr.actual_participants as realization_pax,
+                    mr.id as medical_result_id
+                  FROM projects p
+                  LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
+                  LEFT JOIN users k ON p.korlap_id = k.user_id
+                  LEFT JOIN rabs r ON p.project_id = r.project_id AND r.status != 'rejected'
+                  LEFT JOIN (
+                      SELECT project_id, SUM(total_amount) as total_amount, SUM(actual_participants) as actual_participants 
+                      FROM rab_realizations 
+                      GROUP BY project_id
+                  ) rr ON p.project_id = rr.project_id
+                  LEFT JOIN medical_results mr ON p.project_id = mr.project_id
+                  WHERE 1=1
+                  AND p.status_project NOT IN ('need_approval_manager', 'need_approval_head', 'rejected', 're-nego', 'cancelled', 'DRAFT')
+                  ";
+
+        $params = [];
+        if ($filter_project_id) {
+            $query .= " AND p.project_id = :pid";
+            $params[':pid'] = $filter_project_id;
+        }
+        if ($filter_sales_id) {
+            $query .= " AND p.sales_person_id = :sid";
+            $params[':sid'] = $filter_sales_id;
+        }
+        if ($filter_korlap_id) {
+            $query .= " AND p.korlap_id = :kid";
+            $params[':kid'] = $filter_korlap_id;
+        }
+        if ($filter_kohas_id) {
+            $query .= " AND EXISTS (
+                SELECT 1 FROM medical_results mr2 
+                JOIN medical_result_items mri ON mr2.id = mri.medical_result_id
+                WHERE mr2.project_id = p.project_id AND mri.assigned_to_user_id = :kohas_id
+            )";
+            $params[':kohas_id'] = $filter_kohas_id;
+        }
+
+        $stmt = $this->db->prepare($query);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->execute();
+        $raw_projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $holidays = $this->nationalHoliday->getHolidayDates();
+        $korlap_tat_days = (int)($this->systemSetting->get('korlap_tat_days') ?? 3);
+        $stats = $this->calculatePeriodStats($start_date, $end_date, $raw_projects, $holidays, $korlap_tat_days);
+        $filtered_projects = $stats['filtered_projects'] ?? [];
+
+        $project_ids = array_values(array_filter(array_map(function ($project) {
+            return $project['project_id'] ?? null;
+        }, $filtered_projects)));
+
+        if (!class_exists('XLSXWriter')) {
+            throw new Exception('XLSX library is not available.');
+        }
+
+        if ($export_type === 'realisasi') {
+            $rows = $this->getRealizationOpsTableData($project_ids);
+            $headers = [
+                'Tanggal Realisasi', 'RAB Number', 'Project ID', 'Nama Project', 'Company',
+                'Actual Participants', 'Status Realisasi', 'Total Realisasi',
+                'Personnel Realisasi', 'Transport Realisasi', 'Consumption Realisasi', 'Vendor Realisasi',
+                'RAB Total', 'Budget Ops', 'Variance', 'Realisasi %', 'Budget Status', 'Tgl Input Realisasi'
+            ];
+            $filename = 'productivity_ops_realisasi_rab_' . date('Ymd_His') . '.xlsx';
+        } else {
+            $rows = $this->getRabOpsTableData($project_ids);
+            $headers = [
+                'RAB Number', 'Status', 'Project ID', 'Nama Project', 'Company', 'Tanggal MCU',
+                'Sales', 'Korlap', 'Total Personnel', 'Personnel Detail', 'Total Transport', 'Transport Detail',
+                'Total Consumption', 'Consumption Detail', 'Total Vendor', 'Vendor Detail',
+                'Grand Total', 'Budget Ops', 'Budget %', 'Tgl Pengajuan', 'Approved Manager',
+                'Approved Head', 'Submitted Finance', 'Finance Paid'
+            ];
+            $filename = 'productivity_ops_rab_' . date('Ymd_His') . '.xlsx';
+        }
+
+        $writer = new XLSXWriter();
+        $sheet_name = ($export_type === 'realisasi') ? 'Realisasi RAB' : 'RAB';
+        $sheet_header = [];
+        foreach ($headers as $header) {
+            $sheet_header[$header] = 'string';
+        }
+        $writer->writeSheetHeader($sheet_name, $sheet_header);
+
+        foreach ($rows as $row) {
+            if ($export_type === 'realisasi') {
+                $writer->writeSheetRow($sheet_name, [
+                    $row['realization_date'] ?? '',
+                    $row['rab_number'] ?? '',
+                    $row['project_id'] ?? '',
+                    $row['nama_project'] ?? '',
+                    $row['company_name'] ?? '',
+                    $row['actual_participants'] ?? 0,
+                    $row['realization_status'] ?? '',
+                    $row['realization_total'] ?? 0,
+                    $row['personnel_realization'] ?? '',
+                    $row['transport_realization'] ?? '',
+                    $row['consumption_realization'] ?? '',
+                    $row['vendor_realization'] ?? '',
+                    $row['rab_total'] ?? 0,
+                    $row['budget_ops'] ?? 0,
+                    $row['variance'] ?? 0,
+                    $row['realization_percentage'] ?? 0,
+                    $row['budget_status'] ?? '',
+                    $row['tgl_input_realisasi'] ?? ''
+                ]);
+            } else {
+                $writer->writeSheetRow($sheet_name, [
+                    $row['rab_number'] ?? '',
+                    $row['status'] ?? '',
+                    $row['project_id'] ?? '',
+                    $row['nama_project'] ?? '',
+                    $row['company_name'] ?? '',
+                    $row['tanggal_mcu'] ?? '',
+                    $row['sales_name'] ?? '',
+                    $row['korlap_name'] ?? '',
+                    $row['total_personnel'] ?? 0,
+                    $row['personnel_details'] ?? '',
+                    $row['total_transport'] ?? 0,
+                    $row['transport_details'] ?? '',
+                    $row['total_consumption'] ?? 0,
+                    $row['consumption_details'] ?? '',
+                    $row['total_vendor'] ?? 0,
+                    $row['vendor_details'] ?? '',
+                    $row['grand_total'] ?? 0,
+                    $row['budget_ops'] ?? 0,
+                    $row['budget_percentage'] ?? 0,
+                    $row['tgl_pengajuan'] ?? '',
+                    $row['approved_date_manager'] ?? '',
+                    $row['approved_date_head'] ?? '',
+                    $row['submitted_to_finance_at'] ?? '',
+                    $row['finance_paid_at'] ?? ''
+                ]);
+            }
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        $writer->writeToStdOut();
+        exit;
     }
 
     private function calculatePeriodStats($start_date, $end_date, $raw_projects, $holidays, $korlap_tat_days) {
@@ -423,6 +605,173 @@ class ProductivityOpsController {
             'kohas_stats_data',
             'trend_data'
         );
+    }
+
+    private function getRabOpsTableData($project_ids) {
+        if (empty($project_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($project_ids), '?'));
+        $query = "SELECT r.id as rab_id_pk, r.rab_number, r.status, r.location_type, r.total_participants,
+                         p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
+                         sp.sales_name, u_korlap.full_name as korlap_name,
+                         r.total_personnel, r.total_transport, r.total_consumption,
+                         (SELECT SUM(subtotal) FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as total_vendor,
+                         r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage,
+                         r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at
+                  FROM rabs r
+                  LEFT JOIN projects p ON r.project_id = p.project_id
+                  LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
+                  LEFT JOIN users u_korlap ON p.korlap_id = u_korlap.user_id
+                  WHERE p.project_id IN ($placeholders)
+                  ORDER BY r.created_at DESC";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($project_ids);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $rows = [];
+        foreach ($data as $row) {
+            $rows[] = [
+                'rab_number' => $row['rab_number'],
+                'status' => $row['status'],
+                'project_id' => $row['project_id'],
+                'nama_project' => $row['nama_project'],
+                'company_name' => $row['company_name'],
+                'tanggal_mcu' => $this->formatTanggalMcuForTable($row['tanggal_mcu']),
+                'sales_name' => $row['sales_name'],
+                'korlap_name' => $row['korlap_name'],
+                'total_personnel' => (float)($row['total_personnel'] ?? 0),
+                'personnel_details' => $this->getRabItemDetailsForTable($row['rab_id_pk'], 'personnel'),
+                'total_transport' => (float)($row['total_transport'] ?? 0),
+                'transport_details' => $this->getRabItemDetailsForTable($row['rab_id_pk'], 'transport'),
+                'total_consumption' => (float)($row['total_consumption'] ?? 0),
+                'consumption_details' => $this->getRabItemDetailsForTable($row['rab_id_pk'], 'consumption'),
+                'total_vendor' => (float)($row['total_vendor'] ?? 0),
+                'vendor_details' => $this->getRabItemDetailsForTable($row['rab_id_pk'], 'vendor'),
+                'grand_total' => (float)($row['grand_total'] ?? 0),
+                'budget_ops' => (float)($row['budget_ops'] ?? 0),
+                'budget_percentage' => (float)($row['budget_percentage'] ?? 0),
+                'tgl_pengajuan' => $row['tgl_pengajuan'],
+                'approved_date_manager' => $row['approved_date_manager'],
+                'approved_date_head' => $row['approved_date_head'],
+                'submitted_to_finance_at' => $row['submitted_to_finance_at'],
+                'finance_paid_at' => $row['finance_paid_at']
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function getRealizationOpsTableData($project_ids) {
+        if (empty($project_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($project_ids), '?'));
+        $query = "SELECT rr.id as real_id_pk, rr.date as realization_date, rr.actual_participants, rr.total_amount as realization_total, rr.status as realization_status,
+                         r.rab_number, r.grand_total as rab_total, r.cost_value as budget_ops,
+                         (r.cost_value - rr.total_amount) as variance,
+                         (CASE WHEN r.cost_value > 0 THEN (rr.total_amount / r.cost_value * 100) ELSE 0 END) as realization_percentage,
+                         p.project_id, p.nama_project, p.company_name,
+                         rr.created_at as tgl_input_realisasi
+                  FROM rab_realizations rr
+                  LEFT JOIN rabs r ON rr.rab_id = r.id
+                  LEFT JOIN projects p ON rr.project_id = p.project_id
+                  WHERE p.project_id IN ($placeholders)
+                  ORDER BY rr.date DESC";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($project_ids);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $rows = [];
+        foreach ($data as $row) {
+            $variance = (float)($row['variance'] ?? 0);
+            $rows[] = [
+                'realization_date' => $row['realization_date'],
+                'rab_number' => $row['rab_number'],
+                'project_id' => $row['project_id'],
+                'nama_project' => $row['nama_project'],
+                'company_name' => $row['company_name'],
+                'actual_participants' => (float)($row['actual_participants'] ?? 0),
+                'realization_status' => $row['realization_status'],
+                'realization_total' => (float)($row['realization_total'] ?? 0),
+                'personnel_realization' => $this->getRealizationItemDetailsForTable($row['real_id_pk'], 'personnel'),
+                'transport_realization' => $this->getRealizationItemDetailsForTable($row['real_id_pk'], 'transport'),
+                'consumption_realization' => $this->getRealizationItemDetailsForTable($row['real_id_pk'], 'consumption'),
+                'vendor_realization' => $this->getRealizationItemDetailsForTable($row['real_id_pk'], 'vendor'),
+                'rab_total' => (float)($row['rab_total'] ?? 0),
+                'budget_ops' => (float)($row['budget_ops'] ?? 0),
+                'variance' => $variance,
+                'realization_percentage' => (float)($row['realization_percentage'] ?? 0),
+                'budget_status' => ($variance >= 0) ? 'Under Budget' : 'Over Budget',
+                'tgl_input_realisasi' => $row['tgl_input_realisasi']
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function getRabItemDetailsForTable($rab_id, $category) {
+        $query = "SELECT item_name, qty, days, price
+                  FROM rab_items
+                  WHERE rab_id = :rab_id AND category = :category";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':rab_id', $rab_id);
+        $stmt->bindValue(':category', $category);
+        $stmt->execute();
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $lines = [];
+        foreach ($items as $item) {
+            $line = $item['item_name'] . ': ' . (float)$item['qty'];
+            if ((float)$item['days'] > 0) {
+                $line .= ' x ' . (float)$item['days'];
+            }
+            $line .= ' @ ' . number_format((float)$item['price'], 0, ',', '.');
+            $lines[] = $line;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function getRealizationItemDetailsForTable($realization_id, $category) {
+        $query = "SELECT item_name, qty, price
+                  FROM rab_realization_items
+                  WHERE realization_id = :realization_id AND category = :category";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':realization_id', $realization_id);
+        $stmt->bindValue(':category', $category);
+        $stmt->execute();
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $lines = [];
+        foreach ($items as $item) {
+            $lines[] = $item['item_name'] . ': ' . (float)$item['qty'] . ' @ ' . number_format((float)$item['price'], 0, ',', '.');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function formatTanggalMcuForTable($tanggal_mcu_json) {
+        if (empty($tanggal_mcu_json)) {
+            return '-';
+        }
+
+        $dates = json_decode($tanggal_mcu_json, true);
+        if (!is_array($dates) || empty($dates)) {
+            return $tanggal_mcu_json;
+        }
+
+        $formatted = [];
+        foreach ($dates as $date) {
+            $timestamp = strtotime($date);
+            $formatted[] = $timestamp ? date('d M Y', $timestamp) : $date;
+        }
+
+        return implode(', ', $formatted);
     }
 }
 ?>

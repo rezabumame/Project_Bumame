@@ -197,6 +197,7 @@ $router->add('audit_index', 'AuditController', 'index');
 
 // Productivity Ops
 $router->add('productivity_ops', 'ProductivityOpsController', 'index');
+$router->add('productivity_ops_export_excel', 'ProductivityOpsController', 'export_excel');
 
 // Chatter / Notifications
 $router->add('get_comments', 'ProjectController', 'get_comments');

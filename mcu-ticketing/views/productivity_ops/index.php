@@ -165,6 +165,8 @@ $korlap_stats = $korlap_stats ?? [];
 $kohas_stats_data = $kohas_stats_data ?? [];
 $trend_data = $trend_data ?? [];
 $filtered_projects = $filtered_projects ?? [];
+$rab_table_rows = $rab_table_rows ?? [];
+$realization_table_rows = $realization_table_rows ?? [];
 ?>
 
 <div class="container-fluid px-4">
@@ -309,6 +311,21 @@ $filtered_projects = $filtered_projects ?? [];
         </div>
     </div>
 
+    <ul class="nav nav-tabs mb-4" id="opsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">
+                Overview Dashboard
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rab-table-tab" data-bs-toggle="tab" data-bs-target="#rab-table-pane" type="button" role="tab" aria-controls="rab-table-pane" aria-selected="false">
+                Tabel RAB & Realisasi RAB
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="opsTabContent">
+        <div class="tab-pane fade show active" id="overview-pane" role="tabpanel" aria-labelledby="overview-tab">
     <!-- Summary Cards -->
     <div class="row g-2 mb-4">
         <!-- Total Projects -->
@@ -722,6 +739,150 @@ $filtered_projects = $filtered_projects ?? [];
             </div>
         </div>
     </div>
+        </div>
+
+        <div class="tab-pane fade" id="rab-table-pane" role="tabpanel" aria-labelledby="rab-table-tab">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-transparent border-0 fw-bold py-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Tabel RAB (Format Cross-check App Script)</div>
+                        <a class="btn btn-sm btn-success"
+                           href="index.php?page=productivity_ops_export_excel&type=rab&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&project_id=<?php echo urlencode($filter_project_id); ?>&sales_id=<?php echo urlencode($filter_sales_id); ?>&korlap_id=<?php echo urlencode($filter_korlap_id); ?>&kohas_id=<?php echo urlencode($filter_kohas_id); ?>">
+                            <i class="fas fa-file-excel me-1"></i>Download Excel (RAB)
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="rabOpsTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>RAB Number</th>
+                                    <th>Status</th>
+                                    <th>Project ID</th>
+                                    <th>Project</th>
+                                    <th>Company</th>
+                                    <th>Tanggal MCU</th>
+                                    <th>Sales</th>
+                                    <th>Korlap</th>
+                                    <th class="text-end">Personnel</th>
+                                    <th>Personnel Detail</th>
+                                    <th class="text-end">Transport</th>
+                                    <th>Transport Detail</th>
+                                    <th class="text-end">Consumption</th>
+                                    <th>Consumption Detail</th>
+                                    <th class="text-end">Vendor</th>
+                                    <th>Vendor Detail</th>
+                                    <th class="text-end">Grand Total</th>
+                                    <th class="text-end">Budget Ops</th>
+                                    <th class="text-end">Budget %</th>
+                                    <th>Tgl Pengajuan</th>
+                                    <th>Approved Manager</th>
+                                    <th>Approved Head</th>
+                                    <th>Submit Finance</th>
+                                    <th>Paid Finance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($rab_table_rows as $row): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['status'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['nama_project'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['company_name'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['tanggal_mcu'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['sales_name'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['korlap_name'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['total_personnel'] ?? 0)); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['personnel_details'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['total_transport'] ?? 0)); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['transport_details'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['total_consumption'] ?? 0)); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['consumption_details'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['total_vendor'] ?? 0)); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['vendor_details'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['grand_total'] ?? 0)); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['budget_percentage'] ?? 0), 2); ?>%</td>
+                                        <td><?php echo !empty($row['tgl_pengajuan']) ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-'; ?></td>
+                                        <td><?php echo !empty($row['approved_date_manager']) ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-'; ?></td>
+                                        <td><?php echo !empty($row['approved_date_head']) ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-'; ?></td>
+                                        <td><?php echo !empty($row['submitted_to_finance_at']) ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-'; ?></td>
+                                        <td><?php echo !empty($row['finance_paid_at']) ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-'; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-5">
+                <div class="card-header bg-transparent border-0 fw-bold py-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div><i class="fas fa-receipt text-primary me-2"></i>Tabel Realisasi RAB (Format Cross-check App Script)</div>
+                        <a class="btn btn-sm btn-success"
+                           href="index.php?page=productivity_ops_export_excel&type=realisasi&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&project_id=<?php echo urlencode($filter_project_id); ?>&sales_id=<?php echo urlencode($filter_sales_id); ?>&korlap_id=<?php echo urlencode($filter_korlap_id); ?>&kohas_id=<?php echo urlencode($filter_kohas_id); ?>">
+                            <i class="fas fa-file-excel me-1"></i>Download Excel (Realisasi)
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="realizationOpsTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Tanggal Realisasi</th>
+                                    <th>RAB Number</th>
+                                    <th>Project ID</th>
+                                    <th>Project</th>
+                                    <th>Company</th>
+                                    <th class="text-end">Actual Pax</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Total Realisasi</th>
+                                    <th>Personnel Detail</th>
+                                    <th>Transport Detail</th>
+                                    <th>Consumption Detail</th>
+                                    <th>Vendor Detail</th>
+                                    <th class="text-end">RAB Total</th>
+                                    <th class="text-end">Budget Ops</th>
+                                    <th class="text-end">Variance</th>
+                                    <th class="text-end">Realisasi %</th>
+                                    <th>Budget Status</th>
+                                    <th>Tgl Input</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($realization_table_rows as $row): ?>
+                                    <tr>
+                                        <td><?php echo !empty($row['realization_date']) ? date('d M Y', strtotime($row['realization_date'])) : '-'; ?></td>
+                                        <td><?php echo htmlspecialchars($row['rab_number'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['project_id'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['nama_project'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['company_name'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['actual_participants'] ?? 0)); ?></td>
+                                        <td><?php echo htmlspecialchars($row['realization_status'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['realization_total'] ?? 0)); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['personnel_realization'] ?? '-'); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['transport_realization'] ?? '-'); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['consumption_realization'] ?? '-'); ?></td>
+                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['vendor_realization'] ?? '-'); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['rab_total'] ?? 0)); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['variance'] ?? 0)); ?></td>
+                                        <td class="text-end"><?php echo number_format((float)($row['realization_percentage'] ?? 0), 2); ?>%</td>
+                                        <td><?php echo htmlspecialchars($row['budget_status'] ?? '-'); ?></td>
+                                        <td><?php echo !empty($row['tgl_input_realisasi']) ? date('d M Y H:i', strtotime($row['tgl_input_realisasi'])) : '-'; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php include '../views/partials/project_detail_modal.php'; ?>
@@ -852,6 +1013,16 @@ $(document).ready(function() {
     $('#detailTable').DataTable({
         pageLength: 10,
         order: [[ 7, "desc" ]] // Sort by utilization desc
+    });
+
+    $('#rabOpsTable').DataTable({
+        pageLength: 10,
+        order: [[ 19, "desc" ]]
+    });
+
+    $('#realizationOpsTable').DataTable({
+        pageLength: 10,
+        order: [[ 0, "desc" ]]
     });
 
     // Handle Project Modal

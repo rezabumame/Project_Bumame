@@ -2,7 +2,8 @@
     "name": "bumame/mcu-ticketing",
     "require": {
         "php": ">=8.0",
-        "google/cloud-storage": "^1.30"
+        "google/cloud-storage": "^1.30",
+        "mk-j/php_xlsxwriter": "^0.39.0"
     },
     "autoload": {
         "classmap": ["helpers/"]
