@@ -17,7 +17,7 @@ class ProductivityOpsController {
         }
 
         // Access Control
-        $allowed_roles = ['superadmin', 'manager_ops', 'head_ops'];
+        $allowed_roles = ['superadmin', 'manager_ops', 'head_ops', 'admin_ops', 'spv_ops', 'korlap'];
         
         $role = $_SESSION['role'] ?? '';
         if (!in_array($role, $allowed_roles)) {
@@ -49,6 +49,9 @@ class ProductivityOpsController {
         $filter_sales_id = $_GET['sales_id'] ?? ''; // sales_persons.id
         $filter_korlap_id = $_GET['korlap_id'] ?? ''; // users.user_id
         $filter_kohas_id = $_GET['kohas_id'] ?? ''; // users.user_id
+        if ($this->isKorlapScope()) {
+            $filter_korlap_id = $_SESSION['user_id'] ?? '';
+        }
 
         // Comparison Filters
         $compare_mode = isset($_GET['compare_mode']) && $_GET['compare_mode'] == '1';
@@ -75,10 +78,15 @@ class ProductivityOpsController {
         $kohas_list = $stmt_kohas->fetchAll(PDO::FETCH_ASSOC);
         
         // Projects List for Filter (Only Ops In Progress or later)
+        $project_scope_clause = $this->getProjectScopeSqlClause();
         $query_projects = "SELECT project_id, nama_project FROM projects 
                            WHERE status_project NOT IN ('need_approval_manager', 'need_approval_head', 'rejected', 're-nego', 'cancelled', 'DRAFT')
+                           $project_scope_clause
                            ORDER BY created_at DESC";
         $stmt_projects = $this->db->prepare($query_projects);
+        if ($this->isKorlapScope()) {
+            $stmt_projects->bindValue(':scope_korlap_id', $_SESSION['user_id'] ?? '');
+        }
         $stmt_projects->execute();
         $project_list = $stmt_projects->fetchAll(PDO::FETCH_ASSOC);
 
@@ -127,6 +135,7 @@ class ProductivityOpsController {
                   LEFT JOIN medical_results mr ON p.project_id = mr.project_id
                   WHERE 1=1
                   AND p.status_project NOT IN ('need_approval_manager', 'need_approval_head', 'rejected', 're-nego', 'cancelled', 'DRAFT')
+                  " . $this->getProjectScopeSqlClause() . "
                   ";
         
         $params = [];
@@ -154,6 +163,9 @@ class ProductivityOpsController {
                 WHERE mr2.project_id = p.project_id AND mri.assigned_to_user_id = :kohas_id
              )";
              $params[':kohas_id'] = $filter_kohas_id;
+        }
+        if ($this->isKorlapScope()) {
+            $params[':scope_korlap_id'] = $_SESSION['user_id'] ?? '';
         }
 
         $stmt = $this->db->prepare($query);
@@ -221,6 +233,9 @@ class ProductivityOpsController {
         $filter_sales_id = $_GET['sales_id'] ?? '';
         $filter_korlap_id = $_GET['korlap_id'] ?? '';
         $filter_kohas_id = $_GET['kohas_id'] ?? '';
+        if ($this->isKorlapScope()) {
+            $filter_korlap_id = $_SESSION['user_id'] ?? '';
+        }
         $export_type = $_GET['type'] ?? 'rab';
 
         $query = "SELECT 
@@ -257,6 +272,7 @@ class ProductivityOpsController {
                   LEFT JOIN medical_results mr ON p.project_id = mr.project_id
                   WHERE 1=1
                   AND p.status_project NOT IN ('need_approval_manager', 'need_approval_head', 'rejected', 're-nego', 'cancelled', 'DRAFT')
+                  " . $this->getProjectScopeSqlClause() . "
                   ";
 
         $params = [];
@@ -280,6 +296,9 @@ class ProductivityOpsController {
             )";
             $params[':kohas_id'] = $filter_kohas_id;
         }
+        if ($this->isKorlapScope()) {
+            $params[':scope_korlap_id'] = $_SESSION['user_id'] ?? '';
+        }
 
         $stmt = $this->db->prepare($query);
         foreach ($params as $key => $val) {
@@ -298,7 +317,14 @@ class ProductivityOpsController {
         }, $filtered_projects)));
 
         if (!class_exists('XLSXWriter')) {
-            throw new Exception('XLSX library is not available.');
+            $manualXlsxWriterPath = dirname(__DIR__) . '/vendor/mk-j/php_xlsxwriter/xlsxwriter.class.php';
+            if (file_exists($manualXlsxWriterPath)) {
+                require_once $manualXlsxWriterPath;
+            }
+        }
+        if (!class_exists('XLSXWriter')) {
+            header('Location: index.php?page=productivity_ops&err=' . urlencode('Library export XLSX belum tersedia di server. Jalankan composer install.'));
+            exit;
         }
 
         if ($export_type === 'realisasi') {
@@ -772,6 +798,17 @@ class ProductivityOpsController {
         }
 
         return implode(', ', $formatted);
+    }
+
+    private function isKorlapScope() {
+        return (($_SESSION['role'] ?? '') === 'korlap');
+    }
+
+    private function getProjectScopeSqlClause() {
+        if ($this->isKorlapScope()) {
+            return " AND p.korlap_id = :scope_korlap_id ";
+        }
+        return "";
     }
 }
 ?>

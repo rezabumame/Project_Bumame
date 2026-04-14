@@ -5,7 +5,7 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-masih    /* Premium UI Overrides */
+     /* Premium UI Overrides */
      :root {
          --bumame-blue: #204EAB;
          --bumame-dark: #173b85;
@@ -137,6 +137,26 @@ masih    /* Premium UI Overrides */
          background: #f8f9fa;
          color: #204EAB;
      }
+
+     .ops-table {
+         font-size: 0.78rem;
+     }
+
+     .ops-table th,
+     .ops-table td {
+         white-space: nowrap;
+         vertical-align: top;
+     }
+
+     .ops-table .detail-cell {
+         white-space: pre-line;
+         min-width: 220px;
+         max-width: 320px;
+     }
+
+     .ops-tab-panel .card-header {
+         border-bottom: 1px solid #eef2f7 !important;
+     }
 </style>
 
 <?php
@@ -178,6 +198,13 @@ $realization_table_rows = $realization_table_rows ?? [];
             Operations & Productivity Monitoring Dashboard
         </div>
     </div>
+
+    <?php if (!empty($_GET['err'])): ?>
+        <div class="alert alert-danger py-2 px-3"><?php echo htmlspecialchars($_GET['err']); ?></div>
+    <?php endif; ?>
+    <?php if (!empty($_GET['msg'])): ?>
+        <div class="alert alert-success py-2 px-3"><?php echo htmlspecialchars($_GET['msg']); ?></div>
+    <?php endif; ?>
 
     <!-- Filters -->
     <div class="filter-card mb-4">
@@ -741,7 +768,7 @@ $realization_table_rows = $realization_table_rows ?? [];
     </div>
         </div>
 
-        <div class="tab-pane fade" id="rab-table-pane" role="tabpanel" aria-labelledby="rab-table-tab">
+        <div class="tab-pane fade ops-tab-panel" id="rab-table-pane" role="tabpanel" aria-labelledby="rab-table-tab">
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-transparent border-0 fw-bold py-3">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -754,7 +781,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="rabOpsTable">
+                        <table class="table table-hover table-striped align-middle ops-table" id="rabOpsTable">
                             <thead class="bg-light">
                                 <tr>
                                     <th>RAB Number</th>
@@ -795,13 +822,13 @@ $realization_table_rows = $realization_table_rows ?? [];
                                         <td><?php echo htmlspecialchars($row['sales_name'] ?? '-'); ?></td>
                                         <td><?php echo htmlspecialchars($row['korlap_name'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['total_personnel'] ?? 0)); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['personnel_details'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['personnel_details'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['total_transport'] ?? 0)); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['transport_details'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['transport_details'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['total_consumption'] ?? 0)); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['consumption_details'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['consumption_details'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['total_vendor'] ?? 0)); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['vendor_details'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['vendor_details'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['grand_total'] ?? 0)); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['budget_percentage'] ?? 0), 2); ?>%</td>
@@ -830,7 +857,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="realizationOpsTable">
+                        <table class="table table-hover table-striped align-middle ops-table" id="realizationOpsTable">
                             <thead class="bg-light">
                                 <tr>
                                     <th>Tanggal Realisasi</th>
@@ -864,10 +891,10 @@ $realization_table_rows = $realization_table_rows ?? [];
                                         <td class="text-end"><?php echo number_format((float)($row['actual_participants'] ?? 0)); ?></td>
                                         <td><?php echo htmlspecialchars($row['realization_status'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['realization_total'] ?? 0)); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['personnel_realization'] ?? '-'); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['transport_realization'] ?? '-'); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['consumption_realization'] ?? '-'); ?></td>
-                                        <td style="white-space: pre-line;"><?php echo htmlspecialchars($row['vendor_realization'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['personnel_realization'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['transport_realization'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['consumption_realization'] ?? '-'); ?></td>
+                                        <td class="detail-cell"><?php echo htmlspecialchars($row['vendor_realization'] ?? '-'); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['rab_total'] ?? 0)); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['budget_ops'] ?? 0)); ?></td>
                                         <td class="text-end"><?php echo number_format((float)($row['variance'] ?? 0)); ?></td>
@@ -1017,12 +1044,16 @@ $(document).ready(function() {
 
     $('#rabOpsTable').DataTable({
         pageLength: 10,
-        order: [[ 19, "desc" ]]
+        order: [[ 19, "desc" ]],
+        scrollX: true,
+        autoWidth: false
     });
 
     $('#realizationOpsTable').DataTable({
         pageLength: 10,
-        order: [[ 0, "desc" ]]
+        order: [[ 0, "desc" ]],
+        scrollX: true,
+        autoWidth: false
     });
 
     // Handle Project Modal
