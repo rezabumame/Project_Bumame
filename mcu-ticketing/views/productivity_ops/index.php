@@ -174,8 +174,9 @@
      }
 
      .ops-table-wrap {
-         max-height: 70vh;
-         overflow: auto;
+         max-height: none;
+         overflow-x: auto;
+         overflow-y: visible;
          border: 1px solid #e9edf5;
          border-radius: 0.75rem;
          background: #fff;
@@ -183,9 +184,7 @@
      }
 
      .ops-table-wrap .ops-table thead th {
-         position: sticky;
-         top: 0;
-         z-index: 40;
+         position: static;
          background: #f8fafc !important;
          color: #344054;
          font-weight: 600;
@@ -201,33 +200,25 @@
      /* Freeze first key column (SaaS-style pinned identity column) */
      #rabOpsTable th:nth-child(1), #rabOpsTable td:nth-child(1),
      #realizationOpsTable th:nth-child(1), #realizationOpsTable td:nth-child(1) {
-         position: sticky;
-         left: 0;
-         z-index: 25;
+         position: static;
          background: #fff;
          min-width: 160px;
-         box-shadow: 1px 0 0 #e9edf5;
      }
 
      /* Realization: also pin No RAB beside date */
      #realizationOpsTable th:nth-child(2),
      #realizationOpsTable td:nth-child(2) {
-         position: sticky;
-         left: 160px;
-         z-index: 25;
+         position: static;
          background: #fff;
          min-width: 170px;
-         box-shadow: 1px 0 0 #e9edf5;
      }
 
      #rabOpsTable thead th:nth-child(1),
      #realizationOpsTable thead th:nth-child(1) {
-         z-index: 45;
          background: #eef4ff !important;
      }
 
      #realizationOpsTable thead th:nth-child(2) {
-         z-index: 45;
          background: #eef4ff !important;
      }
 </style>
@@ -850,7 +841,7 @@ $realization_table_rows = $realization_table_rows ?? [];
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-header bg-transparent border-0 fw-bold py-3">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Tabel RAB (Format Cross-check App Script)</div>
+                        <div><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Tabel RAB</div>
                         <a class="btn btn-sm btn-success"
                            href="index.php?page=productivity_ops_export_excel&type=rab&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&project_id=<?php echo urlencode($filter_project_id); ?>&sales_id=<?php echo urlencode($filter_sales_id); ?>&korlap_id=<?php echo urlencode($filter_korlap_id); ?>&kohas_id=<?php echo urlencode($filter_kohas_id); ?>">
                             <i class="fas fa-file-excel me-1"></i>Download Excel (RAB)
@@ -928,7 +919,7 @@ $realization_table_rows = $realization_table_rows ?? [];
             <div class="card border-0 shadow-sm rounded-4 mb-5">
                 <div class="card-header bg-transparent border-0 fw-bold py-3">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div><i class="fas fa-receipt text-primary me-2"></i>Tabel Realisasi RAB (Format Cross-check App Script)</div>
+                        <div><i class="fas fa-receipt text-primary me-2"></i>Tabel Realisasi RAB</div>
                         <a class="btn btn-sm btn-success"
                            href="index.php?page=productivity_ops_export_excel&type=realisasi&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&project_id=<?php echo urlencode($filter_project_id); ?>&sales_id=<?php echo urlencode($filter_sales_id); ?>&korlap_id=<?php echo urlencode($filter_korlap_id); ?>&kohas_id=<?php echo urlencode($filter_kohas_id); ?>">
                             <i class="fas fa-file-excel me-1"></i>Download Excel (Realisasi)
