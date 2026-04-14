@@ -316,15 +316,8 @@ class ProductivityOpsController {
             return $project['project_id'] ?? null;
         }, $filtered_projects)));
 
-        $xlsxAvailable = true;
-        if (!class_exists('XLSXWriter')) {
-            $manualXlsxWriterPath = dirname(__DIR__) . '/vendor/mk-j/php_xlsxwriter/xlsxwriter.class.php';
-            if (file_exists($manualXlsxWriterPath)) {
-                require_once $manualXlsxWriterPath;
-            }
-        }
-        if (!class_exists('XLSXWriter')) {
-            $xlsxAvailable = false;
+        if (!class_exists('SimpleXlsxExporter')) {
+            require_once dirname(__DIR__) . '/helpers/SimpleXlsxExporter.php';
         }
 
         if ($export_type === 'realisasi') {
@@ -336,7 +329,6 @@ class ProductivityOpsController {
                 'RAB Total', 'Budget Ops', 'Variance', 'Realisasi %', 'Budget Status', 'Tgl Input Realisasi'
             ];
             $filenameXlsx = 'productivity_ops_realisasi_rab_' . date('Ymd_His') . '.xlsx';
-            $filenameCsv = 'productivity_ops_realisasi_rab_' . date('Ymd_His') . '.csv';
         } else {
             $rows = $this->getRabOpsTableData($project_ids);
             $headers = [
@@ -347,133 +339,63 @@ class ProductivityOpsController {
                 'Approved Head', 'Submitted Finance', 'Finance Paid'
             ];
             $filenameXlsx = 'productivity_ops_rab_' . date('Ymd_His') . '.xlsx';
-            $filenameCsv = 'productivity_ops_rab_' . date('Ymd_His') . '.csv';
         }
 
-        if ($xlsxAvailable) {
-            $writer = new XLSXWriter();
-            $sheet_name = ($export_type === 'realisasi') ? 'Realisasi RAB' : 'RAB';
-            $sheet_header = [];
-            foreach ($headers as $header) {
-                $sheet_header[$header] = 'string';
+        $sheetRows = [];
+        foreach ($rows as $row) {
+            if ($export_type === 'realisasi') {
+                $sheetRows[] = [
+                    $row['realization_date'] ?? '',
+                    $row['rab_number'] ?? '',
+                    $row['project_id'] ?? '',
+                    $row['nama_project'] ?? '',
+                    $row['company_name'] ?? '',
+                    $row['actual_participants'] ?? 0,
+                    $row['realization_status'] ?? '',
+                    $row['realization_total'] ?? 0,
+                    $row['personnel_realization'] ?? '',
+                    $row['transport_realization'] ?? '',
+                    $row['consumption_realization'] ?? '',
+                    $row['vendor_realization'] ?? '',
+                    $row['rab_total'] ?? 0,
+                    $row['budget_ops'] ?? 0,
+                    $row['variance'] ?? 0,
+                    $row['realization_percentage'] ?? 0,
+                    $row['budget_status'] ?? '',
+                    $row['tgl_input_realisasi'] ?? ''
+                ];
+            } else {
+                $sheetRows[] = [
+                    $row['rab_number'] ?? '',
+                    $row['status'] ?? '',
+                    $row['project_id'] ?? '',
+                    $row['nama_project'] ?? '',
+                    $row['company_name'] ?? '',
+                    $row['tanggal_mcu'] ?? '',
+                    $row['sales_name'] ?? '',
+                    $row['korlap_name'] ?? '',
+                    $row['total_personnel'] ?? 0,
+                    $row['personnel_details'] ?? '',
+                    $row['total_transport'] ?? 0,
+                    $row['transport_details'] ?? '',
+                    $row['total_consumption'] ?? 0,
+                    $row['consumption_details'] ?? '',
+                    $row['total_vendor'] ?? 0,
+                    $row['vendor_details'] ?? '',
+                    $row['grand_total'] ?? 0,
+                    $row['budget_ops'] ?? 0,
+                    $row['budget_percentage'] ?? 0,
+                    $row['tgl_pengajuan'] ?? '',
+                    $row['approved_date_manager'] ?? '',
+                    $row['approved_date_head'] ?? '',
+                    $row['submitted_to_finance_at'] ?? '',
+                    $row['finance_paid_at'] ?? ''
+                ];
             }
-            $writer->writeSheetHeader($sheet_name, $sheet_header);
-
-            foreach ($rows as $row) {
-                if ($export_type === 'realisasi') {
-                    $writer->writeSheetRow($sheet_name, [
-                        $row['realization_date'] ?? '',
-                        $row['rab_number'] ?? '',
-                        $row['project_id'] ?? '',
-                        $row['nama_project'] ?? '',
-                        $row['company_name'] ?? '',
-                        $row['actual_participants'] ?? 0,
-                        $row['realization_status'] ?? '',
-                        $row['realization_total'] ?? 0,
-                        $row['personnel_realization'] ?? '',
-                        $row['transport_realization'] ?? '',
-                        $row['consumption_realization'] ?? '',
-                        $row['vendor_realization'] ?? '',
-                        $row['rab_total'] ?? 0,
-                        $row['budget_ops'] ?? 0,
-                        $row['variance'] ?? 0,
-                        $row['realization_percentage'] ?? 0,
-                        $row['budget_status'] ?? '',
-                        $row['tgl_input_realisasi'] ?? ''
-                    ]);
-                } else {
-                    $writer->writeSheetRow($sheet_name, [
-                        $row['rab_number'] ?? '',
-                        $row['status'] ?? '',
-                        $row['project_id'] ?? '',
-                        $row['nama_project'] ?? '',
-                        $row['company_name'] ?? '',
-                        $row['tanggal_mcu'] ?? '',
-                        $row['sales_name'] ?? '',
-                        $row['korlap_name'] ?? '',
-                        $row['total_personnel'] ?? 0,
-                        $row['personnel_details'] ?? '',
-                        $row['total_transport'] ?? 0,
-                        $row['transport_details'] ?? '',
-                        $row['total_consumption'] ?? 0,
-                        $row['consumption_details'] ?? '',
-                        $row['total_vendor'] ?? 0,
-                        $row['vendor_details'] ?? '',
-                        $row['grand_total'] ?? 0,
-                        $row['budget_ops'] ?? 0,
-                        $row['budget_percentage'] ?? 0,
-                        $row['tgl_pengajuan'] ?? '',
-                        $row['approved_date_manager'] ?? '',
-                        $row['approved_date_head'] ?? '',
-                        $row['submitted_to_finance_at'] ?? '',
-                        $row['finance_paid_at'] ?? ''
-                    ]);
-                }
-            }
-
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . $filenameXlsx . '"');
-            header('Cache-Control: max-age=0');
-            $writer->writeToStdOut();
-        } else {
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="' . $filenameCsv . '"');
-            $output = fopen('php://output', 'w');
-            fputcsv($output, $headers);
-
-            foreach ($rows as $row) {
-                if ($export_type === 'realisasi') {
-                    fputcsv($output, [
-                        $row['realization_date'] ?? '',
-                        $row['rab_number'] ?? '',
-                        $row['project_id'] ?? '',
-                        $row['nama_project'] ?? '',
-                        $row['company_name'] ?? '',
-                        $row['actual_participants'] ?? 0,
-                        $row['realization_status'] ?? '',
-                        $row['realization_total'] ?? 0,
-                        $row['personnel_realization'] ?? '',
-                        $row['transport_realization'] ?? '',
-                        $row['consumption_realization'] ?? '',
-                        $row['vendor_realization'] ?? '',
-                        $row['rab_total'] ?? 0,
-                        $row['budget_ops'] ?? 0,
-                        $row['variance'] ?? 0,
-                        $row['realization_percentage'] ?? 0,
-                        $row['budget_status'] ?? '',
-                        $row['tgl_input_realisasi'] ?? ''
-                    ]);
-                } else {
-                    fputcsv($output, [
-                        $row['rab_number'] ?? '',
-                        $row['status'] ?? '',
-                        $row['project_id'] ?? '',
-                        $row['nama_project'] ?? '',
-                        $row['company_name'] ?? '',
-                        $row['tanggal_mcu'] ?? '',
-                        $row['sales_name'] ?? '',
-                        $row['korlap_name'] ?? '',
-                        $row['total_personnel'] ?? 0,
-                        $row['personnel_details'] ?? '',
-                        $row['total_transport'] ?? 0,
-                        $row['transport_details'] ?? '',
-                        $row['total_consumption'] ?? 0,
-                        $row['consumption_details'] ?? '',
-                        $row['total_vendor'] ?? 0,
-                        $row['vendor_details'] ?? '',
-                        $row['grand_total'] ?? 0,
-                        $row['budget_ops'] ?? 0,
-                        $row['budget_percentage'] ?? 0,
-                        $row['tgl_pengajuan'] ?? '',
-                        $row['approved_date_manager'] ?? '',
-                        $row['approved_date_head'] ?? '',
-                        $row['submitted_to_finance_at'] ?? '',
-                        $row['finance_paid_at'] ?? ''
-                    ]);
-                }
-            }
-            fclose($output);
         }
+
+        $sheetName = ($export_type === 'realisasi') ? 'Realisasi RAB' : 'Pengajuan RAB';
+        SimpleXlsxExporter::download($headers, $sheetRows, $filenameXlsx, $sheetName);
         exit;
     }
 

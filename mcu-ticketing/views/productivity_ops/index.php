@@ -139,20 +139,26 @@
      }
 
      .ops-table {
-         font-size: 0.78rem;
+         font-size: 0.8rem;
+         min-width: 1800px;
+         border-collapse: separate;
+         border-spacing: 0;
      }
 
      .ops-table th,
      .ops-table td {
          vertical-align: top;
          white-space: normal;
+         border-bottom: 1px solid #eef2f7;
      }
 
      .ops-table .detail-cell {
          white-space: pre-line;
-         min-width: 220px;
-         max-width: 320px;
+         min-width: 260px;
+         max-width: 360px;
          word-break: break-word;
+         color: #475467;
+         line-height: 1.45;
      }
 
      .ops-table .nowrap-cell {
@@ -168,33 +174,46 @@
      }
 
      .ops-table-wrap {
-         max-height: 68vh;
+         max-height: 70vh;
          overflow: auto;
-         border: 1px solid #eef2f7;
-         border-radius: 0.5rem;
+         border: 1px solid #e9edf5;
+         border-radius: 0.75rem;
+         background: #fff;
+         box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
      }
 
      .ops-table-wrap .ops-table thead th {
          position: sticky;
          top: 0;
-         z-index: 30;
-         background: #f8f9fa !important;
-         box-shadow: inset 0 -1px 0 #e9ecef;
+         z-index: 40;
+         background: #f8fafc !important;
+         color: #344054;
+         font-weight: 600;
+         font-size: 0.75rem;
+         letter-spacing: 0.01em;
+         box-shadow: inset 0 -1px 0 #dbe3ef;
      }
 
-     /* Freeze leading columns for RAB table */
-     #rabOpsTable th:nth-child(1), #rabOpsTable td:nth-child(1) { position: sticky; left: 0; z-index: 21; background: #fff; min-width: 150px; }
-     #rabOpsTable th:nth-child(2), #rabOpsTable td:nth-child(2) { position: sticky; left: 150px; z-index: 21; background: #fff; min-width: 130px; }
-     #rabOpsTable th:nth-child(3), #rabOpsTable td:nth-child(3) { position: sticky; left: 280px; z-index: 21; background: #fff; min-width: 90px; }
-     #rabOpsTable th:nth-child(4), #rabOpsTable td:nth-child(4) { position: sticky; left: 370px; z-index: 21; background: #fff; min-width: 240px; }
-     #rabOpsTable thead th:nth-child(1), #rabOpsTable thead th:nth-child(2), #rabOpsTable thead th:nth-child(3), #rabOpsTable thead th:nth-child(4) { z-index: 35; background: #eef2f7 !important; }
+     .ops-table tbody tr:hover td {
+         background: #f8fbff;
+     }
 
-     /* Freeze leading columns for Realization table */
-     #realizationOpsTable th:nth-child(1), #realizationOpsTable td:nth-child(1) { position: sticky; left: 0; z-index: 21; background: #fff; min-width: 130px; }
-     #realizationOpsTable th:nth-child(2), #realizationOpsTable td:nth-child(2) { position: sticky; left: 130px; z-index: 21; background: #fff; min-width: 150px; }
-     #realizationOpsTable th:nth-child(3), #realizationOpsTable td:nth-child(3) { position: sticky; left: 280px; z-index: 21; background: #fff; min-width: 90px; }
-     #realizationOpsTable th:nth-child(4), #realizationOpsTable td:nth-child(4) { position: sticky; left: 370px; z-index: 21; background: #fff; min-width: 240px; }
-     #realizationOpsTable thead th:nth-child(1), #realizationOpsTable thead th:nth-child(2), #realizationOpsTable thead th:nth-child(3), #realizationOpsTable thead th:nth-child(4) { z-index: 35; background: #eef2f7 !important; }
+     /* Freeze first key column (SaaS-style pinned identity column) */
+     #rabOpsTable th:nth-child(1), #rabOpsTable td:nth-child(1),
+     #realizationOpsTable th:nth-child(1), #realizationOpsTable td:nth-child(1) {
+         position: sticky;
+         left: 0;
+         z-index: 25;
+         background: #fff;
+         min-width: 160px;
+         box-shadow: 1px 0 0 #e9edf5;
+     }
+
+     #rabOpsTable thead th:nth-child(1),
+     #realizationOpsTable thead th:nth-child(1) {
+         z-index: 45;
+         background: #eef4ff !important;
+     }
 </style>
 
 <?php
@@ -823,7 +842,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive ops-table-wrap">
+                    <div class="ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="rabOpsTable">
                             <thead class="bg-light">
                                 <tr>
@@ -901,7 +920,7 @@ $realization_table_rows = $realization_table_rows ?? [];
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive ops-table-wrap">
+                    <div class="ops-table-wrap">
                         <table class="table table-hover table-striped align-middle ops-table" id="realizationOpsTable">
                             <thead class="bg-light">
                                 <tr>
@@ -1090,17 +1109,17 @@ $(document).ready(function() {
     $('#rabOpsTable').DataTable({
         pageLength: 10,
         order: [[ 19, "desc" ]],
-        scrollX: true,
         autoWidth: false,
-        fixedHeader: false
+        fixedHeader: false,
+        responsive: false
     });
 
     $('#realizationOpsTable').DataTable({
         pageLength: 10,
         order: [[ 0, "desc" ]],
-        scrollX: true,
         autoWidth: false,
-        fixedHeader: false
+        fixedHeader: false,
+        responsive: false
     });
 
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function () {
