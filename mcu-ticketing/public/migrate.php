@@ -2,45 +2,18 @@
 /**
  * Database migrations (idempotent).
  *
- * CLI:  php migrate.php
- * Web:  index.php?page=migrate&key=YOUR_KEY  — or open /migrate.php?key=... if rewrite allows
- *        Prefer CLI on production.
+ * CLI: php public/migrate.php
+ * Web: https://your-domain/mcu-ticketing/public/migrate.php
  *
- * Set MIGRATE_KEY in .env for browser access (never commit the real key).
+ * Catatan: URL ini bisa diakses siapa saja — pastikan server/firewall membatasi akses jika perlu.
  */
 declare(strict_types=1);
 
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-$isCli = PHP_SAPI === 'cli';
-if (!$isCli) {
+if (PHP_SAPI !== 'cli') {
     header('Content-Type: text/plain; charset=utf-8');
-}
-
-if (!$isCli) {
-    $key = $_GET['key'] ?? '';
-    $envFile = [];
-    $candidates = [dirname(__DIR__) . '/.env', dirname(__DIR__) . '/config/.env'];
-    foreach ($candidates as $f) {
-        if (is_readable($f)) {
-            foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
-                $line = trim($line);
-                if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
-                    continue;
-                }
-                [$k, $v] = explode('=', $line, 2);
-                $envFile[trim($k)] = trim($v, " \t\"'");
-            }
-            break;
-        }
-    }
-    $expected = getenv('MIGRATE_KEY') ?: ($_ENV['MIGRATE_KEY'] ?? $envFile['MIGRATE_KEY'] ?? '');
-    if ($expected === '' || !hash_equals((string) $expected, (string) $key)) {
-        http_response_code(403);
-        echo "Forbidden. Set MIGRATE_KEY in .env and pass ?key=... or run: php public/migrate.php\n";
-        exit(1);
-    }
 }
 
 require_once dirname(__DIR__) . '/config/autoload.php';
