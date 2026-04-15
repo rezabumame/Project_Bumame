@@ -128,148 +128,150 @@ class ProjectController extends BaseController {
 
     public function add_comment() {
         if (!isset($_SESSION['user_id'])) {
-             echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-             return;
+            $this->jsonResponse(['status' => 'error', 'message' => 'Unauthorized']);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['project_id']) && isset($_POST['message'])) {
-            // CSRF Protection
-            if (!$this->validateCsrfToken()) {
-                echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-                return;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['project_id'], $_POST['message'])) {
+            $this->jsonResponse(['status' => 'error', 'message' => 'Invalid request']);
+        }
+
+        if (!$this->validateCsrfToken()) {
+            $this->jsonResponse(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        }
+
+        $project_id = $_POST['project_id'];
+        if (!$this->verifyProjectAccess($project_id)) {
+            $this->jsonResponse(['status' => 'error', 'message' => 'Access Denied']);
+        }
+
+        $parentId = null;
+        if (!empty($_POST['parent_id'])) {
+            $raw = (string) $_POST['parent_id'];
+            if ($raw !== 'null' && ctype_digit($raw)) {
+                $parentId = (int) $raw;
             }
+        }
 
-            $project_id = $_POST['project_id'];
-            if (!$this->verifyProjectAccess($project_id)) {
-                echo json_encode(['status' => 'error', 'message' => 'Access Denied']);
-                return;
+        $this->comment->project_id = $project_id;
+        $this->comment->user_id = $_SESSION['user_id'];
+        $this->comment->message = $_POST['message'];
+        $this->comment->parent_id = $parentId;
+
+        try {
+            if (!$this->comment->create()) {
+                $this->jsonResponse(['status' => 'error', 'message' => 'Failed to save comment']);
             }
+        } catch (Throwable $e) {
+            error_log('add_comment INSERT: ' . $e->getMessage());
+            $this->jsonResponse(['status' => 'error', 'message' => 'Failed to save comment']);
+        }
 
-            $this->comment->project_id = $project_id;
-            $this->comment->user_id = $_SESSION['user_id'];
-            $this->comment->message = $_POST['message'];
-            
-            // Handle Parent ID (Reply)
-            if (isset($_POST['parent_id']) && !empty($_POST['parent_id'])) {
-                $this->comment->parent_id = $_POST['parent_id'];
+        try {
+            $this->chatParticipant->subscribe($project_id, $_SESSION['user_id']);
+
+            $projectInfo = $this->project->getProjectById($project_id);
+            $projectName = $projectInfo ? $projectInfo['nama_project'] : $project_id;
+
+            $mentioned_usernames = [];
+            if (isset($_POST['mentions'])) {
+                $rawMentions = $_POST['mentions'];
+                $mentionList = is_array($rawMentions) ? $rawMentions : [$rawMentions];
+                $mentioned_usernames = array_unique(array_filter($mentionList, 'strlen'));
             }
-
-            if ($this->comment->create()) {
-                // Subscribe the sender automatically
-                $this->chatParticipant->subscribe($_POST['project_id'], $_SESSION['user_id']);
-
-                // Get Project Name for Notification
-                $projectInfo = $this->project->getProjectById($_POST['project_id']);
-                $projectName = $projectInfo ? $projectInfo['nama_project'] : $_POST['project_id'];
-
-                // Identify explicit mentions (Usernames)
-                $mentioned_usernames = [];
-
-                // 1. Use explicit mentions from frontend
-                if (isset($_POST['mentions']) && is_array($_POST['mentions'])) {
-                    $mentioned_usernames = array_unique($_POST['mentions']);
+            if (empty($mentioned_usernames)) {
+                preg_match_all('/@(\w+)/', $_POST['message'], $matches);
+                if (!empty($matches[1])) {
+                    $mentioned_usernames = array_unique($matches[1]);
                 }
+            }
 
-                // 2. Fallback: Parse from message
-                if (empty($mentioned_usernames)) {
-                    preg_match_all('/@(\w+)/', $_POST['message'], $matches);
-                    if (!empty($matches[1])) {
-                        $mentioned_usernames = array_unique($matches[1]);
-                    }
-                }
-                
-                // Convert usernames to User IDs and collect emails
-                $emails_to_notify = []; // [uid => email]
-                if (!empty($mentioned_usernames)) {
-                    foreach ($mentioned_usernames as $uname) {
-                        $stmt = $this->user->searchUsers($uname);
-                        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($users as $u) {
-                            if ($u['username'] === $uname && $u['user_id'] != $_SESSION['user_id']) {
-                                $emails_to_notify[$u['user_id']] = $u['username'];
-                            }
+            $emails_to_notify = [];
+            if (!empty($mentioned_usernames)) {
+                foreach ($mentioned_usernames as $uname) {
+                    $stmt = $this->user->searchUsers($uname);
+                    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($users as $u) {
+                        if ($u['username'] === $uname && $u['user_id'] != $_SESSION['user_id']) {
+                            $emails_to_notify[$u['user_id']] = $u['username'];
                         }
                     }
                 }
+            }
 
-                // Collect notified user IDs for App Notifications duplicate check
-                $notified_user_ids = [];
+            $notified_user_ids = [];
 
-                // 1. Handle Mentions (High Priority - Always Notify)
-                foreach ($emails_to_notify as $uid => $email) {
-                    $this->notification->user_id = $uid;
-                    $this->notification->type = 'mention';
-                    $this->notification->message = $_SESSION['full_name'] . " mentioned you in project " . $projectName;
-                    $this->notification->link = "index.php?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
-                    $this->notification->create();
-                    
-                    // Also subscribe them if not already
-                    $this->chatParticipant->subscribe($project_id, $uid);
-                    $notified_user_ids[] = $uid;
-                }
+            foreach ($emails_to_notify as $uid => $email) {
+                $this->notification->user_id = $uid;
+                $this->notification->type = 'mention';
+                $this->notification->message = $_SESSION['full_name'] . " mentioned you in project " . $projectName;
+                $this->notification->link = "index.php?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
+                $this->notification->create();
 
-                // 2. Handle Replies (Email + App Notification)
-                if (isset($_POST['parent_id']) && !empty($_POST['parent_id'])) {
-                    $parentComment = $this->comment->getById($_POST['parent_id']);
-                    if ($parentComment && $parentComment['user_id'] != $_SESSION['user_id']) {
-                        $puid = $parentComment['user_id'];
-                        $pemail = $parentComment['email'];
-                        
-                        if (!in_array($puid, $notified_user_ids)) {
-                            $emails_to_notify[$puid] = $pemail;
-                            
-                            $this->notification->user_id = $puid;
-                            $this->notification->type = 'project_comment';
-                            $this->notification->message = $_SESSION['full_name'] . " replied to your comment in project " . $projectName;
-                            $this->notification->link = "index.php?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
-                            $this->notification->create();
-                            
-                            $notified_user_ids[] = $puid;
-                        }
-                    }
-                }
+                $this->chatParticipant->subscribe($project_id, $uid);
+                $notified_user_ids[] = $uid;
+            }
 
-                // 3. Handle Room Participants (App Notification only, if not muted and not already notified)
-                $subscribersStmt = $this->chatParticipant->getSubscribers($project_id);
-                $subscribers = $subscribersStmt->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($subscribers as $sub) {
-                    $uid = $sub['user_id'];
-                    if ($uid == $_SESSION['user_id'] || in_array($uid, $notified_user_ids)) continue;
+            if ($parentId !== null) {
+                $parentComment = $this->comment->getById($parentId);
+                if ($parentComment && $parentComment['user_id'] != $_SESSION['user_id']) {
+                    $puid = $parentComment['user_id'];
+                    $pemail = $parentComment['email'];
 
-                    if ($sub['is_muted'] == 0) {
-                        $this->notification->user_id = $uid;
+                    if (!in_array($puid, $notified_user_ids)) {
+                        $emails_to_notify[$puid] = $pemail;
+
+                        $this->notification->user_id = $puid;
                         $this->notification->type = 'project_comment';
-                        $this->notification->message = $_SESSION['full_name'] . " commented in project " . $projectName;
+                        $this->notification->message = $_SESSION['full_name'] . " replied to your comment in project " . $projectName;
                         $this->notification->link = "index.php?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
                         $this->notification->create();
+
+                        $notified_user_ids[] = $puid;
                     }
                 }
-
-                // 4. Send Emails for Tags & Replies
-                // Include MailHelper
-                require_once __DIR__ . '/../helpers/MailHelper.php';
-                foreach ($emails_to_notify as $uid => $email) {
-                    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
-                    
-                    try {
-                        $subject = "Notifikasi Chatter: " . $projectName;
-                        $content = "Halo, <br><br>";
-                        $content .= "<b>" . $_SESSION['full_name'] . "</b> telah mengirim pesan di Chatter proyek <b>$projectName</b>.<br><br>";
-                        $content .= "<i>\"" . $_POST['message'] . "\"</i><br><br>";
-                        
-                        $link = MailHelper::getBaseUrl() . "?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
-                        $html = MailHelper::getTemplate("Pesan Baru di Chatter", $content, $link, "Buka Chatter");
-                        MailHelper::send($email, $subject, $html);
-                    } catch (Exception $e) {
-                        error_log("Failed to send Chatter email notification to $email: " . $e->getMessage());
-                    }
-                }
-
-                echo json_encode(['status' => 'success']);
-            } else {
-                echo json_encode(['status' => 'error']);
             }
+
+            $subscribersStmt = $this->chatParticipant->getSubscribers($project_id);
+            $subscribers = $subscribersStmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($subscribers as $sub) {
+                $uid = $sub['user_id'];
+                if ($uid == $_SESSION['user_id'] || in_array($uid, $notified_user_ids)) {
+                    continue;
+                }
+
+                if (isset($sub['is_muted']) && (int) $sub['is_muted'] === 0) {
+                    $this->notification->user_id = $uid;
+                    $this->notification->type = 'project_comment';
+                    $this->notification->message = $_SESSION['full_name'] . " commented in project " . $projectName;
+                    $this->notification->link = "index.php?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
+                    $this->notification->create();
+                }
+            }
+
+            require_once __DIR__ . '/../helpers/MailHelper.php';
+            foreach ($emails_to_notify as $uid => $email) {
+                if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    continue;
+                }
+
+                try {
+                    $subject = "Notifikasi Chatter: " . $projectName;
+                    $content = "Halo, <br><br>";
+                    $content .= "<b>" . $_SESSION['full_name'] . "</b> telah mengirim pesan di Chatter proyek <b>$projectName</b>.<br><br>";
+                    $content .= "<i>\"" . $_POST['message'] . "\"</i><br><br>";
+
+                    $link = MailHelper::getBaseUrl() . "?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
+                    $html = MailHelper::getTemplate("Pesan Baru di Chatter", $content, $link, "Buka Chatter");
+                    MailHelper::send($email, $subject, $html);
+                } catch (Exception $e) {
+                    error_log("Failed to send Chatter email notification to $email: " . $e->getMessage());
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('add_comment notifications: ' . $e->getMessage());
         }
+
+        $this->jsonResponse(['status' => 'success']);
     }
 
     public function search_users() {

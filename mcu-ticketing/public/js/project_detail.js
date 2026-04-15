@@ -1183,13 +1183,25 @@ function sendComment(e, projectId) {
                 activeReplyId = null;
                 loadChatter(projectId);
             } else {
-                alert('Error sending message');
+                alert(res.message || 'Error sending message');
                 btn.prop('disabled', false).html(originalBtn);
             }
         } catch (e) {
+            console.error('add_comment parse error', e, response);
             alert('Error parsing response');
             btn.prop('disabled', false).html(originalBtn);
         }
+    }).fail(function (xhr) {
+        btn.prop('disabled', false).html(originalBtn);
+        console.error('add_comment request failed', xhr.status, xhr.responseText);
+        let msg = 'Gagal mengirim pesan. Periksa koneksi.';
+        if (xhr.responseText) {
+            try {
+                const err = typeof xhr.responseText === 'string' ? JSON.parse(xhr.responseText) : xhr.responseText;
+                if (err && err.message) msg = err.message;
+            } catch (ignore) { /* keep default */ }
+        }
+        alert(msg);
     });
 }
 

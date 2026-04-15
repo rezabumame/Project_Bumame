@@ -24,14 +24,16 @@ class ProjectComment {
 
         $stmt = $this->conn->prepare($query);
 
-        $this->project_id = htmlspecialchars(strip_tags($this->project_id));
-        $this->user_id = htmlspecialchars(strip_tags($this->user_id));
-        // parent_id can be null
-        $this->message = htmlspecialchars(strip_tags($this->message));
+        $this->project_id = htmlspecialchars(strip_tags((string) $this->project_id));
+        $this->user_id = htmlspecialchars(strip_tags((string) $this->user_id));
+        $this->message = htmlspecialchars(strip_tags((string) $this->message));
+        $parentId = isset($this->parent_id) && $this->parent_id !== '' && $this->parent_id !== null
+            ? (int) $this->parent_id
+            : null;
 
         $stmt->bindParam(":project_id", $this->project_id);
         $stmt->bindParam(":user_id", $this->user_id);
-        $stmt->bindParam(":parent_id", $this->parent_id);
+        $stmt->bindValue(":parent_id", $parentId, $parentId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindParam(":message", $this->message);
 
         if ($stmt->execute()) {
