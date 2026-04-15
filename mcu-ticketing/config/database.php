@@ -60,9 +60,10 @@ class Database {
         }
 
         try {
-            $dsn = "mysql:host=" . $host . ($port ? ";port=" . $port : "") . ";dbname=" . $db_name;
-            $this->conn = new PDO($dsn, $username, $password);
-            $this->conn->exec("set names utf8");
+            $dsn = "mysql:host=" . $host . ($port ? ";port=" . $port : "") . ";dbname=" . $db_name . ";charset=utf8mb4";
+            $this->conn = new PDO($dsn, $username, $password, [
+                PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4',
+            ]);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $exception) {
             echo "Connection error (" . ($is_localhost ? "Local" : "Live") . "): " . $exception->getMessage();
