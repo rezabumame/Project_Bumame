@@ -1171,15 +1171,23 @@ function sendComment(e, projectId) {
         });
     }
 
-    $.post('index.php?page=add_comment', {
-        project_id: projectId,
-        message: message,
-        mentions: mentions,
-        parent_id: activeReplyId
-    }, function (response) {
+    $.ajax({
+        url: 'index.php?page=add_comment',
+        type: 'POST',
+        showLoader: false,
+        data: {
+            project_id: projectId,
+            message: message,
+            mentions: mentions,
+            parent_id: activeReplyId
+        },
+        success: function (response) {
         try {
             const res = typeof response === 'string' ? JSON.parse(response) : response;
             if (res.status === 'success') {
+                if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) {
+                    Swal.close();
+                }
                 activeReplyId = null;
                 loadChatter(projectId);
             } else {
@@ -1190,6 +1198,7 @@ function sendComment(e, projectId) {
             console.error('add_comment parse error', e, response);
             alert('Error parsing response');
             btn.prop('disabled', false).html(originalBtn);
+        }
         }
     }).fail(function (xhr) {
         btn.prop('disabled', false).html(originalBtn);
@@ -1350,9 +1359,17 @@ function toggleChatMute(projectId, btn) {
     const $btn = $(btn);
     $btn.prop('disabled', true);
 
-    $.post('index.php?page=toggle_chat_mute', { project_id: projectId }, function (response) {
+    $.ajax({
+        url: 'index.php?page=toggle_chat_mute',
+        type: 'POST',
+        showLoader: false,
+        data: { project_id: projectId },
+        success: function (response) {
         try {
             const status = typeof response === 'string' ? JSON.parse(response) : response;
+            if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) {
+                Swal.close();
+            }
             if (status.is_muted == 1) {
                 $btn.removeClass('btn-outline-secondary').addClass('btn-danger');
                 $btn.html('<i class="fas fa-bell-slash"></i> Muted');
@@ -1367,6 +1384,10 @@ function toggleChatMute(projectId, btn) {
             alert('Error updating mute status');
         }
         $btn.prop('disabled', false);
+        }
+    }).fail(function () {
+        $btn.prop('disabled', false);
+        alert('Error updating mute status');
     });
 }
 

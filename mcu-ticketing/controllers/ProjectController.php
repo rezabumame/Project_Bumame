@@ -166,6 +166,9 @@ class ProjectController extends BaseController {
             $this->jsonResponse(['status' => 'error', 'message' => 'Failed to save comment']);
         }
 
+        $emails_to_notify = [];
+        $projectName = $project_id;
+
         try {
             $this->chatParticipant->subscribe($project_id, $_SESSION['user_id']);
 
@@ -185,7 +188,6 @@ class ProjectController extends BaseController {
                 }
             }
 
-            $emails_to_notify = [];
             if (!empty($mentioned_usernames)) {
                 foreach ($mentioned_usernames as $uname) {
                     $stmt = $this->user->searchUsers($uname);
@@ -247,7 +249,16 @@ class ProjectController extends BaseController {
                     $this->notification->create();
                 }
             }
+        } catch (Throwable $e) {
+            error_log('add_comment notifications: ' . $e->getMessage());
+        }
 
+        $fullName = $_SESSION['full_name'] ?? '';
+        $messageBody = $_POST['message'];
+
+        $this->jsonResponseDetachClient(['status' => 'success']);
+
+        try {
             require_once __DIR__ . '/../helpers/MailHelper.php';
             foreach ($emails_to_notify as $uid => $email) {
                 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -257,8 +268,8 @@ class ProjectController extends BaseController {
                 try {
                     $subject = "Notifikasi Chatter: " . $projectName;
                     $content = "Halo, <br><br>";
-                    $content .= "<b>" . $_SESSION['full_name'] . "</b> telah mengirim pesan di Chatter proyek <b>$projectName</b>.<br><br>";
-                    $content .= "<i>\"" . $_POST['message'] . "\"</i><br><br>";
+                    $content .= "<b>" . $fullName . "</b> telah mengirim pesan di Chatter proyek <b>$projectName</b>.<br><br>";
+                    $content .= "<i>\"" . $messageBody . "\"</i><br><br>";
 
                     $link = MailHelper::getBaseUrl() . "?page=all_projects&open_project_id=" . $project_id . "&open_tab=chatter";
                     $html = MailHelper::getTemplate("Pesan Baru di Chatter", $content, $link, "Buka Chatter");
@@ -268,10 +279,10 @@ class ProjectController extends BaseController {
                 }
             }
         } catch (Throwable $e) {
-            error_log('add_comment notifications: ' . $e->getMessage());
+            error_log('add_comment email: ' . $e->getMessage());
         }
 
-        $this->jsonResponse(['status' => 'success']);
+        exit;
     }
 
     public function search_users() {

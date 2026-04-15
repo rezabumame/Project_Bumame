@@ -60,6 +60,37 @@ class BaseController {
         exit;
     }
 
+    /**
+     * Send JSON to the client and end the HTTP response when possible so heavy work (e.g. SMTP)
+     * can continue without blocking the browser. Falls back to flush only when not under FPM.
+     */
+    protected function jsonResponseDetachClient(array $data, int $statusCode = 200): void {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($statusCode);
+
+        $json = json_encode($data);
+        if ($json === false) {
+            error_log('JSON Encode Error: ' . json_last_error_msg());
+            $json = json_encode(['status' => 'error', 'message' => 'Internal Server Error (JSON Encoding)']);
+        }
+
+        echo $json;
+
+        if (function_exists('session_write_close')) {
+            session_write_close();
+        }
+
+        flush();
+
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+    }
+
     protected function redirect($page, $params = []) {
         $url = "index.php?page=" . $page;
         if (!empty($params)) {

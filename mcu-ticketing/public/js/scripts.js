@@ -141,12 +141,12 @@ $(document).ready(function () {
     });
 
     $(document).on('ajaxComplete', function(e, xhr, options) {
-        // Only close if it's a loader and NOT a success/error alert that was just shown
         if (options.type === 'POST' && options.showLoader !== false) {
-            // We usually don't close here because success/error handlers will show their own alerts
-            // But if there's no success alert, we should close it.
-            // Swal.close() here might race with success alerts.
-            // So we rely on success/error handlers to override the loading Swal.
+            // Close the global "Processing..." overlay when the request finishes.
+            // If the success handler already opened another Swal (success/error), isLoading is false and we skip.
+            if (typeof Swal !== 'undefined' && typeof Swal.isLoading === 'function' && Swal.isLoading()) {
+                Swal.close();
+            }
         }
     });
 
