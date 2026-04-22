@@ -3,6 +3,13 @@ function formatJenisPemeriksaan(text) {
     return text; // Fallback
 }
 
+// Global fix for SweetAlert2 focus when using Bootstrap 5 modals
+$(document).on('focusin', function(e) {
+    if ($(e.target).closest(".swal2-container").length) {
+        e.stopImmediatePropagation();
+    }
+});
+
 function showUploadModal(projectId, date, formattedDate) {
     document.getElementById('upload_ba_project_id').value = projectId;
     document.getElementById('upload_ba_date').value = date;
