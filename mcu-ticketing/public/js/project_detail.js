@@ -706,14 +706,22 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                 const hoverEffect = "onmouseover=\"this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)'\" onmouseout=\"this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'\"";
 
                 if (!hideTabs && typeof userRole !== 'undefined') {
-                    if ((userRole === 'manager_ops' || userRole === 'superadmin') && p.status_project === 'need_approval_manager') {
-                        buttons += `<button class="btn btn-success me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #28a745 0%, #218838 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'need_approval_head', 'Approve this project?')"><i class="fas fa-check-circle me-2"></i>Approve</button>`;
-                        buttons += `<button class="btn btn-danger me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'rejected', 'Reject this project?')"><i class="fas fa-times-circle me-2"></i>Reject</button>`;
-                        buttons += `<button class="btn btn-warning rounded-pill px-4 text-uppercase border-0 text-white" style="${btnStyle} background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 're-nego', 'Request re-negotiation?')"><i class="fas fa-sync-alt me-2"></i>Re-Nego</button>`;
-                    } else if ((userRole === 'head_ops' || userRole === 'superadmin') && p.status_project === 'need_approval_head') {
-                        buttons += `<button class="btn btn-success me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #28a745 0%, #218838 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'approved', 'Approve this project?')"><i class="fas fa-check-double me-2"></i>Final Approve</button>`;
-                        buttons += `<button class="btn btn-danger me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'rejected', 'Reject this project?')"><i class="fas fa-times-circle me-2"></i>Reject</button>`;
-                        buttons += `<button class="btn btn-warning rounded-pill px-4 text-uppercase border-0 text-white" style="${btnStyle} background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 're-nego', 'Request re-negotiation?')"><i class="fas fa-sync-alt me-2"></i>Re-Nego</button>`;
+                    if (userRole === 'superadmin' || userRole === 'manager_ops' || userRole === 'head_ops') {
+                        if (p.status_project === 'need_approval_manager') {
+                            if (userRole === 'superadmin' || userRole === 'manager_ops') {
+                                buttons += `<button class="btn btn-success me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #28a745 0%, #218838 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'need_approval_head', 'Approve this project?')"><i class="fas fa-check-circle me-2"></i>Approve</button>`;
+                            }
+                            buttons += `<button class="btn btn-danger me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'rejected', 'Reject this project?')"><i class="fas fa-times-circle me-2"></i>Reject</button>`;
+                            buttons += `<button class="btn btn-warning me-2 rounded-pill px-4 text-uppercase border-0 text-white" style="${btnStyle} background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 're-nego', 'Request re-negotiation?')"><i class="fas fa-sync-alt me-2"></i>Re-Nego</button>`;
+                            buttons += `<button class="btn btn-secondary rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #6c757d 0%, #495057 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'cancelled', 'Cancel this project?')"><i class="fas fa-ban me-2"></i>Cancel</button>`;
+                        } else if (p.status_project === 'need_approval_head') {
+                            if (userRole === 'superadmin' || userRole === 'head_ops') {
+                                buttons += `<button class="btn btn-success me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #28a745 0%, #218838 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'approved', 'Approve this project?')"><i class="fas fa-check-double me-2"></i>Final Approve</button>`;
+                            }
+                            buttons += `<button class="btn btn-danger me-2 rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'rejected', 'Reject this project?')"><i class="fas fa-times-circle me-2"></i>Reject</button>`;
+                            buttons += `<button class="btn btn-warning me-2 rounded-pill px-4 text-uppercase border-0 text-white" style="${btnStyle} background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 're-nego', 'Request re-negotiation?')"><i class="fas fa-sync-alt me-2"></i>Re-Nego</button>`;
+                            buttons += `<button class="btn btn-secondary rounded-pill px-4 text-uppercase border-0" style="${btnStyle} background: linear-gradient(135deg, #6c757d 0%, #495057 100%);" ${hoverEffect} onclick="updateProjectStatus('${p.project_id}', 'cancelled', 'Cancel this project?')"><i class="fas fa-ban me-2"></i>Cancel</button>`;
+                        }
                     }
                 }
 
@@ -755,17 +763,17 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
 }
 
 function updateProjectStatus(id, status, confirmMsg) {
-    if (status === 're-nego' || status === 'rejected') {
+    if (status === 're-nego' || status === 'rejected' || status === 'cancelled') {
         Swal.fire({
-            title: 'Reason Required',
+            title: status === 'cancelled' ? 'Cancellation Reason' : 'Reason Required',
             text: confirmMsg,
             input: 'textarea',
             inputPlaceholder: 'Enter reason here...',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Submit',
-            confirmButtonColor: '#204EAB',
-            cancelButtonColor: '#d33',
+            confirmButtonColor: status === 'cancelled' ? '#dc3545' : '#204EAB',
+            cancelButtonColor: '#3085d6',
             preConfirm: (reason) => {
                 if (!reason) {
                     Swal.showValidationMessage('Reason is required');

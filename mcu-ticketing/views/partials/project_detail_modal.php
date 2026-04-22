@@ -18,7 +18,7 @@
             <div class="modal-footer border-top-0 bg-light rounded-bottom-4">
                 <!-- Debug Role -->
                 <input type="hidden" id="debug_user_role" value="<?php echo isset($_SESSION['role']) ? $_SESSION['role'] : ''; ?>">
-                <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'superadmin'): ?>
+                <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['superadmin', 'manager_ops', 'head_ops'])): ?>
                     <button type="button" class="btn btn-danger rounded-pill px-4 me-2" id="btn-cancel-project-modal" style="display: none;">
                         <i class="fas fa-ban me-2"></i>Cancel Project
                     </button>

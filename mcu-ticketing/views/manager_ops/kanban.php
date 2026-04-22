@@ -511,18 +511,36 @@
                         var newStatus = evt.to.getAttribute('data-status');
                         var projectId = itemEl.getAttribute('data-id');
 
-                        // Check for Rejected or Re-nego
-                        if(newStatus === 'rejected' || newStatus === 're-nego') {
+                        // Check for Rejected, Re-nego, or Cancelled
+                        if(newStatus === 'rejected' || newStatus === 're-nego' || newStatus === 'cancelled') {
+                            let title = 'Reason Required';
+                            let confirmText = 'Submit';
+                            let confirmColor = '#3085d6';
+
+                            if (newStatus === 'rejected') {
+                                title = 'Reject Project';
+                                confirmText = 'Yes, Reject';
+                                confirmColor = '#d33';
+                            } else if (newStatus === 're-nego') {
+                                title = 'Re-negotiate Project';
+                                confirmText = 'Submit Re-nego';
+                                confirmColor = '#f0ad4e';
+                            } else if (newStatus === 'cancelled') {
+                                title = 'Cancel Project';
+                                confirmText = 'Yes, Cancel';
+                                confirmColor = '#6c757d';
+                            }
+
                             Swal.fire({
-                                title: newStatus === 'rejected' ? 'Reject Project' : 'Re-negotiate Project',
+                                title: title,
                                 text: "Please provide a reason:",
                                 input: 'textarea',
                                 inputPlaceholder: 'Enter your reason here...',
                                 icon: 'warning',
                                 showCancelButton: true,
-                                confirmButtonColor: newStatus === 'rejected' ? '#d33' : '#f0ad4e',
+                                confirmButtonColor: confirmColor,
                                 cancelButtonColor: '#3085d6',
-                                confirmButtonText: newStatus === 'rejected' ? 'Yes, Reject' : 'Submit Re-nego',
+                                confirmButtonText: confirmText,
                                 inputValidator: (value) => {
                                     if (!value) {
                                         return 'You need to write a reason!'
