@@ -588,7 +588,7 @@ class Project {
             $query .= ", approved_date_head = NOW(), approved_by_head = :user_id";
         }
 
-        if (($status == 'rejected' || $status == 're-nego') && $reason) {
+        if (($status == 'rejected' || $status == 're-nego' || $status == 'cancelled') && $reason) {
             $query .= ", reject_reason = :reason";
         }
 

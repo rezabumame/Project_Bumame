@@ -113,6 +113,22 @@ try {
         return 'applied';
     });
 
+    run_migration($db, '002_add_reject_reason_to_projects', static function (PDO $db): string {
+        if (!table_exists($db, 'projects')) {
+            return 'skip_no_table';
+        }
+        
+        // Check if column exists
+        $q = $db->prepare("SHOW COLUMNS FROM projects LIKE 'reject_reason'");
+        $q->execute();
+        if ($q->fetch()) {
+            return 'already_ok';
+        }
+
+        $db->exec("ALTER TABLE projects ADD COLUMN reject_reason TEXT NULL AFTER status_project");
+        return 'applied';
+    });
+
     echo "\nDone.\n";
 } catch (Throwable $e) {
     echo 'Error: ' . $e->getMessage() . "\n";
