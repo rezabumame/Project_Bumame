@@ -1,6 +1,6 @@
 
 <!-- Project Detail Modal -->
-<div class="modal fade" id="detailModal" tabindex="-1">
+<div class="modal fade" id="detailModal">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header modal-modern-header">
