@@ -1,9 +1,11 @@
 <?php
 $GLOBALS['_APP_ENV'] = [];
-$envCandidates = [__DIR__ . '/../.env', __DIR__ . '/.env'];
+$envCandidates = [__DIR__ . '/../.env', __DIR__ . '/.env', __DIR__ . '/../deploy.env', __DIR__ . '/deploy.env'];
 if (function_exists('getcwd')) {
     $envCandidates[] = getcwd() . '/.env';
     $envCandidates[] = getcwd() . '/../.env';
+    $envCandidates[] = getcwd() . '/deploy.env';
+    $envCandidates[] = getcwd() . '/../deploy.env';
 }
 foreach ($envCandidates as $envFile) {
     $envFile = realpath($envFile) ?: $envFile;
