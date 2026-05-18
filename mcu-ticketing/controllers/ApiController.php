@@ -262,7 +262,9 @@ class ApiController extends BaseController {
     }
 
     private function export_inventory() {
-        $query = "SELECT ir.id, ir.project_id, ir.request_number, ir.created_by, ir.status, ir.created_at, ir.updated_at,
+        $query = "SELECT ir.id, ir.project_id, ir.request_number, ir.created_by, 
+                         IF(ir.status = 'SPLIT_SYSTEM', iri.item_type_snapshot, ir.status) as status, 
+                         ir.created_at, ir.updated_at,
                          p.nama_project, u_creator.full_name as creator_name,
                          ii.item_name as `Item Name`, iri.qty_request as `QTY`, ii.unit as `UOM`
                   FROM inventory_requests ir
