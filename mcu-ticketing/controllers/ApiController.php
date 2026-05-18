@@ -181,7 +181,7 @@ class ApiController extends BaseController {
                          r.rab_number, r.grand_total as rab_total, r.cost_value as budget_ops,
                          (r.cost_value - rr.total_amount) as variance,
                          (rr.total_amount / r.cost_value * 100) as realization_percentage,
-                         p.nama_project, p.company_name,
+                         p.project_id, p.nama_project, p.company_name,
                          rr.created_at as tgl_input_realisasi
                   FROM rab_realizations rr
                   LEFT JOIN rabs r ON rr.rab_id = r.id
@@ -197,6 +197,7 @@ class ApiController extends BaseController {
             $formattedRow = [];
 
             // 1. Basic Info
+            $formattedRow['Project ID'] = $row['project_id'];
             $formattedRow['realization_date'] = date('d M Y', strtotime($row['realization_date']));
             $formattedRow['rab_number'] = $row['rab_number'];
             $formattedRow['nama_project'] = $row['nama_project'];
