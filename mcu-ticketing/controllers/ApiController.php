@@ -122,10 +122,10 @@ class ApiController extends BaseController {
             $realizedTotal = $this->getRealizedTotalByRab($row['rab_id_pk']);
             $formattedRow['Total Realisasi'] = number_format($realizedTotal, 0, ',', '.');
             
-            $formattedRow['Personel Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'personnel');
-            $formattedRow['Transport Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'transport');
-            $formattedRow['Consumption Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'consumption');
-            $formattedRow['Vendor Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'vendor');
+            $formattedRow['Personel Realisasi'] = number_format($this->getRealizationCategoryTotalByRab($row['rab_id_pk'], 'personnel'), 0, ',', '.');
+            $formattedRow['Transport Realisasi'] = number_format($this->getRealizationCategoryTotalByRab($row['rab_id_pk'], 'transport'), 0, ',', '.');
+            $formattedRow['Consumption Realisasi'] = number_format($this->getRealizationCategoryTotalByRab($row['rab_id_pk'], 'consumption'), 0, ',', '.');
+            $formattedRow['Vendor Realisasi'] = number_format($this->getRealizationCategoryTotalByRab($row['rab_id_pk'], 'vendor'), 0, ',', '.');
 
             $finalData[] = $formattedRow;
         }
@@ -163,8 +163,8 @@ class ApiController extends BaseController {
         return $row['total'] ?? 0;
     }
 
-    private function getRealizationDetailsByRab($rab_id, $category) {
-        $query = "SELECT rri.item_name, rri.qty, rri.price 
+    private function getRealizationCategoryTotalByRab($rab_id, $category) {
+        $query = "SELECT SUM(rri.subtotal) as total 
                   FROM rab_realization_items rri 
                   JOIN rab_realizations rr ON rri.realization_id = rr.id 
                   WHERE rr.rab_id = :rab_id AND rri.category = :category AND rr.status != 'rejected'";
@@ -172,14 +172,8 @@ class ApiController extends BaseController {
         $stmt->bindParam(':rab_id', $rab_id);
         $stmt->bindParam(':category', $category);
         $stmt->execute();
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $lines = [];
-        foreach ($items as $item) {
-            $priceStr = number_format($item['price'], 0, ',', '.');
-            $lines[] = $item['item_name'] . ': ' . (float)$item['qty'] . ' @ ' . $priceStr;
-        }
-        return implode("\n", $lines);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'] ?? 0;
     }
 
     private function export_realizations() {
