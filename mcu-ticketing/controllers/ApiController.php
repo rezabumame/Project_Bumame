@@ -39,9 +39,6 @@ class ApiController extends BaseController {
                 case 'inventory':
                     $this->export_inventory();
                     break;
-                case 'medical':
-                    $this->export_medical();
-                    break;
                 case 'invoices':
                     $this->export_invoices();
                     break;
@@ -65,12 +62,12 @@ class ApiController extends BaseController {
 
     private function export_rabs() {
         $query = "SELECT r.id as rab_id_pk, r.rab_number, r.status, r.location_type, r.total_participants,
-                         p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
-                         sp.sales_name, u_korlap.full_name as korlap_name,
-                         r.total_personnel, r.total_transport, r.total_consumption,
-                         (SELECT SUM(subtotal) FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as total_vendor,
-                         r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage,
-                         r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at
+                          p.project_id, p.nama_project, p.company_name, p.tanggal_mcu,
+                          sp.sales_name, u_korlap.full_name as korlap_name,
+                          r.total_personnel, r.total_transport, r.total_consumption,
+                          (SELECT SUM(subtotal) FROM rab_items WHERE rab_id = r.id AND category = 'vendor') as total_vendor,
+                          r.grand_total, r.cost_value as budget_ops, r.cost_percentage as budget_percentage,
+                          r.created_at as tgl_pengajuan, r.approved_date_manager, r.approved_date_head, r.submitted_to_finance_at, r.finance_paid_at
                   FROM rabs r
                   LEFT JOIN projects p ON r.project_id = p.project_id
                   LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
@@ -92,47 +89,43 @@ class ApiController extends BaseController {
             $formattedRow = [];
             
             // 1. Basic Info
-            $formattedRow['rab_number'] = $row['rab_number'];
-            $formattedRow['status'] = $row['status'];
-            $formattedRow['location_type'] = $row['location_type'];
-            $formattedRow['total_participants'] = $row['total_participants'];
-            $formattedRow['project_id'] = $row['project_id'];
-            $formattedRow['nama_project'] = $row['nama_project'];
-            $formattedRow['company_name'] = $row['company_name'];
+            $formattedRow['Project ID'] = $row['project_id'];
+            $formattedRow['Nama Project'] = $row['nama_project'];
+            $formattedRow['Company'] = $row['company_name'];
             
             if (class_exists('DateHelper')) {
-                $formattedRow['tanggal_mcu'] = DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']);
+                $formattedRow['MCU Date'] = DateHelper::formatSmartDateIndonesian($row['tanggal_mcu']);
             } else {
-                $formattedRow['tanggal_mcu'] = $row['tanggal_mcu'];
+                $formattedRow['MCU Date'] = $row['tanggal_mcu'];
             }
             
-            $formattedRow['sales_name'] = $row['sales_name'];
-            $formattedRow['korlap_name'] = $row['korlap_name'];
+            $formattedRow['Sales'] = $row['sales_name'];
+            $formattedRow['Korlap'] = $row['korlap_name'];
 
             // 2. Details and Totals (Side by Side)
-            $formattedRow['total_personnel'] = number_format($row['total_personnel'], 0, ',', '.');
-            $formattedRow['personnel_details'] = $this->getItemDetails($row['rab_id_pk'], 'personnel');
+            $formattedRow['Total Personel'] = number_format($row['total_personnel'], 0, ',', '.');
+            $formattedRow['Personel Detail'] = $this->getItemDetails($row['rab_id_pk'], 'personnel');
             
-            $formattedRow['total_transport'] = number_format($row['total_transport'], 0, ',', '.');
-            $formattedRow['transport_details'] = $this->getItemDetails($row['rab_id_pk'], 'transport');
+            $formattedRow['Total Transport'] = number_format($row['total_transport'], 0, ',', '.');
+            $formattedRow['Transport Detail'] = $this->getItemDetails($row['rab_id_pk'], 'transport');
             
-            $formattedRow['total_consumption'] = number_format($row['total_consumption'], 0, ',', '.');
-            $formattedRow['consumption_details'] = $this->getItemDetails($row['rab_id_pk'], 'consumption');
+            $formattedRow['Total Consumption'] = number_format($row['total_consumption'], 0, ',', '.');
             
-            $formattedRow['total_vendor'] = number_format($row['total_vendor'] ?? 0, 0, ',', '.');
-            $formattedRow['vendor_details'] = $this->getItemDetails($row['rab_id_pk'], 'vendor');
+            $formattedRow['Total Vendor'] = number_format($row['total_vendor'] ?? 0, 0, ',', '.');
+            $formattedRow['Vendor Detail'] = $this->getItemDetails($row['rab_id_pk'], 'vendor');
 
             // 3. Grand Totals & Budget
-            $formattedRow['grand_total'] = number_format($row['grand_total'], 0, ',', '.');
-            $formattedRow['budget_ops'] = number_format($row['budget_ops'], 0, ',', '.');
-            $formattedRow['budget_percentage'] = number_format($row['budget_percentage'], 2, ',', '.') . '%';
+            $formattedRow['Grand Total'] = number_format($row['grand_total'], 0, ',', '.');
+            $formattedRow['Budget OPS'] = number_format($row['budget_ops'], 0, ',', '.');
 
-            // 4. Timestamps (Far Right)
-            $formattedRow['tgl_pengajuan'] = $row['tgl_pengajuan'] ? date('d M Y H:i', strtotime($row['tgl_pengajuan'])) : '-';
-            $formattedRow['approved_date_manager'] = $row['approved_date_manager'] ? date('d M Y H:i', strtotime($row['approved_date_manager'])) : '-';
-            $formattedRow['approved_date_head'] = $row['approved_date_head'] ? date('d M Y H:i', strtotime($row['approved_date_head'])) : '-';
-            $formattedRow['submitted_to_finance_at'] = $row['submitted_to_finance_at'] ? date('d M Y H:i', strtotime($row['submitted_to_finance_at'])) : '-';
-            $formattedRow['finance_paid_at'] = $row['finance_paid_at'] ? date('d M Y H:i', strtotime($row['finance_paid_at'])) : '-';
+            // 4. Realization Data
+            $realizedTotal = $this->getRealizedTotalByRab($row['rab_id_pk']);
+            $formattedRow['Total Realisasi'] = number_format($realizedTotal, 0, ',', '.');
+            
+            $formattedRow['Personel Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'personnel');
+            $formattedRow['Transport Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'transport');
+            $formattedRow['Consumption Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'consumption');
+            $formattedRow['Vendor Realisasi'] = $this->getRealizationDetailsByRab($row['rab_id_pk'], 'vendor');
 
             $finalData[] = $formattedRow;
         }
@@ -157,6 +150,34 @@ class ApiController extends BaseController {
             }
             $line .= ' @ ' . $priceStr;
             $lines[] = $line;
+        }
+        return implode("\n", $lines);
+    }
+
+    private function getRealizedTotalByRab($rab_id) {
+        $query = "SELECT SUM(total_amount) as total FROM rab_realizations WHERE rab_id = :rab_id AND status != 'rejected'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':rab_id', $rab_id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'] ?? 0;
+    }
+
+    private function getRealizationDetailsByRab($rab_id, $category) {
+        $query = "SELECT rri.item_name, rri.qty, rri.price 
+                  FROM rab_realization_items rri 
+                  JOIN rab_realizations rr ON rri.realization_id = rr.id 
+                  WHERE rr.rab_id = :rab_id AND rri.category = :category AND rr.status != 'rejected'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':rab_id', $rab_id);
+        $stmt->bindParam(':category', $category);
+        $stmt->execute();
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $lines = [];
+        foreach ($items as $item) {
+            $priceStr = number_format($item['price'], 0, ',', '.');
+            $lines[] = $item['item_name'] . ': ' . (float)$item['qty'] . ' @ ' . $priceStr;
         }
         return implode("\n", $lines);
     }
@@ -255,23 +276,6 @@ class ApiController extends BaseController {
                   LEFT JOIN projects p ON ir.project_id = p.project_id
                   LEFT JOIN users u_creator ON ir.created_by = u_creator.user_id
                   ORDER BY ir.created_at DESC";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        $this->jsonResponse(['status' => 'success', 'data' => $data]);
-    }
-
-    private function export_medical() {
-        $query = "SELECT mr.*, p.nama_project, p.company_name, p.tanggal_mcu,
-                         (SELECT GROUP_CONCAT(CONCAT(u.full_name, ': ', mri.actual_pax_checked, '/', mri.actual_pax_released) SEPARATOR ' | ')
-                          FROM medical_result_items mri
-                          JOIN users u ON mri.assigned_to_user_id = u.user_id
-                          WHERE mri.medical_result_id = mr.id) as assignment_details
-                  FROM medical_results mr
-                  LEFT JOIN projects p ON mr.project_id = p.project_id
-                  ORDER BY mr.created_at DESC";
         
         $stmt = $this->db->prepare($query);
         $stmt->execute();
