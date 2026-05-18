@@ -262,15 +262,15 @@ class ApiController extends BaseController {
     }
 
     private function export_inventory() {
-        $query = "SELECT ir.*, p.nama_project, u_creator.full_name as creator_name,
-                         (SELECT GROUP_CONCAT(CONCAT(ii.item_name, ' (', iri.qty_request, ' ', ii.unit, ')') SEPARATOR ' | ')
-                          FROM inventory_request_items iri
-                          JOIN inventory_items ii ON iri.item_id = ii.id
-                          WHERE iri.request_id = ir.id) as requested_items
+        $query = "SELECT ir.id, ir.project_id, ir.request_number, ir.created_by, ir.status, ir.created_at, ir.updated_at,
+                         p.nama_project, u_creator.full_name as creator_name,
+                         ii.item_name as `Item Name`, iri.qty_request as `QTY`, ii.unit as `UOM`
                   FROM inventory_requests ir
                   LEFT JOIN projects p ON ir.project_id = p.project_id
                   LEFT JOIN users u_creator ON ir.created_by = u_creator.user_id
-                  ORDER BY ir.created_at DESC";
+                  LEFT JOIN inventory_request_items iri ON iri.request_id = ir.id
+                  LEFT JOIN inventory_items ii ON iri.item_id = ii.id
+                  ORDER BY ir.created_at DESC, iri.id ASC";
         
         $stmt = $this->db->prepare($query);
         $stmt->execute();
