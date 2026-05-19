@@ -198,7 +198,7 @@ class ApiController extends BaseController {
 
             // 1. Basic Info
             $formattedRow['Project ID'] = $row['project_id'];
-            $formattedRow['realization_date'] = date('d M Y', strtotime($row['realization_date']));
+            $formattedRow['realization_date'] = date('d/m/Y', strtotime($row['realization_date']));
             $formattedRow['rab_number'] = $row['rab_number'];
             $formattedRow['nama_project'] = $row['nama_project'];
             $formattedRow['company_name'] = $row['company_name'];
