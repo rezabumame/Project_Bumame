@@ -236,6 +236,7 @@ $router->add('inventory_master_store', 'InventoryMasterController', 'store');
 $router->add('inventory_master_edit', 'InventoryMasterController', 'edit');
 $router->add('inventory_master_update', 'InventoryMasterController', 'update');
 $router->add('inventory_master_delete', 'InventoryMasterController', 'delete');
+$router->add('inventory_master_get_item', 'InventoryMasterController', 'getItemJson');
 
 // Warehouse (Admin Gudang)
 $router->add('warehouse_dashboard', 'WarehouseController', 'index');

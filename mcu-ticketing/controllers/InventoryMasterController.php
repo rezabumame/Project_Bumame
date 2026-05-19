@@ -55,7 +55,7 @@ class InventoryMasterController extends BaseController {
             }
             echo "<script>alert('Item created successfully'); window.location.href='index.php?page=inventory_master_index';</script>";
         } else {
-            echo "<script>alert('Failed to create item'); history.back();</script>";
+            echo "<script>alert('Failed to create item'); window.location.href='index.php?page=inventory_master_index';</script>";
         }
     }
 
@@ -108,8 +108,30 @@ class InventoryMasterController extends BaseController {
             }
             echo "<script>alert('Item updated successfully'); window.location.href='index.php?page=inventory_master_index';</script>";
         } else {
-            echo "<script>alert('Failed to update item'); history.back();</script>";
+            echo "<script>alert('Failed to update item'); window.location.href='index.php?page=inventory_master_index';</script>";
         }
+    }
+
+    public function getItemJson() {
+        $this->checkPermission();
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No ID']);
+            return;
+        }
+        $item = $this->inventoryItem->getById($id);
+        if (!$item) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+            return;
+        }
+        $item['asset_codes'] = $item['item_type'] === 'ASET'
+            ? $this->inventoryItem->getAssetCodes($id)
+            : [];
+
+        header('Content-Type: application/json');
+        echo json_encode($item);
     }
 
     public function delete() {
