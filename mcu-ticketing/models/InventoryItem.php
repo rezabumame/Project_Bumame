@@ -156,7 +156,7 @@ class InventoryItem {
     public function getItemCodesWithUsage($item_id, $month, $year) {
         $query = "SELECT ac.id, ac.asset_code,
                          COUNT(DISTINCT p.project_id) as usage_count,
-                         MAX(p.tanggal_mcu) as last_used
+                         MAX(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) as last_used
                   FROM inventory_asset_codes ac
                   LEFT JOIN inventory_request_asset_codes irac ON irac.asset_code_id = ac.id
                   LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
@@ -176,7 +176,8 @@ class InventoryItem {
     }
 
     public function getCodeProjectHistory($asset_code_id) {
-        $query = "SELECT p.project_id, p.nama_project, p.tanggal_mcu,
+        $query = "SELECT p.project_id, p.nama_project,
+                         JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]')) as tanggal_mcu,
                          ir.request_number, wr.status as warehouse_status, wr.id as warehouse_request_id
                   FROM inventory_request_asset_codes irac
                   JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
@@ -184,7 +185,7 @@ class InventoryItem {
                   JOIN projects p ON ir.project_id = p.project_id
                   WHERE irac.asset_code_id = :code_id
                   GROUP BY p.project_id, p.nama_project, p.tanggal_mcu, ir.request_number, wr.status, wr.id
-                  ORDER BY p.tanggal_mcu DESC";
+                  ORDER BY JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]')) DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":code_id", $asset_code_id);
         $stmt->execute();
