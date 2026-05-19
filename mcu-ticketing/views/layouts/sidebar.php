@@ -309,7 +309,7 @@
             $isSuper = ($role == 'superadmin');
             $canSeeSalesMgmt = in_array($role, ['superadmin', 'admin_sales', 'ceo', 'sales_support_supervisor', 'sales_performance_manager']);
             $canSeeStaffMgmt = in_array($role, ['superadmin', 'admin_ops', 'manager_ops', 'head_ops']);
-            $canSeeInventoryMaster = in_array($role, ['superadmin', 'korlap', 'admin_ops']);
+            $canSeeInventoryMaster = in_array($role, ['superadmin', 'korlap', 'admin_ops', 'admin_gudang_aset', 'admin_gudang_warehouse']);
             
             if ($isSuper || $canSeeSalesMgmt || $canSeeStaffMgmt || $canSeeInventoryMaster):
             ?>
