@@ -130,6 +130,67 @@ class InventoryItem {
         return false;
     }
 
+    public function getAssetUsageSummary($month, $year) {
+        $query = "SELECT ii.id, ii.item_name, ii.category,
+                         COUNT(DISTINCT ac.id) as total_codes,
+                         COUNT(DISTINCT irac.asset_code_id) as used_codes,
+                         COUNT(DISTINCT p.project_id) as total_projects
+                  FROM inventory_items ii
+                  JOIN inventory_asset_codes ac ON ac.inventory_item_id = ii.id
+                  LEFT JOIN inventory_request_asset_codes irac ON irac.asset_code_id = ac.id
+                  LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
+                  LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
+                  LEFT JOIN projects p ON ir.project_id = p.project_id
+                      AND MONTH(p.tanggal_mcu) = :month
+                      AND YEAR(p.tanggal_mcu) = :year
+                  WHERE ii.item_type = 'ASET' AND ii.is_active = 1
+                  GROUP BY ii.id, ii.item_name, ii.category
+                  ORDER BY total_projects DESC, ii.category ASC, ii.item_name ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":month", $month);
+        $stmt->bindParam(":year", $year);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getItemCodesWithUsage($item_id, $month, $year) {
+        $query = "SELECT ac.id, ac.asset_code,
+                         COUNT(DISTINCT p.project_id) as usage_count,
+                         MAX(p.tanggal_mcu) as last_used
+                  FROM inventory_asset_codes ac
+                  LEFT JOIN inventory_request_asset_codes irac ON irac.asset_code_id = ac.id
+                  LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
+                  LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
+                  LEFT JOIN projects p ON ir.project_id = p.project_id
+                      AND MONTH(p.tanggal_mcu) = :month
+                      AND YEAR(p.tanggal_mcu) = :year
+                  WHERE ac.inventory_item_id = :item_id
+                  GROUP BY ac.id, ac.asset_code
+                  ORDER BY usage_count DESC, ac.asset_code ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":item_id", $item_id);
+        $stmt->bindParam(":month", $month);
+        $stmt->bindParam(":year", $year);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCodeProjectHistory($asset_code_id) {
+        $query = "SELECT p.project_id, p.nama_project, p.tanggal_mcu,
+                         ir.request_number, wr.status as warehouse_status, wr.id as warehouse_request_id
+                  FROM inventory_request_asset_codes irac
+                  JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
+                  JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
+                  JOIN projects p ON ir.project_id = p.project_id
+                  WHERE irac.asset_code_id = :code_id
+                  GROUP BY p.project_id, p.nama_project, p.tanggal_mcu, ir.request_number, wr.status, wr.id
+                  ORDER BY p.tanggal_mcu DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":code_id", $asset_code_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function delete() {
         // Soft delete
         $query = "UPDATE " . $this->table_name . " SET is_active = 0 WHERE id = :id";

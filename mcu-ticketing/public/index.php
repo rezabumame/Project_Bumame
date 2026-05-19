@@ -243,6 +243,9 @@ $router->add('warehouse_dashboard', 'WarehouseController', 'index');
 $router->add('warehouse_detail', 'WarehouseController', 'detail');
 $router->add('warehouse_update_status', 'WarehouseController', 'update_status');
 $router->add('warehouse_save_asset_codes', 'WarehouseController', 'saveAssetCodes');
+$router->add('warehouse_asset_monitoring', 'WarehouseController', 'assetMonitoring');
+$router->add('warehouse_asset_item_codes', 'WarehouseController', 'getItemCodesJson');
+$router->add('warehouse_asset_code_history', 'WarehouseController', 'getCodeHistoryJson');
 $router->add('warehouse_print', 'WarehouseController', 'print_pdf');
 $router->add('warehouse_qr_verify', 'WarehouseController', 'qr_verify');
 

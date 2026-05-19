@@ -117,6 +117,46 @@ class WarehouseController extends BaseController {
         }
     }
     
+    public function assetMonitoring() {
+        $role = $_SESSION['role'];
+        if (!in_array($role, ['superadmin', 'admin_gudang_aset'])) die("Access Denied");
+
+        $inventoryItem = $this->loadModel('InventoryItem');
+
+        $month = (int)($_GET['month'] ?? date('n'));
+        $year  = (int)($_GET['year']  ?? date('Y'));
+
+        $summary = $inventoryItem->getAssetUsageSummary($month, $year);
+
+        $this->view('warehouse/asset_monitoring', [
+            'summary' => $summary,
+            'month'   => $month,
+            'year'    => $year,
+        ]);
+    }
+
+    public function getItemCodesJson() {
+        if (!in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'])) die("Access Denied");
+
+        $inventoryItem = $this->loadModel('InventoryItem');
+        $item_id = (int)($_GET['item_id'] ?? 0);
+        $month   = (int)($_GET['month'] ?? date('n'));
+        $year    = (int)($_GET['year']  ?? date('Y'));
+
+        header('Content-Type: application/json');
+        echo json_encode($inventoryItem->getItemCodesWithUsage($item_id, $month, $year));
+    }
+
+    public function getCodeHistoryJson() {
+        if (!in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'])) die("Access Denied");
+
+        $inventoryItem = $this->loadModel('InventoryItem');
+        $code_id = (int)($_GET['code_id'] ?? 0);
+
+        header('Content-Type: application/json');
+        echo json_encode($inventoryItem->getCodeProjectHistory($code_id));
+    }
+
     public function saveAssetCodes() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
 
