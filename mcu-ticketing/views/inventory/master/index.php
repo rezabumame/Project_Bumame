@@ -26,6 +26,7 @@
                         <th>Type</th>
                         <th>Unit</th>
                         <th>Target Warehouse</th>
+                        <th>Asset Codes</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -45,6 +46,15 @@
                             <span class="badge <?php echo $item['target_warehouse'] == 'GUDANG_ASET' ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
                                 <?php echo htmlspecialchars($item['target_warehouse']); ?>
                             </span>
+                        </td>
+                        <td>
+                            <?php if ($item['item_type'] === 'ASET'): ?>
+                                <span class="badge bg-primary">
+                                    <?php echo (int)$item['asset_code_count']; ?> kode
+                                </span>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($item['is_active']): ?>

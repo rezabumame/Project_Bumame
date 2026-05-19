@@ -48,6 +48,11 @@ class InventoryMasterController extends BaseController {
         $this->inventoryItem->target_warehouse = $_POST['target_warehouse']; // GUDANG_ASET or GUDANG_KONSUMABLE
 
         if ($this->inventoryItem->create()) {
+            $newId = $this->inventoryItem->getLastInsertId();
+            if ($_POST['item_type'] === 'ASET' && !empty($_POST['asset_codes'])) {
+                $codes = array_filter(array_map('trim', $_POST['asset_codes']));
+                $this->inventoryItem->replaceAssetCodes($newId, $codes);
+            }
             echo "<script>alert('Item created successfully'); window.location.href='index.php?page=inventory_master_index';</script>";
         } else {
             echo "<script>alert('Failed to create item'); history.back();</script>";
@@ -68,7 +73,9 @@ class InventoryMasterController extends BaseController {
             return;
         }
 
-        $this->view('inventory/master/edit', ['item' => $item]);
+        $assetCodes = $item['item_type'] === 'ASET' ? $this->inventoryItem->getAssetCodes($id) : [];
+
+        $this->view('inventory/master/edit', ['item' => $item, 'assetCodes' => $assetCodes]);
     }
 
     public function update() {
@@ -92,6 +99,13 @@ class InventoryMasterController extends BaseController {
         $this->inventoryItem->is_active = $_POST['is_active'];
 
         if ($this->inventoryItem->update()) {
+            if ($_POST['item_type'] === 'ASET') {
+                $codes = isset($_POST['asset_codes']) ? array_filter(array_map('trim', $_POST['asset_codes'])) : [];
+                $this->inventoryItem->replaceAssetCodes($_POST['id'], $codes);
+            } else {
+                // Clear codes if type changed from ASET to KONSUMABLE
+                $this->inventoryItem->replaceAssetCodes($_POST['id'], []);
+            }
             echo "<script>alert('Item updated successfully'); window.location.href='index.php?page=inventory_master_index';</script>";
         } else {
             echo "<script>alert('Failed to update item'); history.back();</script>";

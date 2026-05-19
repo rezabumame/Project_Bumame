@@ -55,7 +55,23 @@
                     </select>
                     <div class="form-text">Requests for this item will be routed to this warehouse.</div>
                 </div>
-                
+
+                <div id="asset-codes-section" class="mb-3" style="display:none;">
+                    <label class="form-label fw-semibold">Asset Codes</label>
+                    <div class="form-text mb-2">Tambahkan kode aset untuk item ini. Setiap kode harus unik.</div>
+                    <div id="asset-codes-container">
+                        <div class="input-group mb-2 asset-code-row">
+                            <input type="text" class="form-control" name="asset_codes[]" placeholder="e.g. BCM-MA-TDG-001-B2B">
+                            <button type="button" class="btn btn-outline-danger btn-remove-code" tabindex="-1">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-add-code" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Code
+                    </button>
+                </div>
+
                 <div class="d-flex justify-content-end">
                     <a href="index.php?page=inventory_master_index" class="btn btn-secondary me-2">Cancel</a>
                     <button type="submit" class="btn btn-primary">Create Item</button>
@@ -66,15 +82,36 @@
 </div>
 
 <script>
-    // Auto-select Target Warehouse based on Item Type
-    document.getElementById('item_type').addEventListener('change', function() {
-        var type = this.value;
-        var warehouseSelect = document.getElementById('target_warehouse');
-        
-        if (type === 'ASET') {
-            warehouseSelect.value = 'GUDANG_ASET';
-        } else if (type === 'KONSUMABLE') {
-            warehouseSelect.value = 'GUDANG_KONSUMABLE';
+    const itemTypeSelect = document.getElementById('item_type');
+    const warehouseSelect = document.getElementById('target_warehouse');
+    const assetSection = document.getElementById('asset-codes-section');
+    const container = document.getElementById('asset-codes-container');
+
+    function toggleAssetSection() {
+        const isAset = itemTypeSelect.value === 'ASET';
+        assetSection.style.display = isAset ? 'block' : 'none';
+        warehouseSelect.value = isAset ? 'GUDANG_ASET' : 'GUDANG_KONSUMABLE';
+    }
+
+    itemTypeSelect.addEventListener('change', toggleAssetSection);
+    toggleAssetSection();
+
+    document.getElementById('btn-add-code').addEventListener('click', function() {
+        const row = document.createElement('div');
+        row.className = 'input-group mb-2 asset-code-row';
+        row.innerHTML = '<input type="text" class="form-control" name="asset_codes[]" placeholder="e.g. BCM-MA-TDG-001-B2B">' +
+            '<button type="button" class="btn btn-outline-danger btn-remove-code" tabindex="-1"><i class="fas fa-times"></i></button>';
+        container.appendChild(row);
+    });
+
+    container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-remove-code');
+        if (!btn) return;
+        const rows = container.querySelectorAll('.asset-code-row');
+        if (rows.length > 1) {
+            btn.closest('.asset-code-row').remove();
+        } else {
+            btn.closest('.asset-code-row').querySelector('input').value = '';
         }
     });
 </script>

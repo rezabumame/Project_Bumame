@@ -24,7 +24,14 @@ class InventoryItem {
     }
 
     public function readAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY category ASC, item_name ASC";
+        $query = "SELECT ii.*, COALESCE(ac.code_count, 0) AS asset_code_count
+                  FROM " . $this->table_name . " ii
+                  LEFT JOIN (
+                      SELECT inventory_item_id, COUNT(*) AS code_count
+                      FROM inventory_asset_codes
+                      GROUP BY inventory_item_id
+                  ) ac ON ii.id = ac.inventory_item_id
+                  ORDER BY ii.category ASC, ii.item_name ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
@@ -36,6 +43,34 @@ class InventoryItem {
         $stmt->bindParam(":id", $id);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getAssetCodes($item_id) {
+        $query = "SELECT asset_code FROM inventory_asset_codes WHERE inventory_item_id = :item_id ORDER BY asset_code ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":item_id", $item_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function replaceAssetCodes($item_id, array $codes) {
+        $del = $this->conn->prepare("DELETE FROM inventory_asset_codes WHERE inventory_item_id = :item_id");
+        $del->bindParam(":item_id", $item_id);
+        $del->execute();
+
+        if (empty($codes)) {
+            return true;
+        }
+
+        $ins = $this->conn->prepare("INSERT INTO inventory_asset_codes (inventory_item_id, asset_code) VALUES (:item_id, :asset_code)");
+        foreach ($codes as $code) {
+            $code = trim(htmlspecialchars(strip_tags($code)));
+            if ($code === '') continue;
+            $ins->bindParam(":item_id", $item_id);
+            $ins->bindParam(":asset_code", $code);
+            $ins->execute();
+        }
+        return true;
     }
 
     public function create() {
@@ -57,9 +92,14 @@ class InventoryItem {
         $stmt->bindParam(":target_warehouse", $this->target_warehouse);
 
         if ($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;
+    }
+
+    public function getLastInsertId() {
+        return $this->id;
     }
 
     public function update() {

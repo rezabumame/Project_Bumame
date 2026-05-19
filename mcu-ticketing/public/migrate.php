@@ -129,6 +129,28 @@ try {
         return 'applied';
     });
 
+    run_migration($db, '003_create_inventory_asset_codes', static function (PDO $db): string {
+        if (table_exists($db, 'inventory_asset_codes')) {
+            return 'already_ok';
+        }
+
+        $db->exec(
+            'CREATE TABLE `inventory_asset_codes` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `inventory_item_id` INT(11) NOT NULL,
+                `asset_code` VARCHAR(100) NOT NULL,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uq_asset_code` (`asset_code`),
+                KEY `idx_inventory_item_id` (`inventory_item_id`),
+                CONSTRAINT `fk_asset_codes_item` FOREIGN KEY (`inventory_item_id`)
+                    REFERENCES `inventory_items` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
+        );
+
+        return 'applied';
+    });
+
     echo "\nDone.\n";
 } catch (Throwable $e) {
     echo 'Error: ' . $e->getMessage() . "\n";
