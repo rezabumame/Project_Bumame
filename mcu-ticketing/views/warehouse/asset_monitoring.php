@@ -80,9 +80,8 @@ $currentYear = (int)date('Y');
                             <th>Kategori</th>
                             <th>Nama Item</th>
                             <th class="text-center">Total Kode</th>
-                            <th class="text-center">Dipakai</th>
-                            <th class="text-center">Project</th>
-                            <th class="text-center">Usage Rate</th>
+                            <th class="text-center">Dipakai Bulan Ini</th>
+                            <th class="text-center">Project Bulan Ini</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -114,18 +113,6 @@ $currentYear = (int)date('Y');
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
-                            </td>
-                            <td class="text-center" style="min-width:120px;">
-                                <?php
-                                $rate = $row['total_codes'] > 0 ? round($row['used_codes'] / $row['total_codes'] * 100) : 0;
-                                $barColor = $rate >= 80 ? 'bg-danger' : ($rate >= 50 ? 'bg-warning' : 'bg-success');
-                                ?>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="progress flex-grow-1" style="height:8px;">
-                                        <div class="progress-bar <?php echo $barColor; ?>" style="width:<?php echo $rate; ?>%"></div>
-                                    </div>
-                                    <span class="small text-muted"><?php echo $rate; ?>%</span>
-                                </div>
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-outline-primary btn-lihat-kode"
@@ -230,7 +217,7 @@ $(document).ready(function() {
     $('#tblSummary').DataTable({
         language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json' },
         order: [[4, 'desc']],
-        columnDefs: [{ orderable: false, targets: [5, 6] }]
+        columnDefs: [{ orderable: false, targets: [5] }]
     });
 });
 

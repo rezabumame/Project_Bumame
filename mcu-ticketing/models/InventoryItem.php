@@ -133,7 +133,7 @@ class InventoryItem {
     public function getAssetUsageSummary($month, $year) {
         $query = "SELECT ii.id, ii.item_name, ii.category,
                          COUNT(DISTINCT ac.id) as total_codes,
-                         COUNT(DISTINCT irac.asset_code_id) as used_codes,
+                         COUNT(DISTINCT CASE WHEN p.project_id IS NOT NULL THEN irac.asset_code_id END) as used_codes,
                          COUNT(DISTINCT p.project_id) as total_projects
                   FROM inventory_items ii
                   JOIN inventory_asset_codes ac ON ac.inventory_item_id = ii.id
