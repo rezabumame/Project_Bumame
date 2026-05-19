@@ -270,11 +270,14 @@ class InventoryRequest {
         if (!empty($asetItemIds)) {
             $placeholders = implode(',', array_fill(0, count($asetItemIds), '?'));
             $qCodes = "SELECT ac.id, ac.asset_code, ac.inventory_item_id,
-                              COUNT(irac.id) as usage_count
+                              COUNT(DISTINCT p.project_id) as usage_count
                        FROM inventory_asset_codes ac
                        LEFT JOIN inventory_request_asset_codes irac ON ac.id = irac.asset_code_id
-                           AND MONTH(irac.created_at) = MONTH(NOW())
-                           AND YEAR(irac.created_at) = YEAR(NOW())
+                       LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
+                       LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
+                       LEFT JOIN projects p ON ir.project_id = p.project_id
+                           AND MONTH(p.tanggal_mcu) = MONTH(NOW())
+                           AND YEAR(p.tanggal_mcu) = YEAR(NOW())
                        WHERE ac.inventory_item_id IN ($placeholders)
                        GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
                        ORDER BY ac.inventory_item_id, ac.asset_code";
@@ -364,11 +367,14 @@ class InventoryRequest {
         if (!empty($asetItemIds)) {
             $placeholders = implode(',', array_fill(0, count($asetItemIds), '?'));
             $qCodes = "SELECT ac.id, ac.asset_code, ac.inventory_item_id,
-                              COUNT(irac.id) as usage_count
+                              COUNT(DISTINCT p.project_id) as usage_count
                        FROM inventory_asset_codes ac
                        LEFT JOIN inventory_request_asset_codes irac ON ac.id = irac.asset_code_id
-                           AND MONTH(irac.created_at) = MONTH(NOW())
-                           AND YEAR(irac.created_at) = YEAR(NOW())
+                       LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
+                       LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
+                       LEFT JOIN projects p ON ir.project_id = p.project_id
+                           AND MONTH(p.tanggal_mcu) = MONTH(NOW())
+                           AND YEAR(p.tanggal_mcu) = YEAR(NOW())
                        WHERE ac.inventory_item_id IN ($placeholders)
                        GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
                        ORDER BY ac.inventory_item_id, ac.asset_code";
