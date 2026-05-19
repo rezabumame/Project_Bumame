@@ -151,6 +151,29 @@ try {
         return 'applied';
     });
 
+    run_migration($db, '004_create_inventory_request_asset_codes', static function (PDO $db): string {
+        if (table_exists($db, 'inventory_request_asset_codes')) {
+            return 'already_ok';
+        }
+
+        $db->exec(
+            'CREATE TABLE `inventory_request_asset_codes` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `warehouse_request_id` INT(11) NOT NULL,
+                `request_item_id` INT(11) NOT NULL,
+                `asset_code_id` INT(11) NOT NULL,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `idx_wrid` (`warehouse_request_id`),
+                KEY `idx_asset_code_id` (`asset_code_id`),
+                CONSTRAINT `fk_irac_asset_code` FOREIGN KEY (`asset_code_id`)
+                    REFERENCES `inventory_asset_codes` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci'
+        );
+
+        return 'applied';
+    });
+
     echo "\nDone.\n";
 } catch (Throwable $e) {
     echo 'Error: ' . $e->getMessage() . "\n";

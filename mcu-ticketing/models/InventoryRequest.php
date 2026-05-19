@@ -290,7 +290,7 @@ class InventoryRequest {
         if (!$header) return null;
 
         // Get Items filtered by warehouse type
-        $queryItems = "SELECT iri.*, ii.item_name, ii.unit, ii.category
+        $queryItems = "SELECT iri.id as request_item_id, iri.*, ii.item_name, ii.unit, ii.category, ii.item_type
                        FROM " . $this->items_table . " iri
                        JOIN inventory_items ii ON iri.item_id = ii.id
                        WHERE iri.request_id = :rid AND iri.warehouse_snapshot = :w_type";
@@ -300,9 +300,82 @@ class InventoryRequest {
         $stmtItems->execute();
         $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
 
-        return ['header' => $header, 'items' => $items];
+        // Get available asset codes for ASET items (single query, no N+1)
+        $asetItemIds = array_column(
+            array_filter($items, fn($i) => $i['item_type'] === 'ASET'),
+            'item_id'
+        );
+        $availableAssetCodes = [];
+        if (!empty($asetItemIds)) {
+            $placeholders = implode(',', array_fill(0, count($asetItemIds), '?'));
+            $qCodes = "SELECT ac.id, ac.asset_code, ac.inventory_item_id,
+                              COUNT(irac.id) as usage_count
+                       FROM inventory_asset_codes ac
+                       LEFT JOIN inventory_request_asset_codes irac ON ac.id = irac.asset_code_id
+                           AND MONTH(irac.created_at) = MONTH(NOW())
+                           AND YEAR(irac.created_at) = YEAR(NOW())
+                       WHERE ac.inventory_item_id IN ($placeholders)
+                       GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
+                       ORDER BY ac.inventory_item_id, ac.asset_code";
+            $stmtCodes = $this->conn->prepare($qCodes);
+            $stmtCodes->execute($asetItemIds);
+            foreach ($stmtCodes->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $availableAssetCodes[$row['inventory_item_id']][] = $row;
+            }
+        }
+
+        // Get already-selected codes for this warehouse request
+        $qSelected = "SELECT irac.request_item_id, irac.asset_code_id, ac.asset_code
+                      FROM inventory_request_asset_codes irac
+                      JOIN inventory_asset_codes ac ON irac.asset_code_id = ac.id
+                      WHERE irac.warehouse_request_id = :wrid";
+        $stmtSel = $this->conn->prepare($qSelected);
+        $stmtSel->bindParam(":wrid", $warehouse_request_id);
+        $stmtSel->execute();
+        $selectedCodes = [];
+        foreach ($stmtSel->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $selectedCodes[$row['request_item_id']][] = $row;
+        }
+
+        return [
+            'header'             => $header,
+            'items'              => $items,
+            'availableAssetCodes' => $availableAssetCodes,
+            'selectedCodes'      => $selectedCodes,
+        ];
     }
     
+    public function saveRequestAssetCodes($warehouse_request_id, array $codesByItem) {
+        try {
+            $this->conn->beginTransaction();
+
+            // Delete existing selections for this warehouse request
+            $del = $this->conn->prepare("DELETE FROM inventory_request_asset_codes WHERE warehouse_request_id = :wrid");
+            $del->bindParam(":wrid", $warehouse_request_id);
+            $del->execute();
+
+            $ins = $this->conn->prepare(
+                "INSERT INTO inventory_request_asset_codes (warehouse_request_id, request_item_id, asset_code_id) VALUES (:wrid, :riid, :acid)"
+            );
+            foreach ($codesByItem as $request_item_id => $asset_code_ids) {
+                foreach ($asset_code_ids as $acid) {
+                    $acid = (int)$acid;
+                    if ($acid <= 0) continue;
+                    $ins->bindParam(":wrid", $warehouse_request_id);
+                    $ins->bindParam(":riid", $request_item_id);
+                    $ins->bindParam(":acid", $acid);
+                    $ins->execute();
+                }
+            }
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
+
     public function updateWarehouseStatus($id, $status, $proof_path = null, $user_id = null, $items_data = []) {
         try {
             $this->conn->beginTransaction();

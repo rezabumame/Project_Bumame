@@ -117,6 +117,30 @@ class WarehouseController extends BaseController {
         }
     }
     
+    public function saveAssetCodes() {
+        if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
+
+        if (!$this->validateCsrfToken()) {
+            die("Invalid CSRF token.");
+        }
+
+        $warehouse_request_id = (int)($_POST['warehouse_request_id'] ?? 0);
+        if (!$warehouse_request_id) die("Invalid request.");
+
+        $req = $this->inventoryRequest->getWarehouseRequestDetail($warehouse_request_id);
+        if (!$req) die("Request not found.");
+
+        $role = $_SESSION['role'];
+        if ($role !== 'superadmin' && !($role === 'admin_gudang_aset' && $req['header']['warehouse_type'] === 'GUDANG_ASET')) {
+            die("Access Denied.");
+        }
+
+        $codesByItem = $_POST['asset_codes'] ?? [];
+        $this->inventoryRequest->saveRequestAssetCodes($warehouse_request_id, $codesByItem);
+
+        $this->redirect('warehouse_detail', ['id' => $warehouse_request_id]);
+    }
+
     public function print_pdf() {
         $id = $_GET['id'];
         $data = $this->inventoryRequest->getWarehouseRequestDetail($id);
