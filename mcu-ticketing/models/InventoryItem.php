@@ -141,8 +141,8 @@ class InventoryItem {
                   LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
                   LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
                   LEFT JOIN projects p ON ir.project_id = p.project_id
-                      AND MONTH(p.tanggal_mcu) = :month
-                      AND YEAR(p.tanggal_mcu) = :year
+                      AND MONTH(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = :month
+                      AND YEAR(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = :year
                   WHERE ii.item_type = 'ASET' AND ii.is_active = 1
                   GROUP BY ii.id, ii.item_name, ii.category
                   ORDER BY total_projects DESC, ii.category ASC, ii.item_name ASC";
@@ -162,8 +162,8 @@ class InventoryItem {
                   LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
                   LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
                   LEFT JOIN projects p ON ir.project_id = p.project_id
-                      AND MONTH(p.tanggal_mcu) = :month
-                      AND YEAR(p.tanggal_mcu) = :year
+                      AND MONTH(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = :month
+                      AND YEAR(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = :year
                   WHERE ac.inventory_item_id = :item_id
                   GROUP BY ac.id, ac.asset_code
                   ORDER BY usage_count DESC, ac.asset_code ASC";

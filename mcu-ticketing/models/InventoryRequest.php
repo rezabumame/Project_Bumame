@@ -276,8 +276,8 @@ class InventoryRequest {
                        LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
                        LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
                        LEFT JOIN projects p ON ir.project_id = p.project_id
-                           AND MONTH(p.tanggal_mcu) = MONTH(NOW())
-                           AND YEAR(p.tanggal_mcu) = YEAR(NOW())
+                           AND MONTH(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = MONTH(NOW())
+                           AND YEAR(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = YEAR(NOW())
                        WHERE ac.inventory_item_id IN ($placeholders)
                        GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
                        ORDER BY ac.inventory_item_id, ac.asset_code";
@@ -373,8 +373,8 @@ class InventoryRequest {
                        LEFT JOIN warehouse_requests wr ON irac.warehouse_request_id = wr.id
                        LEFT JOIN inventory_requests ir ON wr.inventory_request_id = ir.id
                        LEFT JOIN projects p ON ir.project_id = p.project_id
-                           AND MONTH(p.tanggal_mcu) = MONTH(NOW())
-                           AND YEAR(p.tanggal_mcu) = YEAR(NOW())
+                           AND MONTH(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = MONTH(NOW())
+                           AND YEAR(JSON_UNQUOTE(JSON_EXTRACT(p.tanggal_mcu, '$[0]'))) = YEAR(NOW())
                        WHERE ac.inventory_item_id IN ($placeholders)
                        GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
                        ORDER BY ac.inventory_item_id, ac.asset_code";
