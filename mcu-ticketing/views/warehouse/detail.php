@@ -34,6 +34,21 @@
     .mobile-list-container { padding-bottom: 80px; }
     .select2-container { width: 100% !important; }
     .asset-code-tag { font-size: 0.75rem; }
+    .select2-container--default .select2-selection--multiple { min-height: 38px; }
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px 6px;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        margin: 0;
+        white-space: nowrap;
+    }
+    .select2-container--default .select2-selection--multiple .select2-search {
+        width: 100%;
+        margin-top: 2px;
+    }
 </style>
 
 <?php
