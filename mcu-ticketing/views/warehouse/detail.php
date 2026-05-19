@@ -9,8 +9,6 @@
         .page-header-container { flex-direction: column; align-items: flex-start; gap: 10px; }
         .page-header-container > div { width: 100%; }
         .page-header-container .btn { width: 100%; }
-        .signature-block { margin-bottom: 40px; }
-        .signature-block:last-child { margin-bottom: 0; }
     }
     @media (min-width: 768px) {
         .desktop-view { display: block !important; }
@@ -29,12 +27,14 @@
         font-size: 1.2rem; flex-shrink: 0;
     }
     .mobile-item-card { background: #fff; border-bottom: 1px solid #e9ecef; }
-    .mobile-item-header { padding: 12px 15px; cursor: pointer; }
+    .mobile-item-header { padding: 12px 15px; }
     .qty-summary { font-size: 0.9rem; background: #eef2f7; padding: 4px 8px; border-radius: 4px; color: #333; }
     .mobile-list-container { padding-bottom: 80px; }
-    .select2-container { width: 100% !important; }
     .asset-code-tag { font-size: 0.75rem; }
-    .select2-container--default .select2-selection--multiple { min-height: 38px; }
+
+    /* Select2 vertical stacking */
+    .select2-container { width: 100% !important; }
+    .select2-container--default .select2-selection--multiple { min-height: 36px; }
     .select2-container--default .select2-selection--multiple .select2-selection__rendered {
         display: flex;
         flex-direction: column;
@@ -47,9 +47,7 @@
         float: none;
     }
     .select2-container--default .select2-selection--multiple .select2-search {
-        width: 100%;
-        margin: 0;
-        float: none;
+        width: 100%; margin: 0; float: none;
     }
     .select2-container--default .select2-selection--multiple .select2-search__field {
         width: 100% !important;
@@ -57,10 +55,8 @@
 </style>
 
 <?php
-$isGudangAset = ($_SESSION['role'] === 'admin_gudang_aset' || $_SESSION['role'] === 'superadmin')
+$isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                 && $data['header']['warehouse_type'] === 'GUDANG_ASET';
-$hasAsetItems = !empty(array_filter($data['items'], fn($i) => $i['item_type'] === 'ASET'));
-$showAssetCodePanel = $isGudangAset && $hasAsetItems;
 ?>
 
 <div class="container-fluid px-4">
@@ -85,14 +81,8 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless mb-0">
-                        <tr>
-                            <td class="ps-0 text-muted">Project</td>
-                            <td class="fw-bold"><?php echo $data['header']['nama_project']; ?></td>
-                        </tr>
-                        <tr>
-                            <td class="ps-0 text-muted">Requester</td>
-                            <td><?php echo $data['header']['requester_name']; ?></td>
-                        </tr>
+                        <tr><td class="ps-0 text-muted">Project</td><td class="fw-bold"><?php echo $data['header']['nama_project']; ?></td></tr>
+                        <tr><td class="ps-0 text-muted">Requester</td><td><?php echo $data['header']['requester_name']; ?></td></tr>
                         <tr>
                             <td class="ps-0 text-muted">Tipe Gudang</td>
                             <td><span class="badge bg-info"><?php echo $data['header']['warehouse_type']; ?></span></td>
@@ -110,7 +100,6 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                 </div>
             </div>
 
-            <!-- Status Update -->
             <div class="card">
                 <div class="card-header bg-soft-warning">
                     <h5 class="card-title mb-0">Update Status</h5>
@@ -122,21 +111,21 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                         <input type="hidden" name="items_data" id="itemsDataInput">
                         <div class="d-grid gap-2">
                             <?php if ($data['header']['status'] == 'PENDING'): ?>
-                            <div class="alert alert-warning text-center mb-2">Status: <b>PENDING</b></div>
-                            <button type="submit" name="status" value="IN_PREPARATION" class="btn btn-primary">
-                                <i class="fas fa-play-circle"></i> Proses Request
-                            </button>
+                                <div class="alert alert-warning text-center mb-2">Status: <b>PENDING</b></div>
+                                <button type="submit" name="status" value="IN_PREPARATION" class="btn btn-primary">
+                                    <i class="fas fa-play-circle"></i> Proses Request
+                                </button>
                             <?php elseif ($data['header']['status'] == 'IN_PREPARATION'): ?>
-                            <button type="submit" name="status" value="READY" class="btn btn-success">
-                                <i class="fas fa-check-double"></i> Barang Sudah Disiapkan
-                            </button>
+                                <button type="submit" name="status" value="READY" class="btn btn-success">
+                                    <i class="fas fa-check-double"></i> Barang Sudah Disiapkan
+                                </button>
                             <?php elseif ($data['header']['status'] == 'READY'): ?>
-                            <div class="alert alert-success text-center mb-2">Status: <b>READY</b></div>
-                            <button type="submit" name="status" value="COMPLETED" class="btn btn-primary">
-                                <i class="fas fa-truck"></i> Barang Sudah Diambil (Completed)
-                            </button>
+                                <div class="alert alert-success text-center mb-2">Status: <b>READY</b></div>
+                                <button type="submit" name="status" value="COMPLETED" class="btn btn-primary">
+                                    <i class="fas fa-truck"></i> Barang Sudah Diambil (Completed)
+                                </button>
                             <?php else: ?>
-                            <div class="alert alert-info text-center">Status: <b><?php echo $data['header']['status']; ?></b></div>
+                                <div class="alert alert-info text-center">Status: <b><?php echo $data['header']['status']; ?></b></div>
                             <?php endif; ?>
                         </div>
                     </form>
@@ -146,9 +135,20 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
 
         <!-- Items Column -->
         <div class="col-lg-8">
+            <?php if ($isGudangAset): ?>
+            <form action="index.php?page=warehouse_save_asset_codes" method="POST">
+                <?php echo $this->getCsrfField(); ?>
+                <input type="hidden" name="warehouse_request_id" value="<?php echo $data['header']['id']; ?>">
+            <?php endif; ?>
+
             <div class="card">
                 <div class="card-header align-items-center d-flex">
                     <h5 class="card-title mb-0 flex-grow-1">Daftar Barang Yang Harus Disiapkan</h5>
+                    <?php if ($isGudangAset): ?>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save me-1"></i>Simpan Kode Aset
+                    </button>
+                    <?php endif; ?>
                 </div>
                 <div class="card-body p-0 p-md-3">
                     <!-- Desktop View -->
@@ -161,9 +161,7 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                                     <th>Satuan</th>
                                     <th class="text-center">Qty</th>
                                     <th>Tipe</th>
-                                    <?php if ($showAssetCodePanel): ?>
-                                    <th>Kode Aset Terpilih</th>
-                                    <?php endif; ?>
+                                    <th style="min-width:200px;">Kode Aset</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -178,9 +176,33 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                                             <?php echo $item['item_type']; ?>
                                         </span>
                                     </td>
-                                    <?php if ($showAssetCodePanel): ?>
                                     <td>
-                                        <?php if ($item['item_type'] === 'ASET'): ?>
+                                        <?php if ($item['item_type'] !== 'ASET'): ?>
+                                            <span class="text-muted">—</span>
+                                        <?php elseif ($isGudangAset): ?>
+                                            <?php
+                                            $availCodes  = $data['availableAssetCodes'][$item['item_id']] ?? [];
+                                            $selectedIds = array_column($data['selectedCodes'][$item['request_item_id']] ?? [], 'asset_code_id');
+                                            ?>
+                                            <?php if (empty($availCodes)): ?>
+                                                <span class="text-warning small">Belum ada kode aset terdaftar</span>
+                                            <?php else: ?>
+                                                <select name="asset_codes[<?php echo $item['request_item_id']; ?>][]"
+                                                        class="select2-asset"
+                                                        multiple
+                                                        data-placeholder="Pilih kode aset..."
+                                                        data-qty="<?php echo $item['qty_request']; ?>">
+                                                    <?php foreach ($availCodes as $code): ?>
+                                                    <option value="<?php echo $code['id']; ?>"
+                                                        <?php echo in_array($code['id'], $selectedIds) ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($code['asset_code']); ?>
+                                                        <?php if ($code['usage_count'] > 0): ?>(Used <?php echo $code['usage_count']; ?>x)<?php endif; ?>
+                                                    </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <div class="form-text">Pilih <?php echo $item['qty_request']; ?> kode.</div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
                                             <?php $selected = $data['selectedCodes'][$item['request_item_id']] ?? []; ?>
                                             <?php if (!empty($selected)): ?>
                                                 <?php foreach ($selected as $sc): ?>
@@ -189,11 +211,8 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                                             <?php else: ?>
                                                 <span class="text-muted small">Belum dipilih</span>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="text-muted">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <?php endif; ?>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -222,62 +241,8 @@ $showAssetCodePanel = $isGudangAset && $hasAsetItems;
                 </div>
             </div>
 
-            <!-- Asset Code Assignment Panel -->
-            <?php if ($showAssetCodePanel): ?>
-            <div class="card mt-3">
-                <div class="card-header bg-soft-primary d-flex align-items-center">
-                    <h5 class="card-title mb-0 flex-grow-1"><i class="fas fa-tag me-2"></i>Assign Kode Aset</h5>
-                </div>
-                <div class="card-body">
-                    <form action="index.php?page=warehouse_save_asset_codes" method="POST">
-                        <?php echo $this->getCsrfField(); ?>
-                        <input type="hidden" name="warehouse_request_id" value="<?php echo $data['header']['id']; ?>">
-
-                        <?php $hasAnyAset = false; ?>
-                        <?php foreach ($data['items'] as $item): ?>
-                        <?php if ($item['item_type'] !== 'ASET') continue; $hasAnyAset = true; ?>
-                        <?php
-                            $availCodes = $data['availableAssetCodes'][$item['item_id']] ?? [];
-                            $selectedIds = array_column($data['selectedCodes'][$item['request_item_id']] ?? [], 'asset_code_id');
-                        ?>
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">
-                                <?php echo htmlspecialchars($item['item_name']); ?>
-                                <span class="text-muted fw-normal small ms-1">(Qty: <?php echo $item['qty_request']; ?>)</span>
-                            </label>
-                            <?php if (empty($availCodes)): ?>
-                                <div class="alert alert-warning py-2 mb-0">Belum ada kode aset terdaftar untuk item ini.</div>
-                            <?php else: ?>
-                                <select name="asset_codes[<?php echo $item['request_item_id']; ?>][]"
-                                        class="form-select select2-asset"
-                                        multiple
-                                        data-placeholder="Pilih kode aset..."
-                                        data-qty="<?php echo $item['qty_request']; ?>">
-                                    <?php foreach ($availCodes as $code): ?>
-                                    <option value="<?php echo $code['id']; ?>"
-                                        <?php echo in_array($code['id'], $selectedIds) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($code['asset_code']); ?>
-                                        <?php if ($code['usage_count'] > 0): ?>
-                                            (Used <?php echo $code['usage_count']; ?>x)
-                                        <?php endif; ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text">Pilih <?php echo $item['qty_request']; ?> kode aset sesuai jumlah qty.</div>
-                            <?php endif; ?>
-                        </div>
-                        <?php endforeach; ?>
-
-                        <?php if ($hasAnyAset): ?>
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>Simpan Kode Aset
-                            </button>
-                        </div>
-                        <?php endif; ?>
-                    </form>
-                </div>
-            </div>
+            <?php if ($isGudangAset): ?>
+            </form>
             <?php endif; ?>
         </div>
     </div>
@@ -303,14 +268,12 @@ $(document).ready(function() {
             templateResult: function(option) {
                 if (!option.id) return option.text;
                 var isUsed = option.text.indexOf('(Used') !== -1;
-                var color = isUsed ? '#856404' : '#155724';
-                return $('<span style="color:' + color + '">' + option.text + '</span>');
+                return $('<span style="color:' + (isUsed ? '#856404' : '#155724') + '">' + option.text + '</span>');
             }
         }).on('select2:select', function() {
             var selected = $(this).val() || [];
             if (selected.length > maxQty) {
-                var vals = selected.slice(0, maxQty);
-                $(this).val(vals).trigger('change');
+                $(this).val(selected.slice(0, maxQty)).trigger('change');
             }
         });
     });
