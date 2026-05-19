@@ -236,7 +236,7 @@ class InventoryRequest {
         if (!$header) return null;
 
         // 2. Get Items
-        $queryItems = "SELECT iri.*, ii.item_name, ii.unit, ii.category
+        $queryItems = "SELECT iri.id as request_item_id, iri.*, ii.item_name, ii.unit, ii.category, ii.item_type
                        FROM " . $this->items_table . " iri
                        JOIN inventory_items ii ON iri.item_id = ii.id
                        WHERE iri.request_id = :rid";
@@ -252,7 +252,62 @@ class InventoryRequest {
         $stmtSplits->execute();
         $splits = $stmtSplits->fetchAll(PDO::FETCH_ASSOC);
 
-        return ['header' => $header, 'items' => $items, 'splits' => $splits];
+        // Find GUDANG_ASET warehouse_request_id for asset code assignment
+        $asetWarehouseId = null;
+        foreach ($splits as $split) {
+            if ($split['warehouse_type'] === 'GUDANG_ASET') {
+                $asetWarehouseId = $split['id'];
+                break;
+            }
+        }
+
+        // Available asset codes for ASET items (single query, no N+1)
+        $asetItemIds = array_column(
+            array_filter($items, fn($i) => $i['item_type'] === 'ASET'),
+            'item_id'
+        );
+        $availableAssetCodes = [];
+        if (!empty($asetItemIds)) {
+            $placeholders = implode(',', array_fill(0, count($asetItemIds), '?'));
+            $qCodes = "SELECT ac.id, ac.asset_code, ac.inventory_item_id,
+                              COUNT(irac.id) as usage_count
+                       FROM inventory_asset_codes ac
+                       LEFT JOIN inventory_request_asset_codes irac ON ac.id = irac.asset_code_id
+                           AND MONTH(irac.created_at) = MONTH(NOW())
+                           AND YEAR(irac.created_at) = YEAR(NOW())
+                       WHERE ac.inventory_item_id IN ($placeholders)
+                       GROUP BY ac.id, ac.asset_code, ac.inventory_item_id
+                       ORDER BY ac.inventory_item_id, ac.asset_code";
+            $stmtCodes = $this->conn->prepare($qCodes);
+            $stmtCodes->execute($asetItemIds);
+            foreach ($stmtCodes->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $availableAssetCodes[$row['inventory_item_id']][] = $row;
+            }
+        }
+
+        // Selected codes for this request (via GUDANG_ASET warehouse_request)
+        $selectedCodes = [];
+        if ($asetWarehouseId) {
+            $qSel = "SELECT irac.request_item_id, irac.asset_code_id, ac.asset_code
+                     FROM inventory_request_asset_codes irac
+                     JOIN inventory_asset_codes ac ON irac.asset_code_id = ac.id
+                     WHERE irac.warehouse_request_id = :wrid";
+            $stmtSel = $this->conn->prepare($qSel);
+            $stmtSel->bindParam(":wrid", $asetWarehouseId);
+            $stmtSel->execute();
+            foreach ($stmtSel->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $selectedCodes[$row['request_item_id']][] = $row;
+            }
+        }
+
+        return [
+            'header'              => $header,
+            'items'               => $items,
+            'splits'              => $splits,
+            'asetWarehouseId'     => $asetWarehouseId,
+            'availableAssetCodes' => $availableAssetCodes,
+            'selectedCodes'       => $selectedCodes,
+        ];
     }
 
     public function getWarehouseRequests($warehouse_type) {

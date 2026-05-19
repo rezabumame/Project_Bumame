@@ -131,7 +131,8 @@ class WarehouseController extends BaseController {
         if (!$req) die("Request not found.");
 
         $role = $_SESSION['role'];
-        if ($role !== 'superadmin' && !($role === 'admin_gudang_aset' && $req['header']['warehouse_type'] === 'GUDANG_ASET')) {
+        if ($role !== 'superadmin'
+            && !($role === 'admin_gudang_aset' && $req['header']['warehouse_type'] === 'GUDANG_ASET')) {
             die("Access Denied.");
         }
 

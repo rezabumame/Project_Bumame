@@ -1,6 +1,17 @@
 <?php include '../views/layouts/header.php'; ?>
 <?php include '../views/layouts/sidebar.php'; ?>
 
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container { width: 100% !important; }
+    .asset-code-tag { font-size: 0.75rem; }
+</style>
+
+<?php
+$canAssignAsset = in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'])
+                  && !empty($data['asetWarehouseId']);
+?>
+
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center page-header-container">
         <div>
@@ -14,172 +25,248 @@
         </div>
     </div>
 
-            <div class="row">
-                <!-- Header Info -->
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Informasi Request</h4>
+    <div class="row">
+        <!-- Header Info -->
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">Informasi Request</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th style="width:150px;">No Request</th>
+                                    <td>: <?php echo $data['header']['request_number']; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Project</th>
+                                    <td>: <?php echo $data['header']['nama_project']; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <td>: <?php echo date('d M Y H:i', strtotime($data['header']['created_at'])); ?></td>
+                                </tr>
+                            </table>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <th style="width: 150px;">No Request</th>
-                                            <td>: <?php echo $data['header']['request_number']; ?></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Project</th>
-                                            <td>: <?php echo $data['header']['nama_project']; ?></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <td>: <?php echo date('d M Y H:i', strtotime($data['header']['created_at'])); ?></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <th style="width: 150px;">Requester</th>
-                                            <td>: <?php echo $data['header']['requester_name']; ?></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Status Utama</th>
-                                            <td>: 
-                                                <span class="badge bg-primary"><?php echo $data['header']['status']; ?></span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th style="width:150px;">Requester</th>
+                                    <td>: <?php echo $data['header']['requester_name']; ?></td>
+                                </tr>
+                                <tr>
+                                    <th>Status Utama</th>
+                                    <td>: <span class="badge bg-primary"><?php echo $data['header']['status']; ?></span></td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
-
-                <!-- Split Status -->
-                <?php if (!empty($data['splits'])): ?>
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Status Gudang</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Gudang</th>
-                                            <th>Status</th>
-                                            <th>Last Update</th>
-                                            <th>Aksi</th>
-                                            <th>Dokumen</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($data['splits'] as $split): ?>
-                                        <tr>
-                                            <td>
-                                                <?php if ($split['warehouse_type'] == 'GUDANG_ASET'): ?>
-                                                    <span class="badge bg-warning text-dark">Gudang Aset</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary">Gudang Konsumable</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php 
-                                                    $badge = 'secondary';
-                                                    if ($split['status'] == 'PENDING') $badge = 'warning';
-                                                    if ($split['status'] == 'IN_PREPARATION') $badge = 'info';
-                                                    if ($split['status'] == 'READY') $badge = 'primary';
-                                                    if ($split['status'] == 'COMPLETED') $badge = 'success';
-                                                ?>
-                                                <span class="badge bg-<?php echo $badge; ?>"><?php echo $split['status']; ?></span>
-                                            </td>
-                                            <td><?php echo $split['updated_at'] ? date('d M Y H:i', strtotime($split['updated_at'])) : '-'; ?></td>
-                                            <td>
-                                                <?php if ($split['status'] == 'READY' && $_SESSION['role'] == 'korlap'): ?>
-                                                    <form action="index.php?page=warehouse_update_status" method="POST" class="d-inline form-confirm-reception">
-                                                        <?php echo $this->getCsrfField(); ?>
-                                                        <input type="hidden" name="id" value="<?php echo $split['id']; ?>">
-                                                        <input type="hidden" name="status" value="COMPLETED">
-                                                        <button type="button" class="btn btn-sm btn-success" onclick="confirmReception(this)">
-                                                            <i class="fas fa-check-circle me-1"></i> Konfirmasi Diterima
-                                                        </button>
-                                                    </form>
-                                                <?php elseif ($split['status'] == 'COMPLETED'): ?>
-                                                    <span class="badge bg-success"><i class="fas fa-check"></i> Sudah Diterima</span>
-                                                <?php elseif ($split['proof_file']): ?>
-                                                     <a href="<?php echo $split['proof_file']; ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-download me-1"></i> Bukti</a>
-                                                <?php else: ?>
-                                                    <span class="text-muted">-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <a href="index.php?page=warehouse_print&id=<?php echo $split['id']; ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="Download PDF">
-                                                    <i class="fas fa-file-pdf me-1"></i> PDF
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <!-- Items -->
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Daftar Barang</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-nowrap align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Nama Barang</th>
-                                            <th>Kategori</th>
-                                            <th>Tipe</th>
-                                            <th>Gudang</th>
-                                            <th>Jumlah Request</th>
-                                            <th>Satuan</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $no = 1; foreach ($data['items'] as $item): ?>
-                                        <tr>
-                                            <td><?php echo $no++; ?></td>
-                                            <td><?php echo $item['item_name']; ?></td>
-                                            <td><?php echo $item['category']; ?></td>
-                                            <td><?php echo $item['item_type_snapshot']; ?></td>
-                                            <td><?php echo $item['warehouse_snapshot']; ?></td>
-                                            <td class="fw-bold"><?php echo $item['qty_request']; ?></td>
-                                            <td><?php echo $item['unit']; ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 mb-4">
-                    <a href="index.php?page=inventory_request_index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Kembali
-                    </a>
-                </div>
-
             </div>
+        </div>
+
+        <!-- Split Status -->
+        <?php if (!empty($data['splits'])): ?>
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">Status Gudang</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Gudang</th>
+                                    <th>Status</th>
+                                    <th>Last Update</th>
+                                    <th>Aksi</th>
+                                    <th>Dokumen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($data['splits'] as $split): ?>
+                                <tr>
+                                    <td>
+                                        <?php if ($split['warehouse_type'] == 'GUDANG_ASET'): ?>
+                                            <span class="badge bg-warning text-dark">Gudang Aset</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Gudang Konsumable</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        $badge = 'secondary';
+                                        if ($split['status'] == 'PENDING') $badge = 'warning';
+                                        if ($split['status'] == 'IN_PREPARATION') $badge = 'info';
+                                        if ($split['status'] == 'READY') $badge = 'primary';
+                                        if ($split['status'] == 'COMPLETED') $badge = 'success';
+                                        ?>
+                                        <span class="badge bg-<?php echo $badge; ?>"><?php echo $split['status']; ?></span>
+                                    </td>
+                                    <td><?php echo $split['updated_at'] ? date('d M Y H:i', strtotime($split['updated_at'])) : '-'; ?></td>
+                                    <td>
+                                        <?php if ($split['status'] == 'READY' && $_SESSION['role'] == 'korlap'): ?>
+                                            <form action="index.php?page=warehouse_update_status" method="POST" class="d-inline form-confirm-reception">
+                                                <?php echo $this->getCsrfField(); ?>
+                                                <input type="hidden" name="id" value="<?php echo $split['id']; ?>">
+                                                <input type="hidden" name="status" value="COMPLETED">
+                                                <button type="button" class="btn btn-sm btn-success" onclick="confirmReception(this)">
+                                                    <i class="fas fa-check-circle me-1"></i> Konfirmasi Diterima
+                                                </button>
+                                            </form>
+                                        <?php elseif ($split['status'] == 'COMPLETED'): ?>
+                                            <span class="badge bg-success"><i class="fas fa-check"></i> Sudah Diterima</span>
+                                        <?php elseif ($split['proof_file']): ?>
+                                            <a href="<?php echo $split['proof_file']; ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-download me-1"></i> Bukti</a>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="index.php?page=warehouse_print&id=<?php echo $split['id']; ?>" target="_blank" class="btn btn-sm btn-outline-danger" title="Download PDF">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Daftar Barang -->
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">Daftar Barang</h4>
+                </div>
+                <div class="card-body">
+                    <?php if ($canAssignAsset): ?>
+                    <form action="index.php?page=warehouse_save_asset_codes" method="POST">
+                        <?php echo $this->getCsrfField(); ?>
+                        <input type="hidden" name="warehouse_request_id" value="<?php echo $data['asetWarehouseId']; ?>">
+                    <?php endif; ?>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-nowrap align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Tipe</th>
+                                    <th>Gudang</th>
+                                    <th>Jumlah Request</th>
+                                    <th>Satuan</th>
+                                    <th>Kode Aset</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1; foreach ($data['items'] as $item): ?>
+                                <tr>
+                                    <td><?php echo $no++; ?></td>
+                                    <td><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['category']); ?></td>
+                                    <td>
+                                        <span class="badge <?php echo $item['item_type'] === 'ASET' ? 'bg-primary' : 'bg-secondary'; ?>">
+                                            <?php echo htmlspecialchars($item['item_type']); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($item['warehouse_snapshot']); ?></td>
+                                    <td class="fw-bold"><?php echo $item['qty_request']; ?></td>
+                                    <td><?php echo htmlspecialchars($item['unit']); ?></td>
+                                    <td style="min-width:220px;">
+                                        <?php if ($item['item_type'] !== 'ASET'): ?>
+                                            <span class="text-muted">—</span>
+                                        <?php elseif ($canAssignAsset): ?>
+                                            <?php
+                                            $availCodes  = $data['availableAssetCodes'][$item['item_id']] ?? [];
+                                            $selectedIds = array_column($data['selectedCodes'][$item['request_item_id']] ?? [], 'asset_code_id');
+                                            ?>
+                                            <?php if (empty($availCodes)): ?>
+                                                <span class="text-warning small">Belum ada kode aset terdaftar</span>
+                                            <?php else: ?>
+                                                <select name="asset_codes[<?php echo $item['request_item_id']; ?>][]"
+                                                        class="form-select select2-asset"
+                                                        multiple
+                                                        data-placeholder="Pilih kode aset..."
+                                                        data-qty="<?php echo $item['qty_request']; ?>">
+                                                    <?php foreach ($availCodes as $code): ?>
+                                                    <option value="<?php echo $code['id']; ?>"
+                                                        <?php echo in_array($code['id'], $selectedIds) ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($code['asset_code']); ?>
+                                                        <?php if ($code['usage_count'] > 0): ?>(Used <?php echo $code['usage_count']; ?>x)<?php endif; ?>
+                                                    </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <div class="form-text">Pilih <?php echo $item['qty_request']; ?> kode aset.</div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <?php $selected = $data['selectedCodes'][$item['request_item_id']] ?? []; ?>
+                                            <?php if (!empty($selected)): ?>
+                                                <?php foreach ($selected as $sc): ?>
+                                                    <span class="badge bg-primary asset-code-tag me-1 mb-1"><?php echo htmlspecialchars($sc['asset_code']); ?></span>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Belum dipilih</span>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <?php if ($canAssignAsset): ?>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Simpan Kode Aset
+                            </button>
+                        </div>
+                    </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mb-4">
+            <a href="index.php?page=inventory_request_index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
+        </div>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+$(document).ready(function() {
+    $('.select2-asset').each(function() {
+        var maxQty = parseInt($(this).data('qty')) || 999;
+        $(this).select2({
+            placeholder: $(this).data('placeholder'),
+            allowClear: true,
+            width: '100%',
+            templateResult: function(option) {
+                if (!option.id) return option.text;
+                var isUsed = option.text.indexOf('(Used') !== -1;
+                return $('<span style="color:' + (isUsed ? '#856404' : '#155724') + '">' + option.text + '</span>');
+            }
+        }).on('select2:select', function() {
+            var selected = $(this).val() || [];
+            if (selected.length > maxQty) {
+                $(this).val(selected.slice(0, maxQty)).trigger('change');
+            }
+        });
+    });
+});
+
 function confirmReception(btn) {
     Swal.fire({
         title: 'Konfirmasi Penerimaan',
