@@ -239,7 +239,6 @@ sort($categories);
                         </tr>
                         <?php else: ?>
                         <?php
-                        <?php
                         // Palette: [bg rgba, text hex, border rgba]
                         $catPalette = [
                             ['rgba(13,110,253,.1)',  '#084298', 'rgba(13,110,253,.25)'],   // blue
