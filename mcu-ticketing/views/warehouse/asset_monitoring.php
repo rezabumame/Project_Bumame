@@ -239,19 +239,30 @@ sort($categories);
                         </tr>
                         <?php else: ?>
                         <?php
-                        $catColors = ['primary','success','info','warning','danger','dark','secondary'];
+                        <?php
+                        // Palette: [bg rgba, text hex, border rgba]
+                        $catPalette = [
+                            ['rgba(13,110,253,.1)',  '#084298', 'rgba(13,110,253,.25)'],   // blue
+                            ['rgba(25,135,84,.1)',   '#0a3622', 'rgba(25,135,84,.25)'],    // green
+                            ['rgba(13,202,240,.1)',  '#055160', 'rgba(13,202,240,.25)'],   // cyan
+                            ['rgba(255,193,7,.15)',  '#664d03', 'rgba(255,193,7,.4)'],     // yellow
+                            ['rgba(214,51,132,.1)',  '#6f1042', 'rgba(214,51,132,.25)'],   // pink
+                            ['rgba(111,66,193,.1)',  '#3d1a78', 'rgba(111,66,193,.25)'],   // purple
+                            ['rgba(253,126,20,.1)',  '#6d2c00', 'rgba(253,126,20,.25)'],   // orange
+                            ['rgba(32,201,151,.1)',  '#0a3622', 'rgba(32,201,151,.3)'],    // teal
+                        ];
                         $catMap = [];
                         $ci = 0;
-                        foreach ($categories as $cat) { $catMap[$cat] = $catColors[$ci++ % count($catColors)]; }
+                        foreach ($categories as $cat) { $catMap[$cat] = $catPalette[$ci++ % count($catPalette)]; }
                         ?>
                         <?php foreach ($summary as $row):
                             $rate = $row['total_codes'] > 0 ? round($row['used_codes'] / $row['total_codes'] * 100) : 0;
                             $barColor = $rate >= 70 ? '#198754' : ($rate >= 30 ? '#fd7e14' : '#dc3545');
-                            $catColor = $catMap[$row['category']] ?? 'secondary';
+                            $pal = $catMap[$row['category']] ?? $catPalette[0];
                         ?>
                         <tr>
                             <td>
-                                <span class="category-badge bg-<?php echo $catColor; ?> bg-opacity-10 text-<?php echo $catColor; ?> border border-<?php echo $catColor; ?> border-opacity-25">
+                                <span class="category-badge" style="background:<?php echo $pal[0]; ?>; color:<?php echo $pal[1]; ?>; border:1px solid <?php echo $pal[2]; ?>;">
                                     <?php echo htmlspecialchars($row['category']); ?>
                                 </span>
                             </td>
