@@ -74,9 +74,6 @@ sort($categories);
             <button type="button" class="btn btn-outline-success btn-sm" id="btnExportExcel">
                 <i class="fas fa-file-excel me-1"></i>Export Excel
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-                <i class="fas fa-print me-1"></i>Print
-            </button>
         </div>
     </div>
 
