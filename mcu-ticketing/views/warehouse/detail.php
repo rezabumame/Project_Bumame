@@ -57,6 +57,8 @@
 <?php
 $isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                 && $data['header']['warehouse_type'] === 'GUDANG_ASET';
+$isGudangKons = $data['header']['warehouse_type'] === 'GUDANG_KONSUMABLE';
+$konsItemCodes = $konsItemCodes ?? [];
 ?>
 
 <div class="container-fluid px-4">
@@ -158,10 +160,15 @@ $isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                                 <tr>
                                     <th>Kategori</th>
                                     <th>Nama Barang</th>
+                                    <?php if ($isGudangKons): ?>
+                                    <th>Kode Item</th>
+                                    <?php endif; ?>
                                     <th>Satuan</th>
                                     <th class="text-center">Qty</th>
                                     <th>Tipe</th>
+                                    <?php if ($isGudangAset): ?>
                                     <th style="min-width:200px;">Kode Aset</th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -169,6 +176,18 @@ $isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                                 <tr>
                                     <td><?php echo htmlspecialchars($item['category']); ?></td>
                                     <td class="fw-bold"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                    <?php if ($isGudangKons): ?>
+                                    <td>
+                                        <?php $itemCodes = $konsItemCodes[$item['item_id']] ?? []; ?>
+                                        <?php if (!empty($itemCodes)): ?>
+                                            <?php foreach ($itemCodes as $code): ?>
+                                                <span class="badge bg-secondary me-1"><?php echo htmlspecialchars($code); ?></span>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <?php endif; ?>
                                     <td><?php echo htmlspecialchars($item['unit']); ?></td>
                                     <td class="text-center fs-5"><?php echo $item['qty_request']; ?></td>
                                     <td>
@@ -176,10 +195,11 @@ $isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                                             <?php echo $item['item_type']; ?>
                                         </span>
                                     </td>
+                                    <?php if ($isGudangAset): ?>
                                     <td>
                                         <?php if ($item['item_type'] !== 'ASET'): ?>
                                             <span class="text-muted">—</span>
-                                        <?php elseif ($isGudangAset): ?>
+                                        <?php else: ?>
                                             <?php
                                             $availCodes  = $data['availableAssetCodes'][$item['item_id']] ?? [];
                                             $selectedIds = array_column($data['selectedCodes'][$item['request_item_id']] ?? [], 'asset_code_id');
@@ -202,17 +222,9 @@ $isGudangAset = in_array($_SESSION['role'], ['admin_gudang_aset', 'superadmin'])
                                                 </select>
                                                 <div class="form-text">Pilih <?php echo $item['qty_request']; ?> kode.</div>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <?php $selected = $data['selectedCodes'][$item['request_item_id']] ?? []; ?>
-                                            <?php if (!empty($selected)): ?>
-                                                <?php foreach ($selected as $sc): ?>
-                                                    <span class="badge bg-primary asset-code-tag me-1 mb-1"><?php echo htmlspecialchars($sc['asset_code']); ?></span>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Belum dipilih</span>
-                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>

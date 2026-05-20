@@ -43,21 +43,33 @@ class WarehouseController extends BaseController {
     public function detail() {
         $id = $_GET['id'];
         $data = $this->inventoryRequest->getWarehouseRequestDetail($id);
-        
+
         if (!$data) {
             die("Request not found");
         }
-        
+
         // Authorization Check
         $role = $_SESSION['role'];
         $allowed = false;
         if ($role == 'superadmin') $allowed = true;
         if ($role == 'admin_gudang_aset' && $data['header']['warehouse_type'] == 'GUDANG_ASET') $allowed = true;
         if ($role == 'admin_gudang_warehouse' && $data['header']['warehouse_type'] == 'GUDANG_KONSUMABLE') $allowed = true;
-        
+
         if (!$allowed) die("Access Denied");
-        
-        $this->view('warehouse/detail', ['data' => $data]);
+
+        // Fetch konsumable item codes from master data
+        $konsItemCodes = [];
+        if ($data['header']['warehouse_type'] === 'GUDANG_KONSUMABLE') {
+            $inventoryItem = $this->loadModel('InventoryItem');
+            foreach ($data['items'] as $item) {
+                $codes = $inventoryItem->getAssetCodes($item['item_id']);
+                if (!empty($codes)) {
+                    $konsItemCodes[$item['item_id']] = $codes;
+                }
+            }
+        }
+
+        $this->view('warehouse/detail', ['data' => $data, 'konsItemCodes' => $konsItemCodes]);
     }
     
     public function update_status() {

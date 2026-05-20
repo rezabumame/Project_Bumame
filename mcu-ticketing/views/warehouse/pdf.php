@@ -103,15 +103,15 @@
             <thead>
                 <tr>
                     <th width="4%">NO</th>
-                    <th width="14%">KATEGORI</th>
-                    <th width="<?php echo ($isAset || $isKons) ? '26%' : '33%'; ?>">NAMA BARANG</th>
+                    <th width="12%">KATEGORI</th>
+                    <th width="<?php echo $isAset ? '24%' : ($isKons ? '22%' : '30%'); ?>">NAMA BARANG</th>
+                    <?php if ($isKons): ?>
+                    <th width="15%">KODE ITEM</th>
+                    <?php endif; ?>
                     <th width="5%">QTY</th>
                     <th width="7%">SATUAN</th>
                     <?php if ($isAset): ?>
                     <th width="20%">KODE ASET</th>
-                    <?php endif; ?>
-                    <?php if ($isKons): ?>
-                    <th width="18%">KODE ITEM</th>
                     <?php endif; ?>
                     <th width="9%">CEK FISIK</th>
                     <th width="11%">PENGEMBALIAN</th>
@@ -126,6 +126,16 @@
                     <td class="text-center"><?php echo $no++; ?></td>
                     <td><?php echo htmlspecialchars($item['category']); ?></td>
                     <td><?php echo htmlspecialchars($item['item_name']); ?></td>
+                    <?php if ($isKons): ?>
+                    <td class="asset-codes-cell">
+                        <?php
+                        $itemCodes = $konsItemCodes[$item['item_id']] ?? [];
+                        if (!empty($itemCodes)) {
+                            foreach ($itemCodes as $code) { echo htmlspecialchars($code) . '<br>'; }
+                        }
+                        ?>
+                    </td>
+                    <?php endif; ?>
                     <td class="text-center"><?php echo $item['qty_request']; ?></td>
                     <td class="text-center"><?php echo htmlspecialchars($item['unit']); ?></td>
                     <?php if ($isAset): ?>
@@ -134,16 +144,6 @@
                         $codes = $selectedCodes[$item['request_item_id']] ?? [];
                         if (!empty($codes)) {
                             foreach ($codes as $c) { echo htmlspecialchars($c['asset_code']) . '<br>'; }
-                        }
-                        ?>
-                    </td>
-                    <?php endif; ?>
-                    <?php if ($isKons): ?>
-                    <td class="asset-codes-cell">
-                        <?php
-                        $itemCodes = $konsItemCodes[$item['item_id']] ?? [];
-                        if (!empty($itemCodes)) {
-                            foreach ($itemCodes as $code) { echo htmlspecialchars($code) . '<br>'; }
                         }
                         ?>
                     </td>
