@@ -135,13 +135,18 @@ function renderRow($item) { ?>
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Category</label>
                             <input type="text" class="form-control" name="category" required placeholder="e.g., Elektronik, APD, ATK">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Item Name</label>
                             <input type="text" class="form-control" name="item_name" required>
+                        </div>
+                        <!-- Kode Item (konsumable only, 1 code) -->
+                        <div class="col-md-4" id="create_item_code_col" style="display:none;">
+                            <label class="form-label">Kode Item</label>
+                            <input type="text" class="form-control" name="item_code" id="create_item_code" placeholder="e.g. KONS-001">
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -164,9 +169,10 @@ function renderRow($item) { ?>
                             <option value="GUDANG_KONSUMABLE">GUDANG_KONSUMABLE</option>
                         </select>
                     </div>
+                    <!-- Kode Aset repeater (aset only) -->
                     <div id="create_asset_section" class="mb-1">
-                        <label class="form-label fw-semibold" id="create_codes_label">Kode</label>
-                        <div class="form-text mb-2" id="create_codes_hint">Tambahkan kode. Setiap kode harus unik.</div>
+                        <label class="form-label fw-semibold">Kode Aset</label>
+                        <div class="form-text mb-2">Tambahkan kode aset. Setiap kode harus unik.</div>
                         <div id="create_codes_container">
                             <div class="input-group mb-2 asset-code-row">
                                 <input type="text" class="form-control" name="asset_codes[]" placeholder="e.g. BCM-MA-TDG-001-B2B">
@@ -206,13 +212,18 @@ function renderRow($item) { ?>
                     </div>
                     <div id="edit_form_body" style="display:none;">
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Category</label>
                                 <input type="text" class="form-control" name="category" id="edit_category" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Item Name</label>
                                 <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
+                            </div>
+                            <!-- Kode Item (konsumable only, 1 code) -->
+                            <div class="col-md-4" id="edit_item_code_col" style="display:none;">
+                                <label class="form-label">Kode Item</label>
+                                <input type="text" class="form-control" name="item_code" id="edit_item_code" placeholder="e.g. KONS-001">
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -245,8 +256,8 @@ function renderRow($item) { ?>
                             </div>
                         </div>
                         <div id="edit_asset_section" class="mb-1">
-                            <label class="form-label fw-semibold" id="edit_codes_label">Kode</label>
-                            <div class="form-text mb-2" id="edit_codes_hint">Tambahkan kode. Setiap kode harus unik.</div>
+                            <label class="form-label fw-semibold">Kode Aset</label>
+                            <div class="form-text mb-2">Tambahkan kode aset. Setiap kode harus unik.</div>
                             <div id="edit_codes_container"></div>
                             <button type="button" class="btn btn-outline-primary btn-sm btn-add-code" data-target="edit_codes_container">
                                 <i class="fas fa-plus me-1"></i>Add Code
@@ -315,15 +326,14 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ---- Create modal: toggle code section label ----
+// ---- Create modal: toggle sections based on item type ----
 function toggleCreateAssetSection() {
     var isAset = document.getElementById('create_item_type').value === 'ASET';
     document.getElementById('create_target_warehouse').value = isAset ? 'GUDANG_ASET' : 'GUDANG_KONSUMABLE';
-    document.getElementById('create_codes_label').textContent = isAset ? 'Kode Aset' : 'Kode Item';
-    document.getElementById('create_codes_hint').textContent  = isAset
-        ? 'Tambahkan kode aset. Setiap kode harus unik.'
-        : 'Tambahkan kode item/produk. Setiap kode harus unik.';
-    document.getElementById('create_asset_section').style.display = 'block';
+    // ASET: show repeater, hide single code col
+    document.getElementById('create_asset_section').style.display  = isAset ? 'block' : 'none';
+    document.getElementById('create_item_code_col').style.display  = isAset ? 'none'  : 'block';
+    if (!isAset) document.getElementById('create_item_code').value = '';
 }
 document.getElementById('create_item_type').addEventListener('change', toggleCreateAssetSection);
 
@@ -338,15 +348,12 @@ document.getElementById('modalCreate').addEventListener('hidden.bs.modal', funct
     toggleCreateAssetSection();
 });
 
-// ---- Edit modal: toggle code section label ----
+// ---- Edit modal: toggle sections based on item type ----
 function toggleEditAssetSection() {
     var isAset = document.getElementById('edit_item_type').value === 'ASET';
     document.getElementById('edit_target_warehouse').value = isAset ? 'GUDANG_ASET' : 'GUDANG_KONSUMABLE';
-    document.getElementById('edit_codes_label').textContent = isAset ? 'Kode Aset' : 'Kode Item';
-    document.getElementById('edit_codes_hint').textContent  = isAset
-        ? 'Tambahkan kode aset. Setiap kode harus unik.'
-        : 'Tambahkan kode item/produk. Setiap kode harus unik.';
-    document.getElementById('edit_asset_section').style.display = 'block';
+    document.getElementById('edit_asset_section').style.display  = isAset ? 'block' : 'none';
+    document.getElementById('edit_item_code_col').style.display  = isAset ? 'none'  : 'block';
 }
 document.getElementById('edit_item_type').addEventListener('change', toggleEditAssetSection);
 
@@ -376,7 +383,12 @@ document.addEventListener('click', function(e) {
             document.getElementById('edit_is_active').value     = item.is_active;
             document.getElementById('edit_redirect_tab').value  = item.item_type === 'KONSUMABLE' ? 'konsumable' : 'aset';
 
-            // Populate asset codes
+            // Populate single kode item for KONSUMABLE
+            if (item.item_type === 'KONSUMABLE') {
+                document.getElementById('edit_item_code').value = (item.asset_codes && item.asset_codes.length) ? item.asset_codes[0] : '';
+            }
+
+            // Populate asset codes repeater for ASET
             var container = document.getElementById('edit_codes_container');
             container.innerHTML = '';
             if (item.item_type === 'ASET') {

@@ -49,10 +49,13 @@ class InventoryMasterController extends BaseController {
 
         if ($this->inventoryItem->create()) {
             $newId = $this->inventoryItem->getLastInsertId();
-            if (!empty($_POST['asset_codes'])) {
-                $codes = array_filter(array_map('trim', $_POST['asset_codes']));
-                $this->inventoryItem->replaceAssetCodes($newId, $codes);
+            if ($_POST['item_type'] === 'KONSUMABLE') {
+                $single = trim($_POST['item_code'] ?? '');
+                $codes  = $single !== '' ? [$single] : [];
+            } else {
+                $codes = array_filter(array_map('trim', $_POST['asset_codes'] ?? []));
             }
+            $this->inventoryItem->replaceAssetCodes($newId, array_values($codes));
             $tab = $_POST['item_type'] === 'KONSUMABLE' ? 'konsumable' : 'aset';
             echo "<script>alert('Item created successfully'); window.location.href='index.php?page=inventory_master_index#tab-" . $tab . "';</script>";
         } else {
@@ -103,8 +106,13 @@ class InventoryMasterController extends BaseController {
         $redirectUrl = 'index.php?page=inventory_master_index#tab-' . $tab;
 
         if ($this->inventoryItem->update()) {
-            $codes = isset($_POST['asset_codes']) ? array_filter(array_map('trim', $_POST['asset_codes'])) : [];
-            $this->inventoryItem->replaceAssetCodes($_POST['id'], $codes);
+            if ($_POST['item_type'] === 'KONSUMABLE') {
+                $single = trim($_POST['item_code'] ?? '');
+                $codes  = $single !== '' ? [$single] : [];
+            } else {
+                $codes = array_filter(array_map('trim', $_POST['asset_codes'] ?? []));
+            }
+            $this->inventoryItem->replaceAssetCodes($_POST['id'], array_values($codes));
             echo "<script>alert('Item updated successfully'); window.location.href='" . $redirectUrl . "';</script>";
         } else {
             echo "<script>alert('Failed to update item'); window.location.href='" . $redirectUrl . "';</script>";
