@@ -2,8 +2,8 @@
 <?php include '../views/layouts/sidebar.php'; ?>
 
 <?php
-$asetItems      = array_filter($items, fn($i) => $i['item_type'] === 'ASET');
-$konsumableItems = array_filter($items, fn($i) => $i['item_type'] === 'KONSUMABLE');
+$asetItems      = array_filter($items, function($i) { return $i['item_type'] === 'ASET'; });
+$konsumableItems = array_filter($items, function($i) { return $i['item_type'] === 'KONSUMABLE'; });
 
 function renderRow($item) { ?>
     <tr>
@@ -263,6 +263,18 @@ function renderRow($item) { ?>
 $(document).ready(function() {
     $('#tableAset').DataTable({ language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json' } });
     $('#tableKonsumable').DataTable({ language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json' } });
+
+    // Restore active tab from URL hash on load
+    var hash = window.location.hash;
+    if (hash === '#tab-konsumable') {
+        var triggerEl = document.getElementById('tab-konsumable-btn');
+        bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+    }
+
+    // Update URL hash when tab changes (no page reload)
+    document.getElementById('inventoryTabs').addEventListener('shown.bs.tab', function(e) {
+        window.location.hash = e.target.getAttribute('data-bs-target');
+    });
 });
 
 // ---- Shared: asset code repeater ----
