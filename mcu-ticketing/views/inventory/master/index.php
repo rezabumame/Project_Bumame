@@ -191,6 +191,7 @@ function renderRow($item) { ?>
             <form action="index.php?page=inventory_master_update" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->generateCsrfToken(); ?>">
                 <input type="hidden" name="id" id="edit_id">
+                <input type="hidden" name="redirect_tab" id="edit_redirect_tab" value="aset">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalEditLabel"><i class="fas fa-edit me-2"></i>Edit Inventory Item</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -362,6 +363,7 @@ document.addEventListener('click', function(e) {
             document.getElementById('edit_item_type').value     = item.item_type;
             document.getElementById('edit_target_warehouse').value = item.target_warehouse;
             document.getElementById('edit_is_active').value     = item.is_active;
+            document.getElementById('edit_redirect_tab').value  = item.item_type === 'KONSUMABLE' ? 'konsumable' : 'aset';
 
             // Populate asset codes
             var container = document.getElementById('edit_codes_container');

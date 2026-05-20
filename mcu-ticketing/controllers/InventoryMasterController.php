@@ -98,6 +98,9 @@ class InventoryMasterController extends BaseController {
         $this->inventoryItem->target_warehouse = $_POST['target_warehouse'];
         $this->inventoryItem->is_active = $_POST['is_active'];
 
+        $tab = (isset($_POST['redirect_tab']) && $_POST['redirect_tab'] === 'konsumable') ? 'konsumable' : 'aset';
+        $redirectUrl = 'index.php?page=inventory_master_index#tab-' . $tab;
+
         if ($this->inventoryItem->update()) {
             if ($_POST['item_type'] === 'ASET') {
                 $codes = isset($_POST['asset_codes']) ? array_filter(array_map('trim', $_POST['asset_codes'])) : [];
@@ -106,9 +109,9 @@ class InventoryMasterController extends BaseController {
                 // Clear codes if type changed from ASET to KONSUMABLE
                 $this->inventoryItem->replaceAssetCodes($_POST['id'], []);
             }
-            echo "<script>alert('Item updated successfully'); window.location.href='index.php?page=inventory_master_index';</script>";
+            echo "<script>alert('Item updated successfully'); window.location.href='" . $redirectUrl . "';</script>";
         } else {
-            echo "<script>alert('Failed to update item'); window.location.href='index.php?page=inventory_master_index';</script>";
+            echo "<script>alert('Failed to update item'); window.location.href='" . $redirectUrl . "';</script>";
         }
     }
 
