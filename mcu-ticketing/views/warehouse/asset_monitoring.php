@@ -426,6 +426,8 @@ var YEAR  = <?php echo $year; ?>;
 var MONTH_NAME = '<?php echo $months[$month]; ?>';
 var lastItemId   = null;
 var lastItemName = '';
+// All summary rows from PHP — used for Excel export (all pages, not just visible)
+var ALL_SUMMARY = <?php echo json_encode(array_values($summary)); ?>;
 
 $(document).ready(function() {
     $('#tblSummary').DataTable({
@@ -439,67 +441,41 @@ $(document).ready(function() {
     });
 });
 
-// ---- Export Excel ----
+// ---- Export Excel ---- (uses ALL_SUMMARY from PHP, all rows not just visible page)
 $('#btnExportExcel').on('click', function() {
     var wb = XLSX.utils.book_new();
 
-    // Sheet 1: Summary
     var summaryData = [
         ['Laporan Monitoring Penggunaan Aset - ' + MONTH_NAME + ' ' + YEAR],
+        ['PT Bumame Cahaya Medika'],
         ['Digenerate: ' + new Date().toLocaleString('id-ID')],
         [],
         ['No', 'Kategori', 'Nama Item', 'Total Kode', 'Dipakai Bulan Ini', 'Tidak Dipakai', 'Tingkat Pemakaian (%)', 'Project Bulan Ini']
     ];
 
-    var rows = [];
-    $('#tblSummary tbody tr').each(function(i) {
-        var cells = $(this).find('td');
-        if (cells.length < 5) return;
-        var totalCodes = parseInt($(cells[2]).text().trim()) || 0;
-        var usedText   = $(cells[3]).find('.usage-bar-fill').length
-            ? parseInt($(cells[3]).find('.small').text()) || 0
-            : 0;
+    var totalCodes = 0, totalUsed = 0, totalProj = 0;
 
-        // Read from data-* attributes of the button instead
-        var btn = $(this).find('.btn-lihat-kode');
-        var tc  = parseInt(btn.data('total-codes')) || 0;
-        var uc  = parseInt(btn.data('used-codes'))  || 0;
+    ALL_SUMMARY.forEach(function(r, i) {
+        var tc   = parseInt(r.total_codes)   || 0;
+        var uc   = parseInt(r.used_codes)    || 0;
+        var proj = parseInt(r.total_projects)|| 0;
         var rate = tc > 0 ? Math.round(uc / tc * 100) : 0;
-
-        var projText = $(cells[4]).text().trim().replace(' project','').trim();
-        var proj = parseInt(projText) || 0;
-
-        rows.push([
-            i + 1,
-            $(cells[0]).text().trim(),
-            $(cells[1]).find('.fw-semibold').text().trim() || $(cells[1]).text().trim(),
-            tc,
-            uc,
-            tc - uc,
-            rate,
-            proj
-        ]);
+        totalCodes += tc;
+        totalUsed  += uc;
+        totalProj  += proj;
+        summaryData.push([i + 1, r.category, r.item_name, tc, uc, tc - uc, rate, proj]);
     });
 
-    rows.forEach(function(r) { summaryData.push(r); });
-
-    // Footer totals
     summaryData.push([]);
-    var totalItems = rows.length;
-    var totalCodes = rows.reduce(function(s,r){ return s + r[3]; }, 0);
-    var totalUsed  = rows.reduce(function(s,r){ return s + r[4]; }, 0);
-    var totalIdle  = rows.reduce(function(s,r){ return s + r[5]; }, 0);
-    summaryData.push(['', 'TOTAL', '', totalCodes, totalUsed, totalIdle,
-        totalCodes > 0 ? Math.round(totalUsed/totalCodes*100) : 0, '']);
+    summaryData.push([
+        '', 'TOTAL', '', totalCodes, totalUsed, totalCodes - totalUsed,
+        totalCodes > 0 ? Math.round(totalUsed / totalCodes * 100) : 0, totalProj
+    ]);
 
-    var ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    var ws = XLSX.utils.aoa_to_sheet(summaryData);
+    ws['!cols'] = [{wch:4},{wch:18},{wch:32},{wch:12},{wch:18},{wch:14},{wch:22},{wch:18}];
 
-    // Column widths
-    ws1['!cols'] = [
-        {wch:4},{wch:16},{wch:30},{wch:12},{wch:16},{wch:14},{wch:22},{wch:18}
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+    XLSX.utils.book_append_sheet(wb, ws, 'Summary');
     XLSX.writeFile(wb, 'Monitoring_Aset_' + MONTH_NAME + '_' + YEAR + '.xlsx');
 });
 
@@ -544,8 +520,8 @@ $(document).on('click', '.btn-lihat-kode', function() {
             var rows = codes.map(function(c, i) {
                 var isUsed = c.usage_count > 0;
                 var statusBadge = isUsed
-                    ? '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fas fa-check me-1"></i>Dipakai ' + c.usage_count + 'x</span>'
-                    : '<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><i class="fas fa-minus me-1"></i>Idle</span>';
+                    ? '<span style="display:inline-block;padding:2px 9px;border-radius:4px;font-size:.8rem;font-weight:500;background:rgba(25,135,84,.12);color:#0a3622;border:1px solid rgba(25,135,84,.3);"><i class="fas fa-check me-1"></i>Dipakai ' + c.usage_count + 'x</span>'
+                    : '<span style="display:inline-block;padding:2px 9px;border-radius:4px;font-size:.8rem;font-weight:500;background:rgba(108,117,125,.1);color:#495057;border:1px solid rgba(108,117,125,.3);"><i class="fas fa-minus me-1"></i>Idle</span>';
                 var lastUsed = c.last_used
                     ? '<span class="fw-semibold">' + formatDate(c.last_used) + '</span>'
                     : '<span class="text-muted">—</span>';
@@ -590,20 +566,22 @@ $(document).on('click', '.btn-lihat-history', function() {
                 $('#codeHistoryEmpty').show();
                 return;
             }
-            var statusMap = {
-                'PENDING': { color: 'secondary', label: 'Pending' },
-                'IN_PREPARATION': { color: 'warning', label: 'Diproses' },
-                'READY': { color: 'primary', label: 'Siap' },
-                'COMPLETED': { color: 'success', label: 'Selesai' }
+            var statusStyles = {
+                'PENDING':        { bg:'rgba(108,117,125,.1)', color:'#495057', border:'rgba(108,117,125,.3)', label:'Pending' },
+                'IN_PREPARATION': { bg:'rgba(255,193,7,.18)',  color:'#664d03', border:'rgba(255,193,7,.5)',   label:'Diproses' },
+                'READY':          { bg:'rgba(13,110,253,.1)',  color:'#084298', border:'rgba(13,110,253,.3)',  label:'Siap' },
+                'COMPLETED':      { bg:'rgba(25,135,84,.12)',  color:'#0a3622', border:'rgba(25,135,84,.3)',   label:'Selesai' }
             };
             var rows = history.map(function(h) {
-                var s = statusMap[h.warehouse_status] || { color: 'secondary', label: h.warehouse_status };
+                var s = statusStyles[h.warehouse_status] || statusStyles['PENDING'];
+                var badgeStyle = 'display:inline-block;padding:2px 9px;border-radius:4px;font-size:.8rem;font-weight:500;' +
+                    'background:' + s.bg + ';color:' + s.color + ';border:1px solid ' + s.border + ';';
                 return '<tr>' +
                     '<td><span class="badge bg-light text-dark border fw-bold">' + escHtml(h.project_id) + '</span></td>' +
                     '<td class="fw-semibold">' + escHtml(h.nama_project) + '</td>' +
                     '<td class="text-center">' + (h.tanggal_mcu ? formatDate(h.tanggal_mcu) : '<span class="text-muted">—</span>') + '</td>' +
                     '<td><small class="text-muted font-monospace">' + escHtml(h.request_number) + '</small></td>' +
-                    '<td class="text-center"><span class="badge bg-' + s.color + ' bg-opacity-15 text-' + s.color + ' border border-' + s.color + ' border-opacity-25">' + s.label + '</span></td>' +
+                    '<td class="text-center"><span style="' + badgeStyle + '">' + s.label + '</span></td>' +
                 '</tr>';
             });
             $('#codeHistoryBody').html(rows.join(''));
