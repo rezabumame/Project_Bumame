@@ -152,14 +152,14 @@ function renderRow($item) {
                             <label class="form-label">Category</label>
                             <input type="text" class="form-control" name="category" required placeholder="e.g., Elektronik, APD, ATK">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Item Name</label>
-                            <input type="text" class="form-control" name="item_name" required>
-                        </div>
-                        <!-- Kode Item (konsumable only, 1 code) -->
+                        <!-- Kode Item (konsumable only, 1 code) — before Item Name -->
                         <div class="col-md-4" id="create_item_code_col" style="display:none;">
                             <label class="form-label">Kode Item</label>
                             <input type="text" class="form-control" name="item_code" id="create_item_code" placeholder="e.g. KONS-001">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="item_name" required>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -229,14 +229,14 @@ function renderRow($item) {
                                 <label class="form-label">Category</label>
                                 <input type="text" class="form-control" name="category" id="edit_category" required>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Item Name</label>
-                                <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
-                            </div>
-                            <!-- Kode Item (konsumable only, 1 code) -->
+                            <!-- Kode Item (konsumable only, 1 code) — before Item Name -->
                             <div class="col-md-4" id="edit_item_code_col" style="display:none;">
                                 <label class="form-label">Kode Item</label>
                                 <input type="text" class="form-control" name="item_code" id="edit_item_code" placeholder="e.g. KONS-001">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Item Name</label>
+                                <input type="text" class="form-control" name="item_name" id="edit_item_name" required>
                             </div>
                         </div>
                         <div class="row mb-3">
