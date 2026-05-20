@@ -210,8 +210,20 @@ class WarehouseController extends BaseController {
             return $base_url . "?page=$page&" . http_build_query($params);
         };
         
+        // Fetch konsumable item codes for PDF
+        $konsItemCodes = [];
+        if ($data['header']['warehouse_type'] === 'GUDANG_KONSUMABLE') {
+            $inventoryItem = $this->loadModel('InventoryItem');
+            foreach ($data['items'] as $item) {
+                $codes = $inventoryItem->getAssetCodes($item['item_id']);
+                if (!empty($codes)) {
+                    $konsItemCodes[$item['item_id']] = $codes;
+                }
+            }
+        }
+
         // Simple HTML Print View
-        $this->view('warehouse/pdf', ['data' => $data, 'get_qr_verify' => $get_qr_verify]);
+        $this->view('warehouse/pdf', ['data' => $data, 'get_qr_verify' => $get_qr_verify, 'konsItemCodes' => $konsItemCodes]);
     }
 
     public function qr_verify() {

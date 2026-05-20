@@ -15,11 +15,13 @@ function renderRow($item) { ?>
                 <?php echo htmlspecialchars($item['target_warehouse']); ?>
             </span>
         </td>
-        <?php if ($item['item_type'] === 'ASET'): ?>
         <td>
-            <span class="badge bg-primary"><?php echo (int)$item['asset_code_count']; ?> kode</span>
+            <?php if ((int)$item['asset_code_count'] > 0): ?>
+                <span class="badge bg-primary"><?php echo (int)$item['asset_code_count']; ?> kode</span>
+            <?php else: ?>
+                <span class="text-muted">—</span>
+            <?php endif; ?>
         </td>
-        <?php endif; ?>
         <td>
             <?php if ($item['is_active']): ?>
                 <span class="badge bg-success">Active</span>
@@ -106,6 +108,7 @@ function renderRow($item) { ?>
                                 <th>Item Name</th>
                                 <th>Unit</th>
                                 <th>Target Warehouse</th>
+                                <th>Kode Item</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -162,8 +165,8 @@ function renderRow($item) { ?>
                         </select>
                     </div>
                     <div id="create_asset_section" class="mb-1">
-                        <label class="form-label fw-semibold">Asset Codes</label>
-                        <div class="form-text mb-2">Tambahkan kode aset. Setiap kode harus unik.</div>
+                        <label class="form-label fw-semibold" id="create_codes_label">Kode</label>
+                        <div class="form-text mb-2" id="create_codes_hint">Tambahkan kode. Setiap kode harus unik.</div>
                         <div id="create_codes_container">
                             <div class="input-group mb-2 asset-code-row">
                                 <input type="text" class="form-control" name="asset_codes[]" placeholder="e.g. BCM-MA-TDG-001-B2B">
@@ -242,8 +245,8 @@ function renderRow($item) { ?>
                             </div>
                         </div>
                         <div id="edit_asset_section" class="mb-1">
-                            <label class="form-label fw-semibold">Asset Codes</label>
-                            <div class="form-text mb-2">Tambahkan kode aset. Setiap kode harus unik.</div>
+                            <label class="form-label fw-semibold" id="edit_codes_label">Kode</label>
+                            <div class="form-text mb-2" id="edit_codes_hint">Tambahkan kode. Setiap kode harus unik.</div>
                             <div id="edit_codes_container"></div>
                             <button type="button" class="btn btn-outline-primary btn-sm btn-add-code" data-target="edit_codes_container">
                                 <i class="fas fa-plus me-1"></i>Add Code
@@ -312,11 +315,15 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ---- Create modal: toggle asset section ----
+// ---- Create modal: toggle code section label ----
 function toggleCreateAssetSection() {
     var isAset = document.getElementById('create_item_type').value === 'ASET';
-    document.getElementById('create_asset_section').style.display = isAset ? 'block' : 'none';
     document.getElementById('create_target_warehouse').value = isAset ? 'GUDANG_ASET' : 'GUDANG_KONSUMABLE';
+    document.getElementById('create_codes_label').textContent = isAset ? 'Kode Aset' : 'Kode Item';
+    document.getElementById('create_codes_hint').textContent  = isAset
+        ? 'Tambahkan kode aset. Setiap kode harus unik.'
+        : 'Tambahkan kode item/produk. Setiap kode harus unik.';
+    document.getElementById('create_asset_section').style.display = 'block';
 }
 document.getElementById('create_item_type').addEventListener('change', toggleCreateAssetSection);
 
@@ -331,11 +338,15 @@ document.getElementById('modalCreate').addEventListener('hidden.bs.modal', funct
     toggleCreateAssetSection();
 });
 
-// ---- Edit modal: toggle asset section ----
+// ---- Edit modal: toggle code section label ----
 function toggleEditAssetSection() {
     var isAset = document.getElementById('edit_item_type').value === 'ASET';
-    document.getElementById('edit_asset_section').style.display = isAset ? 'block' : 'none';
     document.getElementById('edit_target_warehouse').value = isAset ? 'GUDANG_ASET' : 'GUDANG_KONSUMABLE';
+    document.getElementById('edit_codes_label').textContent = isAset ? 'Kode Aset' : 'Kode Item';
+    document.getElementById('edit_codes_hint').textContent  = isAset
+        ? 'Tambahkan kode aset. Setiap kode harus unik.'
+        : 'Tambahkan kode item/produk. Setiap kode harus unik.';
+    document.getElementById('edit_asset_section').style.display = 'block';
 }
 document.getElementById('edit_item_type').addEventListener('change', toggleEditAssetSection);
 

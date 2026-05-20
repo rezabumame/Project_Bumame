@@ -97,17 +97,21 @@
         $isAset = $data['header']['warehouse_type'] === 'GUDANG_ASET';
         $isKons = $data['header']['warehouse_type'] === 'GUDANG_KONSUMABLE';
         $selectedCodes = $data['selectedCodes'] ?? [];
+        $konsItemCodes = $konsItemCodes ?? [];
         ?>
         <table class="content-table">
             <thead>
                 <tr>
                     <th width="4%">NO</th>
                     <th width="14%">KATEGORI</th>
-                    <th width="<?php echo $isAset ? '28%' : '33%'; ?>">NAMA BARANG</th>
+                    <th width="<?php echo ($isAset || $isKons) ? '26%' : '33%'; ?>">NAMA BARANG</th>
                     <th width="5%">QTY</th>
                     <th width="7%">SATUAN</th>
                     <?php if ($isAset): ?>
-                    <th width="22%">KODE ASET</th>
+                    <th width="20%">KODE ASET</th>
+                    <?php endif; ?>
+                    <?php if ($isKons): ?>
+                    <th width="18%">KODE ITEM</th>
                     <?php endif; ?>
                     <th width="9%">CEK FISIK</th>
                     <th width="11%">PENGEMBALIAN</th>
@@ -129,7 +133,17 @@
                         <?php
                         $codes = $selectedCodes[$item['request_item_id']] ?? [];
                         if (!empty($codes)) {
-                            echo implode('<br>', array_map(fn($c) => htmlspecialchars($c['asset_code']), $codes));
+                            foreach ($codes as $c) { echo htmlspecialchars($c['asset_code']) . '<br>'; }
+                        }
+                        ?>
+                    </td>
+                    <?php endif; ?>
+                    <?php if ($isKons): ?>
+                    <td class="asset-codes-cell">
+                        <?php
+                        $itemCodes = $konsItemCodes[$item['item_id']] ?? [];
+                        if (!empty($itemCodes)) {
+                            foreach ($itemCodes as $code) { echo htmlspecialchars($code) . '<br>'; }
                         }
                         ?>
                     </td>
