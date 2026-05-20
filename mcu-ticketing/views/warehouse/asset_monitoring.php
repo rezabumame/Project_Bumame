@@ -14,7 +14,7 @@ $totalItems   = count($summary);
 $totalCodes   = array_sum(array_column($summary, 'total_codes'));
 $totalUsed    = array_sum(array_column($summary, 'used_codes'));
 $totalIdle    = $totalCodes - $totalUsed;
-$activeItems  = count(array_filter($summary, fn($r) => $r['total_projects'] > 0));
+$activeItems  = count(array_filter($summary, function($r) { return $r['total_projects'] > 0; }));
 $usageRate    = $totalCodes > 0 ? round($totalUsed / $totalCodes * 100) : 0;
 
 // Group unique categories
