@@ -159,10 +159,10 @@ $konsItemCodes = $konsItemCodes ?? [];
                             <thead class="table-light">
                                 <tr>
                                     <th>Kategori</th>
-                                    <th>Nama Barang</th>
                                     <?php if ($isGudangKons): ?>
                                     <th>Kode Item</th>
                                     <?php endif; ?>
+                                    <th>Nama Barang</th>
                                     <th>Satuan</th>
                                     <th class="text-center">Qty</th>
                                     <th>Tipe</th>
@@ -175,7 +175,6 @@ $konsItemCodes = $konsItemCodes ?? [];
                                 <?php foreach ($data['items'] as $item): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($item['category']); ?></td>
-                                    <td class="fw-bold"><?php echo htmlspecialchars($item['item_name']); ?></td>
                                     <?php if ($isGudangKons): ?>
                                     <td>
                                         <?php $itemCodes = $konsItemCodes[$item['item_id']] ?? []; ?>
@@ -188,6 +187,7 @@ $konsItemCodes = $konsItemCodes ?? [];
                                         <?php endif; ?>
                                     </td>
                                     <?php endif; ?>
+                                    <td class="fw-bold"><?php echo htmlspecialchars($item['item_name']); ?></td>
                                     <td><?php echo htmlspecialchars($item['unit']); ?></td>
                                     <td class="text-center fs-5"><?php echo $item['qty_request']; ?></td>
                                     <td>
