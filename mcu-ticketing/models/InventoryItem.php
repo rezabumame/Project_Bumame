@@ -24,10 +24,12 @@ class InventoryItem {
     }
 
     public function readAll() {
-        $query = "SELECT ii.*, COALESCE(ac.code_count, 0) AS asset_code_count
+        $query = "SELECT ii.*, COALESCE(ac.code_count, 0) AS asset_code_count,
+                         ac.first_code
                   FROM " . $this->table_name . " ii
                   LEFT JOIN (
-                      SELECT inventory_item_id, COUNT(*) AS code_count
+                      SELECT inventory_item_id, COUNT(*) AS code_count,
+                             MIN(asset_code) AS first_code
                       FROM inventory_asset_codes
                       GROUP BY inventory_item_id
                   ) ac ON ii.id = ac.inventory_item_id

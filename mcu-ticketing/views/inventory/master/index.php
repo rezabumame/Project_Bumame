@@ -5,9 +5,20 @@
 $asetItems      = array_filter($items, function($i) { return $i['item_type'] === 'ASET'; });
 $konsumableItems = array_filter($items, function($i) { return $i['item_type'] === 'KONSUMABLE'; });
 
-function renderRow($item) { ?>
+function renderRow($item) {
+    $isKons = $item['item_type'] === 'KONSUMABLE';
+?>
     <tr>
         <td><?php echo htmlspecialchars($item['category']); ?></td>
+        <?php if ($isKons): ?>
+        <td>
+            <?php if (!empty($item['first_code'])): ?>
+                <span class="badge bg-info text-dark font-monospace"><?php echo htmlspecialchars($item['first_code']); ?></span>
+            <?php else: ?>
+                <span class="text-muted">—</span>
+            <?php endif; ?>
+        </td>
+        <?php endif; ?>
         <td><?php echo htmlspecialchars($item['item_name']); ?></td>
         <td><?php echo htmlspecialchars($item['unit']); ?></td>
         <td>
@@ -15,6 +26,7 @@ function renderRow($item) { ?>
                 <?php echo htmlspecialchars($item['target_warehouse']); ?>
             </span>
         </td>
+        <?php if (!$isKons): ?>
         <td>
             <?php if ((int)$item['asset_code_count'] > 0): ?>
                 <span class="badge bg-primary"><?php echo (int)$item['asset_code_count']; ?> kode</span>
@@ -22,6 +34,7 @@ function renderRow($item) { ?>
                 <span class="text-muted">—</span>
             <?php endif; ?>
         </td>
+        <?php endif; ?>
         <td>
             <?php if ($item['is_active']): ?>
                 <span class="badge bg-success">Active</span>
@@ -105,10 +118,10 @@ function renderRow($item) { ?>
                         <thead>
                             <tr>
                                 <th>Category</th>
+                                <th>Kode Item</th>
                                 <th>Item Name</th>
                                 <th>Unit</th>
                                 <th>Target Warehouse</th>
-                                <th>Kode Item</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>

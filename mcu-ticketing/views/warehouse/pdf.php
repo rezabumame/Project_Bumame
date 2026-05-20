@@ -104,10 +104,10 @@
                 <tr>
                     <th width="4%">NO</th>
                     <th width="12%">KATEGORI</th>
-                    <th width="<?php echo $isAset ? '24%' : ($isKons ? '22%' : '30%'); ?>">NAMA BARANG</th>
                     <?php if ($isKons): ?>
-                    <th width="15%">KODE ITEM</th>
+                    <th width="14%">KODE ITEM</th>
                     <?php endif; ?>
+                    <th width="<?php echo $isAset ? '24%' : ($isKons ? '22%' : '30%'); ?>">NAMA BARANG</th>
                     <th width="5%">QTY</th>
                     <th width="7%">SATUAN</th>
                     <?php if ($isAset): ?>
@@ -125,7 +125,6 @@
                 <tr>
                     <td class="text-center"><?php echo $no++; ?></td>
                     <td><?php echo htmlspecialchars($item['category']); ?></td>
-                    <td><?php echo htmlspecialchars($item['item_name']); ?></td>
                     <?php if ($isKons): ?>
                     <td class="asset-codes-cell">
                         <?php
@@ -136,6 +135,7 @@
                         ?>
                     </td>
                     <?php endif; ?>
+                    <td><?php echo htmlspecialchars($item['item_name']); ?></td>
                     <td class="text-center"><?php echo $item['qty_request']; ?></td>
                     <td class="text-center"><?php echo htmlspecialchars($item['unit']); ?></td>
                     <?php if ($isAset): ?>
