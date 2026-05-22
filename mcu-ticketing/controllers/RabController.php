@@ -505,9 +505,9 @@ class RabController extends BaseController {
         // Consumption Items (from checkboxes)
         // Air Mineral Petugas
         if (isset($_POST['cons_mineral_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_mineral_qty']);
-            $days = str_replace('.', '', $_POST['cons_mineral_days']);
-            $price = str_replace('.', '', $_POST['cons_mineral_price']);
+            $qty = (int) str_replace('.', '', $_POST['cons_mineral_qty']);
+            $days = (int) str_replace('.', '', $_POST['cons_mineral_days']);
+            $price = (int) str_replace('.', '', $_POST['cons_mineral_price']);
             $subtotal = $qty * $days * $price;
             $total_consumption += $subtotal;
             $items[] = [
@@ -523,9 +523,9 @@ class RabController extends BaseController {
 
         // Makan Siang Petugas
         if (isset($_POST['cons_lunch_staff_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_lunch_staff_qty']);
-            $days = str_replace('.', '', $_POST['cons_lunch_staff_days']);
-            $price = str_replace('.', '', $_POST['cons_lunch_staff_price']);
+            $qty = (int) str_replace('.', '', $_POST['cons_lunch_staff_qty']);
+            $days = (int) str_replace('.', '', $_POST['cons_lunch_staff_days']);
+            $price = (int) str_replace('.', '', $_POST['cons_lunch_staff_price']);
             $subtotal = $qty * $days * $price;
             $total_consumption += $subtotal;
             $items[] = [
