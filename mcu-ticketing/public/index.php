@@ -228,6 +228,7 @@ $router->add('inventory_request_edit', 'InventoryRequestController', 'edit');
 $router->add('inventory_request_update', 'InventoryRequestController', 'update');
 $router->add('inventory_request_delete', 'InventoryRequestController', 'delete');
 $router->add('inventory_request_detail', 'InventoryRequestController', 'detail');
+$router->add('inventory_request_save_realisasi', 'InventoryRequestController', 'saveRealisasi');
 
 // Inventory Master (Superadmin & Warehouse Admins)
 $router->add('inventory_master_index', 'InventoryMasterController', 'index');

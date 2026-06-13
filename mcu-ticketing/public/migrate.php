@@ -204,6 +204,23 @@ try {
         return 'applied';
     });
 
+    run_migration($db, '007_add_realisasi_to_inventory_request_items', static function (PDO $db): string {
+        if (!table_exists($db, 'inventory_request_items')) {
+            return 'skip_no_table';
+        }
+
+        $q = $db->prepare("SHOW COLUMNS FROM inventory_request_items LIKE 'qty_realisasi'");
+        $q->execute();
+        if ($q->fetch()) {
+            return 'already_ok';
+        }
+
+        $db->exec("ALTER TABLE inventory_request_items
+            ADD COLUMN qty_realisasi INT NULL DEFAULT NULL,
+            ADD COLUMN realisasi_notes VARCHAR(255) NULL DEFAULT NULL");
+        return 'applied';
+    });
+
     echo "\nDone.\n";
 } catch (Throwable $e) {
     echo 'Error: ' . $e->getMessage() . "\n";

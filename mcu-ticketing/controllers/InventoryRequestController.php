@@ -295,6 +295,59 @@ class InventoryRequestController extends BaseController {
         }
     }
 
+    public function saveRealisasi() {
+        $this->checkRole(['korlap', 'superadmin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('inventory_request_index');
+            return;
+        }
+
+        if (!$this->validateCsrfToken()) {
+            die("Invalid CSRF token.");
+        }
+
+        $request_id           = (int) ($_POST['request_id'] ?? 0);
+        $warehouse_request_id = (int) ($_POST['warehouse_request_id'] ?? 0);
+
+        if (!$request_id || !$warehouse_request_id) {
+            $this->redirect('inventory_request_index');
+            return;
+        }
+
+        $data = $this->inventoryRequest->getDetail($request_id);
+        if (!$data) {
+            die("Request not found");
+        }
+
+        if ($_SESSION['role'] === 'korlap' && $data['header']['korlap_id'] != $_SESSION['user_id']) {
+            die("Access Denied");
+        }
+
+        $realisasi_items = [];
+        if (isset($_POST['realisasi']) && is_array($_POST['realisasi'])) {
+            foreach ($_POST['realisasi'] as $item_id => $fields) {
+                $realisasi_items[] = [
+                    'request_item_id' => (int) $item_id,
+                    'qty_realisasi'   => (int) ($fields['qty'] ?? 0),
+                    'realisasi_notes' => $fields['notes'] ?? '',
+                ];
+            }
+        }
+
+        if ($this->inventoryRequest->saveRealisasiKonsumable($warehouse_request_id, $realisasi_items)) {
+            $this->project->logAction(
+                $data['header']['project_id'],
+                'Realisasi Konsumable Submitted',
+                $_SESSION['user_id'],
+                "Inventory Request ID: $request_id"
+            );
+            $this->redirect('inventory_request_detail', ['id' => $request_id, 'msg' => 'realisasi_saved']);
+        } else {
+            $this->redirect('inventory_request_detail', ['id' => $request_id, 'err' => 'realisasi_failed']);
+        }
+    }
+
     public function delete() {
         $this->checkRole(['korlap', 'superadmin', 'manager_ops', 'admin_ops']);
         

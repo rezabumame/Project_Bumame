@@ -303,13 +303,25 @@ class InventoryRequest {
             }
         }
 
+        $konsumableWarehouseId     = null;
+        $konsumableWarehouseStatus = null;
+        foreach ($splits as $split) {
+            if ($split['warehouse_type'] === 'GUDANG_KONSUMABLE') {
+                $konsumableWarehouseId     = $split['id'];
+                $konsumableWarehouseStatus = $split['status'];
+                break;
+            }
+        }
+
         return [
-            'header'              => $header,
-            'items'               => $items,
-            'splits'              => $splits,
-            'asetWarehouseId'     => $asetWarehouseId,
-            'availableAssetCodes' => $availableAssetCodes,
-            'selectedCodes'       => $selectedCodes,
+            'header'                   => $header,
+            'items'                    => $items,
+            'splits'                   => $splits,
+            'asetWarehouseId'          => $asetWarehouseId,
+            'availableAssetCodes'      => $availableAssetCodes,
+            'selectedCodes'            => $selectedCodes,
+            'konsumableWarehouseId'    => $konsumableWarehouseId,
+            'konsumableWarehouseStatus'=> $konsumableWarehouseStatus,
         ];
     }
 
@@ -465,6 +477,52 @@ class InventoryRequest {
             }
             
             $stmt->execute();
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
+
+    public function saveRealisasiKonsumable($warehouse_request_id, array $realisasi_items) {
+        try {
+            $this->conn->beginTransaction();
+
+            $stmtCheck = $this->conn->prepare(
+                "SELECT id, qty_request FROM " . $this->items_table . " WHERE id = :id"
+            );
+            $stmtUpdate = $this->conn->prepare(
+                "UPDATE " . $this->items_table . "
+                 SET qty_realisasi = :qty_realisasi, realisasi_notes = :notes
+                 WHERE id = :id"
+            );
+
+            foreach ($realisasi_items as $item) {
+                $item_id       = (int) $item['request_item_id'];
+                $qty_realisasi = (int) $item['qty_realisasi'];
+                $notes         = trim($item['realisasi_notes'] ?? '');
+
+                // Validate: qty_realisasi <= qty_request
+                $stmtCheck->execute([':id' => $item_id]);
+                $row = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+                if (!$row) continue;
+                if ($qty_realisasi > (int) $row['qty_request']) {
+                    $qty_realisasi = (int) $row['qty_request'];
+                }
+
+                $stmtUpdate->execute([
+                    ':qty_realisasi' => $qty_realisasi,
+                    ':notes'         => $notes ?: null,
+                    ':id'            => $item_id,
+                ]);
+            }
+
+            // Set warehouse status to COMPLETED
+            $this->conn->prepare(
+                "UPDATE " . $this->warehouse_table . " SET status = 'COMPLETED', updated_at = NOW() WHERE id = :id"
+            )->execute([':id' => $warehouse_request_id]);
 
             $this->conn->commit();
             return true;

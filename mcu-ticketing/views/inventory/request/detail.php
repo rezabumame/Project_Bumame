@@ -28,8 +28,13 @@
 </style>
 
 <?php
-$canAssignAsset = in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'])
-                  && !empty($data['asetWarehouseId']);
+$canAssignAsset   = in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'])
+                    && !empty($data['asetWarehouseId']);
+$isKorlap         = in_array($_SESSION['role'], ['korlap', 'superadmin']);
+$konsumableWHId   = $data['konsumableWarehouseId'] ?? null;
+$konsumableStatus = $data['konsumableWarehouseStatus'] ?? null;
+$konsumableItems  = array_filter($data['items'], fn($i) => $i['warehouse_snapshot'] === 'GUDANG_KONSUMABLE');
+$hasKonsumable    = !empty($konsumableWHId) && !empty($konsumableItems);
 ?>
 
 <div class="container-fluid px-4">
@@ -128,21 +133,33 @@ $canAssignAsset = in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'
                                     </td>
                                     <td><?php echo $split['updated_at'] ? date('d M Y H:i', strtotime($split['updated_at'])) : '-'; ?></td>
                                     <td>
-                                        <?php if ($split['status'] == 'READY' && $_SESSION['role'] == 'korlap'): ?>
-                                            <form action="index.php?page=warehouse_update_status" method="POST" class="d-inline form-confirm-reception">
-                                                <?php echo $this->getCsrfField(); ?>
-                                                <input type="hidden" name="id" value="<?php echo $split['id']; ?>">
-                                                <input type="hidden" name="status" value="COMPLETED">
-                                                <button type="button" class="btn btn-sm btn-success" onclick="confirmReception(this)">
-                                                    <i class="fas fa-check-circle me-1"></i> Konfirmasi Diterima
-                                                </button>
-                                            </form>
-                                        <?php elseif ($split['status'] == 'COMPLETED'): ?>
-                                            <span class="badge bg-success"><i class="fas fa-check"></i> Sudah Diterima</span>
-                                        <?php elseif ($split['proof_file']): ?>
-                                            <a href="<?php echo $split['proof_file']; ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-download me-1"></i> Bukti</a>
+                                        <?php if ($split['warehouse_type'] === 'GUDANG_KONSUMABLE'): ?>
+                                            <?php if ($split['status'] === 'COMPLETED'): ?>
+                                                <span class="badge bg-success"><i class="fas fa-check me-1"></i> Realisasi Submitted</span>
+                                            <?php elseif ($split['status'] === 'READY' && $isKorlap): ?>
+                                                <a href="#section-realisasi" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-clipboard-list me-1"></i> Isi Realisasi
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <span class="text-muted">-</span>
+                                            <?php if ($split['status'] == 'READY' && $_SESSION['role'] == 'korlap'): ?>
+                                                <form action="index.php?page=warehouse_update_status" method="POST" class="d-inline form-confirm-reception">
+                                                    <?php echo $this->getCsrfField(); ?>
+                                                    <input type="hidden" name="id" value="<?php echo $split['id']; ?>">
+                                                    <input type="hidden" name="status" value="COMPLETED">
+                                                    <button type="button" class="btn btn-sm btn-success" onclick="confirmReception(this)">
+                                                        <i class="fas fa-check-circle me-1"></i> Konfirmasi Diterima
+                                                    </button>
+                                                </form>
+                                            <?php elseif ($split['status'] == 'COMPLETED'): ?>
+                                                <span class="badge bg-success"><i class="fas fa-check"></i> Sudah Diterima</span>
+                                            <?php elseif ($split['proof_file']): ?>
+                                                <a href="<?php echo $split['proof_file']; ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-download me-1"></i> Bukti</a>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -255,6 +272,101 @@ $canAssignAsset = in_array($_SESSION['role'], ['superadmin', 'admin_gudang_aset'
                 </div>
             </div>
         </div>
+
+        <?php if ($hasKonsumable): ?>
+        <div class="col-lg-12" id="section-realisasi">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center">
+                    <h4 class="card-title mb-0 flex-grow-1">
+                        <i class="fas fa-clipboard-list me-2 text-success"></i>Realisasi Konsumable
+                    </h4>
+                    <?php if ($konsumableStatus === 'COMPLETED'): ?>
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Submitted</span>
+                    <?php elseif ($konsumableStatus === 'READY'): ?>
+                        <span class="badge bg-primary">Menunggu Realisasi</span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary"><?php echo $konsumableStatus; ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body">
+                    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'realisasi_saved'): ?>
+                        <div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>Realisasi berhasil disimpan.</div>
+                    <?php endif; ?>
+                    <?php if (isset($_GET['err']) && $_GET['err'] === 'realisasi_failed'): ?>
+                        <div class="alert alert-danger"><i class="fas fa-times-circle me-1"></i>Gagal menyimpan realisasi.</div>
+                    <?php endif; ?>
+
+                    <?php if ($isKorlap): ?>
+                    <form action="index.php?page=inventory_request_save_realisasi" method="POST">
+                        <?php echo $this->getCsrfField(); ?>
+                        <input type="hidden" name="request_id" value="<?php echo $data['header']['id']; ?>">
+                        <input type="hidden" name="warehouse_request_id" value="<?php echo $konsumableWHId; ?>">
+                    <?php endif; ?>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Barang</th>
+                                    <th>Satuan</th>
+                                    <th class="text-center">Qty Request</th>
+                                    <th class="text-center">Qty Terpakai</th>
+                                    <th>Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1; foreach ($konsumableItems as $item): ?>
+                                <tr>
+                                    <td><?php echo $no++; ?></td>
+                                    <td class="fw-bold"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($item['unit']); ?></td>
+                                    <td class="text-center"><?php echo $item['qty_request']; ?></td>
+                                    <td class="text-center" style="min-width:120px;">
+                                        <?php if ($isKorlap): ?>
+                                            <input type="number"
+                                                   name="realisasi[<?php echo $item['request_item_id']; ?>][qty]"
+                                                   class="form-control form-control-sm text-center"
+                                                   min="0"
+                                                   max="<?php echo $item['qty_request']; ?>"
+                                                   value="<?php echo $item['qty_realisasi'] ?? $item['qty_request']; ?>"
+                                                   required>
+                                        <?php else: ?>
+                                            <span class="fw-bold <?php echo isset($item['qty_realisasi']) ? 'text-success' : 'text-muted'; ?>">
+                                                <?php echo $item['qty_realisasi'] ?? '-'; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="min-width:200px;">
+                                        <?php if ($isKorlap): ?>
+                                            <input type="text"
+                                                   name="realisasi[<?php echo $item['request_item_id']; ?>][notes]"
+                                                   class="form-control form-control-sm"
+                                                   placeholder="Opsional..."
+                                                   value="<?php echo htmlspecialchars($item['realisasi_notes'] ?? ''); ?>">
+                                        <?php else: ?>
+                                            <span class="text-muted small"><?php echo htmlspecialchars($item['realisasi_notes'] ?? '-'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <?php if ($isKorlap): ?>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fas fa-paper-plane me-1"></i>
+                                <?php echo $konsumableStatus === 'COMPLETED' ? 'Update Realisasi' : 'Submit Realisasi'; ?>
+                            </button>
+                        </div>
+                    </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <div class="col-12 mb-4">
             <a href="index.php?page=inventory_request_index" class="btn btn-secondary">
