@@ -185,7 +185,7 @@ try {
             return 'already_ok';
         }
 
-        $db->exec("ALTER TABLE projects ADD COLUMN avg_package_price BIGINT NULL DEFAULT NULL AFTER sph_number");
+        $db->exec("ALTER TABLE projects ADD COLUMN avg_package_price BIGINT NULL DEFAULT NULL");
         return 'applied';
     });
 
@@ -200,7 +200,7 @@ try {
             return 'already_ok';
         }
 
-        $db->exec("ALTER TABLE projects ADD COLUMN pelaksana VARCHAR(20) NOT NULL DEFAULT 'Bumame' AFTER avg_package_price");
+        $db->exec("ALTER TABLE projects ADD COLUMN pelaksana VARCHAR(20) NOT NULL DEFAULT 'Bumame'");
         return 'applied';
     });
 
