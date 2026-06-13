@@ -714,8 +714,10 @@ class ProjectController extends BaseController {
             $this->project->alamat = $_POST['alamat'];
             $this->project->sph_file = $sph_file;
             $this->project->sph_number = isset($_POST['sph_number']) ? trim($_POST['sph_number']) : '';
+            $this->project->avg_package_price = !empty($_POST['avg_package_price']) ? (int) str_replace('.', '', $_POST['avg_package_price']) : null;
+            $this->project->pelaksana = in_array($_POST['pelaksana'] ?? '', ['Bumame', 'Subcon']) ? $_POST['pelaksana'] : 'Bumame';
             $this->project->notes = $_POST['notes'];
-            
+
             $this->project->project_type = $_POST['project_type'] ?? 'on_site';
             $this->project->clinic_location = ($this->project->project_type == 'walk_in') ? ($_POST['clinic_location'] ?? null) : null;
 
@@ -970,6 +972,8 @@ class ProjectController extends BaseController {
             
             $this->project->alamat = $_POST['alamat'];
             $this->project->sph_number = isset($_POST['sph_number']) ? trim($_POST['sph_number']) : '';
+            $this->project->avg_package_price = !empty($_POST['avg_package_price']) ? (int) str_replace('.', '', $_POST['avg_package_price']) : null;
+            $this->project->pelaksana = in_array($_POST['pelaksana'] ?? '', ['Bumame', 'Subcon']) ? $_POST['pelaksana'] : 'Bumame';
             $this->project->notes = $_POST['notes'];
 
             $this->project->project_type = $_POST['project_type'] ?? 'on_site';

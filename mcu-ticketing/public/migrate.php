@@ -174,6 +174,36 @@ try {
         return 'applied';
     });
 
+    run_migration($db, '006_add_pelaksana_to_projects', static function (PDO $db): string {
+        if (!table_exists($db, 'projects')) {
+            return 'skip_no_table';
+        }
+
+        $q = $db->prepare("SHOW COLUMNS FROM projects LIKE 'pelaksana'");
+        $q->execute();
+        if ($q->fetch()) {
+            return 'already_ok';
+        }
+
+        $db->exec("ALTER TABLE projects ADD COLUMN pelaksana VARCHAR(20) NOT NULL DEFAULT 'Bumame' AFTER avg_package_price");
+        return 'applied';
+    });
+
+    run_migration($db, '005_add_avg_package_price_to_projects', static function (PDO $db): string {
+        if (!table_exists($db, 'projects')) {
+            return 'skip_no_table';
+        }
+
+        $q = $db->prepare("SHOW COLUMNS FROM projects LIKE 'avg_package_price'");
+        $q->execute();
+        if ($q->fetch()) {
+            return 'already_ok';
+        }
+
+        $db->exec("ALTER TABLE projects ADD COLUMN avg_package_price BIGINT NULL DEFAULT NULL AFTER sph_number");
+        return 'applied';
+    });
+
     echo "\nDone.\n";
 } catch (Throwable $e) {
     echo 'Error: ' . $e->getMessage() . "\n";

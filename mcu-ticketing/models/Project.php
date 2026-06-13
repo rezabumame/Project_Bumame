@@ -20,6 +20,8 @@ class Project {
     public $alamat;
     public $sph_file;
     public $sph_number;
+    public $avg_package_price;
+    public $pelaksana;
     public $notes;
     public $status_project;
     public $consumption_status;
@@ -125,9 +127,9 @@ class Project {
 
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-                (project_id, nama_project, company_name, sales_person_id, jenis_pemeriksaan, foto_peserta, lunch, lunch_notes, snack, snack_notes, header_footer, total_peserta, tanggal_mcu, alamat, sph_file, notes, status_project, created_by, project_type, clinic_location, procurement_lunch_qty, procurement_snack_qty, approved_by_manager, approved_date_manager, approved_by_head, approved_date_head) 
-                VALUES 
-                (:project_id, :nama_project, :company_name, :sales_person_id, :jenis_pemeriksaan, :foto_peserta, :lunch, :lunch_notes, :snack, :snack_notes, :header_footer, :total_peserta, :tanggal_mcu, :alamat, :sph_file, :notes, :status_project, :created_by, :project_type, :clinic_location, :procurement_lunch_qty, :procurement_snack_qty, :approved_by_manager, :approved_date_manager, :approved_by_head, :approved_date_head)";
+                (project_id, nama_project, company_name, sales_person_id, jenis_pemeriksaan, foto_peserta, lunch, lunch_notes, snack, snack_notes, header_footer, total_peserta, tanggal_mcu, alamat, sph_file, notes, status_project, created_by, project_type, clinic_location, procurement_lunch_qty, procurement_snack_qty, approved_by_manager, approved_date_manager, approved_by_head, approved_date_head, avg_package_price, pelaksana)
+                VALUES
+                (:project_id, :nama_project, :company_name, :sales_person_id, :jenis_pemeriksaan, :foto_peserta, :lunch, :lunch_notes, :snack, :snack_notes, :header_footer, :total_peserta, :tanggal_mcu, :alamat, :sph_file, :notes, :status_project, :created_by, :project_type, :clinic_location, :procurement_lunch_qty, :procurement_snack_qty, :approved_by_manager, :approved_date_manager, :approved_by_head, :approved_date_head, :avg_package_price, :pelaksana)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -161,6 +163,8 @@ class Project {
         $stmt->bindParam(":approved_date_manager", $this->approved_date_manager);
         $stmt->bindParam(":approved_by_head", $this->approved_by_head);
         $stmt->bindParam(":approved_date_head", $this->approved_date_head);
+        $stmt->bindParam(":avg_package_price", $this->avg_package_price);
+        $stmt->bindParam(":pelaksana", $this->pelaksana);
 
         if ($stmt->execute()) {
             return true;
@@ -196,8 +200,10 @@ class Project {
                     project_type = :project_type,
                     clinic_location = :clinic_location,
                     procurement_lunch_qty = :procurement_lunch_qty,
-                    procurement_snack_qty = :procurement_snack_qty";
-        
+                    procurement_snack_qty = :procurement_snack_qty,
+                    avg_package_price = :avg_package_price,
+                    pelaksana = :pelaksana";
+
         if ($this->sph_file) {
             $query .= ", sph_file = :sph_file";
         }
@@ -253,7 +259,9 @@ class Project {
         $stmt->bindParam(":clinic_location", $this->clinic_location);
         $stmt->bindParam(":procurement_lunch_qty", $this->procurement_lunch_qty);
         $stmt->bindParam(":procurement_snack_qty", $this->procurement_snack_qty);
-        
+        $stmt->bindParam(":avg_package_price", $this->avg_package_price);
+        $stmt->bindParam(":pelaksana", $this->pelaksana);
+
         if ($this->sph_file) {
              $stmt->bindParam(":sph_file", $this->sph_file);
         }

@@ -78,6 +78,7 @@ if (!class_exists('DateHelper')) {
                         <tr>
                             <th class="ps-3 text-uppercase text-muted fw-bold border-0">Project Info</th>
                             <th class="text-center text-uppercase text-muted fw-bold border-0">Type</th>
+                            <th class="text-center text-uppercase text-muted fw-bold border-0">Pelaksana</th>
                             <th class="text-center text-uppercase text-muted fw-bold border-0">Sales</th>
                             <th class="text-center text-uppercase text-muted fw-bold border-0">Pax</th>
                             <th class="text-center text-uppercase text-muted fw-bold border-0">MCU Date</th>
@@ -115,6 +116,16 @@ if (!class_exists('DateHelper')) {
                                                 }
                                             } else {
                                                 echo '<span class="badge bg-light text-dark border rounded-pill"><i class="fas fa-building me-1"></i>On-Site</span>';
+                                            }
+                                        ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php
+                                            $pelaksana = $row['pelaksana'] ?? 'Bumame';
+                                            if ($pelaksana === 'Subcon') {
+                                                echo '<span class="badge bg-warning text-dark rounded-pill"><i class="fas fa-handshake me-1"></i>Subcon</span>';
+                                            } else {
+                                                echo '<span class="badge bg-primary rounded-pill" style="background-color:#204EAB!important;"><i class="fas fa-hospital me-1"></i>Bumame</span>';
                                             }
                                         ?>
                                     </td>

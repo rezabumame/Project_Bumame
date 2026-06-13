@@ -238,6 +238,14 @@ function loadProjectDetail(projectId, activeTab = 'details', options = {}) {
                                         <div class="col-sm-8 fw-medium">${p.company_name}</div>
                                     </div>
                                     <div class="row mb-3">
+                                        <div class="col-sm-4 text-muted small text-uppercase fw-bold">Pelaksana</div>
+                                        <div class="col-sm-8">
+                                            ${p.pelaksana === 'Subcon'
+                                                ? '<span class="badge bg-warning text-dark rounded-pill"><i class="fas fa-handshake me-1"></i>Subcon</span>'
+                                                : '<span class="badge bg-primary rounded-pill" style="background-color:#204EAB!important;"><i class="fas fa-hospital me-1"></i>Bumame</span>'}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
                                         <div class="col-sm-4 text-muted small text-uppercase fw-bold">SPH Number</div>
                                         <div class="col-sm-8 fw-bold" style="color: #204EAB;">${p.sph_number || '-'}</div>
                                     </div>

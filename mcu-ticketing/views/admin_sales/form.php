@@ -454,11 +454,21 @@ if ($hf_value) {
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Pelaksana</label>
+                                <div class="toggle-group">
+                                    <input type="radio" name="pelaksana" id="pelaksana_bumame" value="Bumame" <?php echo (ViewHelper::getValue('pelaksana', $form_data) != 'Subcon') ? 'checked' : ''; ?>>
+                                    <label for="pelaksana_bumame"><i class="fas fa-hospital"></i> Bumame</label>
+
+                                    <input type="radio" name="pelaksana" id="pelaksana_subcon" value="Subcon" <?php echo (ViewHelper::getValue('pelaksana', $form_data) == 'Subcon') ? 'checked' : ''; ?>>
+                                    <label for="pelaksana_subcon"><i class="fas fa-handshake"></i> Subcon</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label fw-bold small text-uppercase text-muted">Project Type</label>
                                 <div class="toggle-group">
                                     <input type="radio" name="project_type" id="type_onsite" value="on_site" <?php echo (ViewHelper::getValue('project_type', $form_data) != 'walk_in') ? 'checked' : ''; ?> onchange="toggleClinicLocation()">
                                     <label for="type_onsite"><i class="fas fa-building"></i> On-Site</label>
-                                    
+
                                     <input type="radio" name="project_type" id="type_walkin" value="walk_in" <?php echo (ViewHelper::getValue('project_type', $form_data) == 'walk_in') ? 'checked' : ''; ?> onchange="toggleClinicLocation()">
                                     <label for="type_walkin"><i class="fas fa-walking"></i> Walk-In</label>
                                 </div>
@@ -736,6 +746,13 @@ if ($hf_value) {
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
                                 <input type="text" name="sph_number" id="sph_number" class="form-control" placeholder="No. SPH" required value="<?php echo htmlspecialchars(ViewHelper::getValue('sph_number', $form_data)); ?>">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Avg. Package Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" name="avg_package_price" id="avg_package_price" class="form-control" placeholder="0" value="<?php echo htmlspecialchars(ViewHelper::getValue('avg_package_price', $form_data) ? number_format((float)ViewHelper::getValue('avg_package_price', $form_data), 0, ',', '.') : ''); ?>" oninput="formatRupiah(this)">
                             </div>
                         </div>
                         <div class="mb-4">
