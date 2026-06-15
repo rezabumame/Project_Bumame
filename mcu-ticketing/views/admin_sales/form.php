@@ -456,10 +456,10 @@ if ($hf_value) {
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-uppercase text-muted">Pelaksana</label>
                                 <div class="toggle-group">
-                                    <input type="radio" name="pelaksana" id="pelaksana_bumame" value="Bumame" <?php echo (ViewHelper::getValue('pelaksana', $form_data) != 'Subcon') ? 'checked' : ''; ?>>
+                                    <input type="radio" name="pelaksana" id="pelaksana_bumame" value="Bumame" <?php echo (ViewHelper::getValue('pelaksana', $form_data) != 'Subcon') ? 'checked' : ''; ?> onchange="toggleClinicLocation()">
                                     <label for="pelaksana_bumame"><i class="fas fa-hospital"></i> Bumame</label>
 
-                                    <input type="radio" name="pelaksana" id="pelaksana_subcon" value="Subcon" <?php echo (ViewHelper::getValue('pelaksana', $form_data) == 'Subcon') ? 'checked' : ''; ?>>
+                                    <input type="radio" name="pelaksana" id="pelaksana_subcon" value="Subcon" <?php echo (ViewHelper::getValue('pelaksana', $form_data) == 'Subcon') ? 'checked' : ''; ?> onchange="toggleClinicLocation()">
                                     <label for="pelaksana_subcon"><i class="fas fa-handshake"></i> Subcon</label>
                                 </div>
                             </div>
@@ -474,7 +474,7 @@ if ($hf_value) {
                                 </div>
                             </div>
                             <div class="col-md-6" id="clinic_location_container" style="display: none;">
-                                <label class="form-label fw-bold small text-uppercase text-muted">Clinic Location <span class="text-danger">*</span></label>
+                                <label id="clinic_location_label" class="form-label fw-bold small text-uppercase text-muted">Clinic Location <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-hospital"></i></span>
                                     <input type="text" name="clinic_location" id="clinic_location" class="form-control" placeholder="Enter Clinic Name/Location" value="<?php echo ViewHelper::getValue('clinic_location', $form_data); ?>">
@@ -943,38 +943,47 @@ if ($hf_value) {
     // Toggle Clinic Location and SPH Requirements
     function toggleClinicLocation() {
         const isWalkIn = $('#type_walkin').is(':checked');
-        const clinicLocationGroup = $('#clinic_location_container'); // Fixed: was clinic_location_group
+        const isSubcon = $('#pelaksana_subcon').is(':checked');
+        const clinicLocationGroup = $('#clinic_location_container');
         const clinicLocationInput = $('#clinic_location');
+        const clinicLocationLabel = $('#clinic_location_label');
         const sphFileInput = $('#sph_file');
         const sphNumberInput = $('#sph_number');
         const sphLinkLabel = $('#sph_link_label');
         const sphNumberLabel = $('#sph_number_label');
-        
-        if(isWalkIn) {
-            // Show clinic location
+
+        if (isWalkIn) {
+            // Walk-In: show as "Clinic Location"
             clinicLocationGroup.show();
             clinicLocationInput.prop('required', true);
-            
-            // Make SPH fields optional for Walk-In
+            clinicLocationLabel.html('Clinic Location <span class="text-danger">*</span>');
+
             sphFileInput.prop('required', false);
             sphNumberInput.prop('required', false);
-            
-            // Update labels
             sphLinkLabel.html('SPH Link (Google Drive) <span class="text-muted small">(Optional for Walk-In)</span>');
             sphNumberLabel.html('Referral No SPH <span class="text-muted small">(Optional for Walk-In)</span>');
-        } else {
-            // Hide clinic location
-            clinicLocationGroup.hide();
-            clinicLocationInput.prop('required', false);
-            clinicLocationInput.val(''); // Clear value
-            
-            // Make SPH fields required for On-Site
+        } else if (isSubcon) {
+            // Subcon + On-Site: show as "Nama Klinik Pelaksana"
+            clinicLocationGroup.show();
+            clinicLocationInput.prop('required', true);
+            clinicLocationLabel.html('Nama Klinik Pelaksana <span class="text-danger">*</span>');
+
             <?php if (!$is_edit): ?>
             sphFileInput.prop('required', true);
             <?php endif; ?>
             sphNumberInput.prop('required', true);
-            
-            // Restore labels
+            sphLinkLabel.html('SPH Link (Google Drive) <span class="text-danger">*</span>');
+            sphNumberLabel.html('Referral No SPH <span class="text-danger">*</span>');
+        } else {
+            // Bumame + On-Site: hide clinic location
+            clinicLocationGroup.hide();
+            clinicLocationInput.prop('required', false);
+            clinicLocationInput.val('');
+
+            <?php if (!$is_edit): ?>
+            sphFileInput.prop('required', true);
+            <?php endif; ?>
+            sphNumberInput.prop('required', true);
             sphLinkLabel.html('SPH Link (Google Drive) <span class="text-danger">*</span>');
             sphNumberLabel.html('Referral No SPH <span class="text-danger">*</span>');
         }
