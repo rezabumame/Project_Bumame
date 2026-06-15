@@ -966,7 +966,7 @@ if ($hf_value) {
             // Subcon + On-Site: show as "Nama Klinik Pelaksana"
             clinicLocationGroup.show();
             clinicLocationInput.prop('required', true);
-            clinicLocationLabel.html('Nama Klinik Pelaksana <span class="text-danger">*</span>');
+            clinicLocationLabel.html('Subcon Clinic Name <span class="text-danger">*</span>');
 
             <?php if (!$is_edit): ?>
             sphFileInput.prop('required', true);
