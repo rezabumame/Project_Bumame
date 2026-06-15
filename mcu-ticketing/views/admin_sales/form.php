@@ -749,11 +749,12 @@ if ($hf_value) {
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-bold small text-uppercase text-muted">Avg. Package Price</label>
+                            <label class="form-label fw-bold small text-uppercase text-muted">Package Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" name="avg_package_price" id="avg_package_price" class="form-control" placeholder="0" value="<?php echo htmlspecialchars(ViewHelper::getValue('avg_package_price', $form_data) ? number_format((float)ViewHelper::getValue('avg_package_price', $form_data), 0, ',', '.') : ''); ?>" oninput="formatRupiah(this)">
                             </div>
+                            <div class="form-text text-muted" style="font-size:0.75rem;">Notes: If there are multiple packages, please input the average</div>
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold small text-uppercase text-muted">Internal Notes</label>
