@@ -162,6 +162,12 @@
                     </a>
                 <?php endif; ?>
 
+                <?php if ($rab['status'] == 'submitted_to_finance' && $_SESSION['role'] == 'finance'): ?>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#advancePaidModal">
+                        <i class="fas fa-money-bill-wave me-2"></i>Advance Paid
+                    </button>
+                <?php endif; ?>
+
 
                 <!-- Approval Actions -->
                 <?php 
