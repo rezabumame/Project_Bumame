@@ -914,7 +914,7 @@ class RabController extends BaseController {
                 $rabData['project_id'], 
                 'Submit to Finance', 
                 $_SESSION['user_id'], 
-                "RAB Number: " . $rabData['rab_number'] . ". Status: Approved -> Submitted to Finance"
+                "RAB Number: " . $rabData['rab_number'] . ". Status: Approved -> Advance Paid"
             );
             
             $msg = "RAB berhasil disubmit ke Finance.";

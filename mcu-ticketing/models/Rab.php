@@ -610,11 +610,13 @@ class Rab {
     }
 
     public function submitToFinance($user_id) {
-        $query = "UPDATE " . $this->table_name . " 
-                  SET status = 'submitted_to_finance', 
+        $query = "UPDATE " . $this->table_name . "
+                  SET status = 'advance_paid',
                       submitted_to_finance_at = NOW(),
                       submitted_to_finance_by = :user_id,
-                      updated_at = NOW() 
+                      finance_paid_at = NOW(),
+                      finance_paid_by = :user_id,
+                      updated_at = NOW()
                   WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $user_id);

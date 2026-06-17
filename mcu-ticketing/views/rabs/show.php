@@ -162,11 +162,6 @@
                     </a>
                 <?php endif; ?>
 
-                <?php if ($rab['status'] == 'submitted_to_finance' && $_SESSION['role'] == 'finance'): ?>
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#advancePaidModal">
-                        <i class="fas fa-money-bill-wave me-2"></i>Advance Paid
-                    </button>
-                <?php endif; ?>
 
                 <!-- Approval Actions -->
                 <?php 
@@ -973,7 +968,7 @@
             
             <div class="alert alert-info small">
                 <i class="fas fa-info-circle me-1"></i>
-                RAB akan dikirim ke Finance dan tidak dapat diedit lagi.
+                RAB akan langsung berstatus <strong>Advance Paid</strong> dan tidak dapat diedit lagi.
             </div>
 
             <div class="row g-2">
