@@ -313,7 +313,7 @@ if (!class_exists('DateHelper')) {
                                                 </button>
                                             <?php endif; ?>
 
-                                            <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
+                                            <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'manager_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'in_progress_ops'])): ?>
                                                 <?php if (empty($row['korlap_id'])): ?>
                                                     <button class="btn btn-sm btn-outline-info btn-assign-korlap" data-id="<?php echo $row['project_id']; ?>" title="Assign Korlap">
                                                         <i class="fas fa-user-check"></i>
@@ -539,7 +539,7 @@ if (!class_exists('DateHelper')) {
                                         </button>
                                     <?php endif; ?>
 
-                                        <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'in_progress_ops'])): ?>
+                                        <?php if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin_ops', 'manager_ops', 'superadmin']) && in_array(trim($row['status_project']), ['approved', 'process_vendor', 'vendor_assigned', 'no_vendor_needed', 'in_progress_ops'])): ?>
                                             <?php if (empty($row['korlap_id'])): ?>
                                                 <button class="btn btn-sm btn-outline-info btn-assign-korlap" data-id="<?php echo $row['project_id']; ?>" title="Assign Korlap">
                                                     <i class="fas fa-user-check"></i> Assign Korlap

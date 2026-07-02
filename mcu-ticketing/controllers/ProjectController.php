@@ -1199,7 +1199,7 @@ class ProjectController extends BaseController {
     }
 
     public function get_korlaps_ajax() {
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin_ops', 'superadmin'])) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin_ops', 'manager_ops', 'superadmin'])) {
              echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
              exit;
         }
@@ -1215,7 +1215,7 @@ class ProjectController extends BaseController {
     }
 
     public function assign_korlap_ajax() {
-         if ($_SESSION['role'] != 'admin_ops' && $_SESSION['role'] != 'superadmin') {
+         if (!in_array($_SESSION['role'], ['admin_ops', 'manager_ops', 'superadmin'])) {
              echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
              exit;
         }
