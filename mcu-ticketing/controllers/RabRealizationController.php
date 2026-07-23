@@ -878,7 +878,10 @@ class RabRealizationController extends BaseController {
             }
 
             $project_id = $_POST['project_id'];
-            $date = $_POST['date'];
+            $date = $_POST['date'] ?? '';
+            if (empty($date)) {
+                throw new Exception("Tanggal realisasi wajib dipilih.");
+            }
             $actual_participants = $_POST['actual_participants'] ?? 0;
             
             // Auto-calculate Accommodation Advance from RAB (Transport + Accommodation)

@@ -1118,7 +1118,19 @@
                 const baFile = document.querySelector('input[name="ba_file"]');
                 const dateSelect = document.querySelector('select[name="date"]');
                 const selectedDate = dateSelect ? dateSelect.value : null;
-                
+
+                if (!selectedDate) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tanggal Belum Dipilih',
+                        text: 'Silakan pilih tanggal realisasi terlebih dahulu.',
+                        confirmButtonColor: '#204EAB'
+                    });
+                    currentStep = 1;
+                    showStep(currentStep);
+                    return;
+                }
+
                 let baExists = false;
                 if (selectedDate && typeof EXISTING_BAS !== 'undefined' && EXISTING_BAS[selectedDate] && EXISTING_BAS[selectedDate].status === 'uploaded') {
                     baExists = true;
@@ -1154,6 +1166,19 @@
         if (btnDraft) {
             btnDraft.addEventListener('click', function(e) {
                 e.preventDefault();
+
+                const draftDateSelect = document.querySelector('select[name="date"]');
+                if (!draftDateSelect || !draftDateSelect.value) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tanggal Belum Dipilih',
+                        text: 'Silakan pilih tanggal realisasi terlebih dahulu.',
+                        confirmButtonColor: '#204EAB'
+                    });
+                    currentStep = 1;
+                    showStep(currentStep);
+                    return;
+                }
 
                 Swal.fire({
                     title: 'Simpan sebagai Draft?',
