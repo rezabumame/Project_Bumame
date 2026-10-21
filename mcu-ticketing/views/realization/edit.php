@@ -1027,6 +1027,29 @@
         // Initial Calc
         calculateAll();
         
+        // BA file size guard (server rejects whole POST if it exceeds post_max_size)
+        <?php
+            $toBytes = function ($v) {
+                $v = trim($v); $n = (float) $v;
+                switch (strtolower(substr($v, -1))) { case 'g': $n *= 1024; case 'm': $n *= 1024; case 'k': $n *= 1024; }
+                return (int) $n;
+            };
+            $maxUpload = min($toBytes(ini_get('upload_max_filesize')), $toBytes(ini_get('post_max_size')) - 512 * 1024);
+        ?>
+        const BA_MAX_BYTES = <?= (int) $maxUpload ?>;
+        $('input[name="ba_file"]').on('change', function() {
+            const file = this.files[0];
+            if (file && file.size > BA_MAX_BYTES) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Terlalu Besar',
+                    text: 'Ukuran file BA ' + (file.size / 1048576).toFixed(1) + ' MB. Maksimal ' + (BA_MAX_BYTES / 1048576).toFixed(1) + ' MB. Silakan kompres file terlebih dahulu.',
+                    confirmButtonColor: '#204EAB'
+                });
+                this.value = '';
+            }
+        });
+
         // Submit Logic
         $('#btn_submit').click(function(e) {
             e.preventDefault();
