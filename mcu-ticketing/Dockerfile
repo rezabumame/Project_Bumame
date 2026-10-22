@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2.35-apache
 
 RUN a2enmod rewrite
 RUN apt-get update && apt-get install -y libzip-dev unzip \
@@ -19,7 +19,8 @@ RUN cd /var/www/html && composer install --no-dev --no-interaction
 # Set PHP upload limits for cloud deployment
 RUN echo "upload_max_filesize = 10M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 10M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "session.upload_progress.enabled = 0" >> /usr/local/etc/php/conf.d/uploads.ini
 
 EXPOSE 8080
 
