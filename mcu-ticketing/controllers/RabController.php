@@ -343,6 +343,12 @@ class RabController extends BaseController {
         ]);
     }
 
+    // Parse "1.500.000" style input; empty or non-numeric input becomes 0 instead of a PHP 8 TypeError.
+    private function toNumber($value) {
+        $clean = str_replace('.', '', (string) ($value ?? ''));
+        return is_numeric($clean) ? $clean + 0 : 0;
+    }
+
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
         
@@ -392,14 +398,14 @@ class RabController extends BaseController {
         $this->rab->created_by = $_SESSION['user_id'];
         // $this->rab->created_date = date('Y-m-d H:i:s'); // No longer needed, DB handles created_at
         $this->rab->selected_dates = json_encode($selected_dates);
-        $this->rab->total_participants = str_replace('.', '', $_POST['total_participants'] ?? 0);
-        $this->rab->total_days = str_replace('.', '', $_POST['total_days'] ?? 0);
+        $this->rab->total_participants = $this->toNumber($_POST['total_participants'] ?? 0);
+        $this->rab->total_days = $this->toNumber($_POST['total_days'] ?? 0);
         $this->rab->location_type = $_POST['location_type'] ?? 'dalam_kota';
         $this->rab->sph_file = $_POST['sph_file'] ?? null;
         $this->rab->lunch_status = $_POST['lunch_status'] ?? 'Tidak';
         $this->rab->snack_status = $_POST['snack_status'] ?? 'Tidak';
-        $this->rab->procurement_lunch_qty = str_replace('.', '', $_POST['procurement_lunch_qty'] ?? 0);
-        $this->rab->procurement_snack_qty = str_replace('.', '', $_POST['procurement_snack_qty'] ?? 0);
+        $this->rab->procurement_lunch_qty = $this->toNumber($_POST['procurement_lunch_qty'] ?? 0);
+        $this->rab->procurement_snack_qty = $this->toNumber($_POST['procurement_snack_qty'] ?? 0);
         $this->rab->personnel_notes = $_POST['notes_personnel'] ?? '';
 
         $items = [];
@@ -411,9 +417,9 @@ class RabController extends BaseController {
         // Personnel Items
         if (isset($_POST['personnel']) && is_array($_POST['personnel'])) {
             foreach ($_POST['personnel'] as $p_item) {
-                $qty = str_replace('.', '', $p_item['qty']);
-                $days = str_replace('.', '', $p_item['days']);
-                $price = str_replace('.', '', $p_item['price']);
+                $qty = $this->toNumber($p_item['qty']);
+                $days = $this->toNumber($p_item['days']);
+                $price = $this->toNumber($p_item['price']);
                 $subtotal = $qty * $days * $price;
                 $total_personnel += $subtotal;
                 $items[] = [
@@ -431,9 +437,9 @@ class RabController extends BaseController {
         // Transport Items
         // BBM
         if (isset($_POST['transport_bbm_check'])) {
-            $nominal = str_replace('.', '', $_POST['transport_bbm_nominal'] ?? 0);
-            $cars = str_replace('.', '', $_POST['transport_bbm_cars'] ?? 0);
-            $days = str_replace('.', '', $_POST['transport_bbm_days'] ?? 0);
+            $nominal = $this->toNumber($_POST['transport_bbm_nominal'] ?? 0);
+            $cars = $this->toNumber($_POST['transport_bbm_cars'] ?? 0);
+            $days = $this->toNumber($_POST['transport_bbm_days'] ?? 0);
             $subtotal = $nominal * $cars * $days;
             $total_transport += $subtotal;
             $items[] = [
@@ -449,9 +455,9 @@ class RabController extends BaseController {
 
         // Tol
         if (isset($_POST['transport_tol_check'])) {
-            $nominal = str_replace('.', '', $_POST['transport_tol_nominal'] ?? 0);
-            $cars = str_replace('.', '', $_POST['transport_tol_cars'] ?? 0);
-            $days = str_replace('.', '', $_POST['transport_tol_days'] ?? 0);
+            $nominal = $this->toNumber($_POST['transport_tol_nominal'] ?? 0);
+            $cars = $this->toNumber($_POST['transport_tol_cars'] ?? 0);
+            $days = $this->toNumber($_POST['transport_tol_days'] ?? 0);
             $subtotal = $nominal * $cars * $days;
             $total_transport += $subtotal;
             $items[] = [
@@ -467,7 +473,7 @@ class RabController extends BaseController {
 
         // Emergency
         if (isset($_POST['transport_emergency_check'])) {
-            $nominal = str_replace('.', '', $_POST['transport_emergency_nominal'] ?? 0);
+            $nominal = $this->toNumber($_POST['transport_emergency_nominal'] ?? 0);
             $notes = $_POST['transport_emergency_notes'] ?? '';
             $subtotal = $nominal; // Flat amount
             $total_transport += $subtotal;
@@ -485,9 +491,9 @@ class RabController extends BaseController {
         // Vendor Items
         if (isset($_POST['vendor']) && is_array($_POST['vendor'])) {
             foreach ($_POST['vendor'] as $v_item) {
-                $qty = str_replace('.', '', $v_item['qty']);
-                $days = str_replace('.', '', $v_item['days']);
-                $price = str_replace('.', '', $v_item['price']);
+                $qty = $this->toNumber($v_item['qty']);
+                $days = $this->toNumber($v_item['days']);
+                $price = $this->toNumber($v_item['price']);
                 $subtotal = $qty * $days * $price;
                 $total_vendor += $subtotal;
                 $items[] = [
@@ -505,9 +511,9 @@ class RabController extends BaseController {
         // Consumption Items (from checkboxes)
         // Air Mineral Petugas
         if (isset($_POST['cons_mineral_check'])) {
-            $qty = (int) str_replace('.', '', $_POST['cons_mineral_qty']);
-            $days = (int) str_replace('.', '', $_POST['cons_mineral_days']);
-            $price = (int) str_replace('.', '', $_POST['cons_mineral_price']);
+            $qty = (int) $this->toNumber($_POST['cons_mineral_qty']);
+            $days = (int) $this->toNumber($_POST['cons_mineral_days']);
+            $price = (int) $this->toNumber($_POST['cons_mineral_price']);
             $subtotal = $qty * $days * $price;
             $total_consumption += $subtotal;
             $items[] = [
@@ -523,9 +529,9 @@ class RabController extends BaseController {
 
         // Makan Siang Petugas
         if (isset($_POST['cons_lunch_staff_check'])) {
-            $qty = (int) str_replace('.', '', $_POST['cons_lunch_staff_qty']);
-            $days = (int) str_replace('.', '', $_POST['cons_lunch_staff_days']);
-            $price = (int) str_replace('.', '', $_POST['cons_lunch_staff_price']);
+            $qty = (int) $this->toNumber($_POST['cons_lunch_staff_qty']);
+            $days = (int) $this->toNumber($_POST['cons_lunch_staff_days']);
+            $price = (int) $this->toNumber($_POST['cons_lunch_staff_price']);
             $subtotal = $qty * $days * $price;
             $total_consumption += $subtotal;
             $items[] = [
@@ -542,8 +548,8 @@ class RabController extends BaseController {
         // Consumption Items (from checkboxes)
         // Snack Participant
         if (isset($_POST['cons_snack_participant_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_snack_participant_qty']);
-            $days = str_replace('.', '', $_POST['cons_snack_participant_days']);
+            $qty = $this->toNumber($_POST['cons_snack_participant_qty']);
+            $days = $this->toNumber($_POST['cons_snack_participant_days']);
             $items[] = [
                 'category' => 'consumption',
                 'item_name' => 'Snack Peserta',
@@ -556,8 +562,8 @@ class RabController extends BaseController {
         }
         // Lunch Participant
         if (isset($_POST['cons_lunch_participant_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_lunch_participant_qty']);
-            $days = str_replace('.', '', $_POST['cons_lunch_participant_days']);
+            $qty = $this->toNumber($_POST['cons_lunch_participant_qty']);
+            $days = $this->toNumber($_POST['cons_lunch_participant_days']);
             $items[] = [
                 'category' => 'consumption',
                 'item_name' => 'Makan Siang Peserta',
@@ -1208,7 +1214,7 @@ class RabController extends BaseController {
         } else {
             $this->rab->selected_dates = $rab['selected_dates'];
         }
-        $this->rab->total_participants = str_replace('.', '', $_POST['total_participants']);
+        $this->rab->total_participants = $this->toNumber($_POST['total_participants']);
         $this->rab->personnel_notes = $_POST['notes_personnel'] ?? '';
         
         $items = [];
@@ -1218,7 +1224,7 @@ class RabController extends BaseController {
         foreach ($personnel_data as $p) {
             if (isset($p['selected']) && $p['selected'] == 1) {
                 $qty = $p['qty'];
-                $price = str_replace('.', '', $p['price']);
+                $price = $this->toNumber($p['price']);
                 $days = $p['days'];
                 $subtotal = $qty * $price * $days;
                 
@@ -1240,7 +1246,7 @@ class RabController extends BaseController {
         $total_vendor = 0;
         foreach ($vendor_data as $v) {
             $qty = $v['qty'];
-            $price = str_replace('.', '', $v['price']);
+            $price = $this->toNumber($v['price']);
             $days = $v['days'];
             $subtotal = $qty * $price * $days;
             
@@ -1283,29 +1289,29 @@ class RabController extends BaseController {
 
         $total_consumption = 0;
         if (isset($_POST['cons_mineral_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_mineral_qty']);
-            $price = str_replace('.', '', $_POST['cons_mineral_price']);
-            $days = str_replace('.', '', $_POST['cons_mineral_days']);
+            $qty = $this->toNumber($_POST['cons_mineral_qty']);
+            $price = $this->toNumber($_POST['cons_mineral_price']);
+            $days = $this->toNumber($_POST['cons_mineral_days']);
             $subtotal = $qty * $price * $days;
             $items[] = ['category' => 'consumption', 'item_name' => 'Air Mineral Petugas', 'qty' => $qty, 'days' => $days, 'price' => $price, 'subtotal' => $subtotal, 'notes' => ''];
             $total_consumption += $subtotal;
         }
         if (isset($_POST['cons_lunch_staff_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_lunch_staff_qty']);
-            $price = str_replace('.', '', $_POST['cons_lunch_staff_price']);
-            $days = str_replace('.', '', $_POST['cons_lunch_staff_days']);
+            $qty = $this->toNumber($_POST['cons_lunch_staff_qty']);
+            $price = $this->toNumber($_POST['cons_lunch_staff_price']);
+            $days = $this->toNumber($_POST['cons_lunch_staff_days']);
             $subtotal = $qty * $price * $days;
             $items[] = ['category' => 'consumption', 'item_name' => 'Makan Siang Petugas', 'qty' => $qty, 'days' => $days, 'price' => $price, 'subtotal' => $subtotal, 'notes' => ''];
             $total_consumption += $subtotal;
         }
         if (isset($_POST['cons_snack_participant_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_snack_participant_qty']);
-            $days = str_replace('.', '', $_POST['cons_snack_participant_days']);
+            $qty = $this->toNumber($_POST['cons_snack_participant_qty']);
+            $days = $this->toNumber($_POST['cons_snack_participant_days']);
             $items[] = ['category' => 'consumption', 'item_name' => 'Snack Peserta', 'qty' => $qty, 'days' => $days, 'price' => 0, 'subtotal' => 0, 'notes' => ''];
         }
         if (isset($_POST['cons_lunch_participant_check'])) {
-            $qty = str_replace('.', '', $_POST['cons_lunch_participant_qty']);
-            $days = str_replace('.', '', $_POST['cons_lunch_participant_days']);
+            $qty = $this->toNumber($_POST['cons_lunch_participant_qty']);
+            $days = $this->toNumber($_POST['cons_lunch_participant_days']);
             $items[] = ['category' => 'consumption', 'item_name' => 'Makan Siang Peserta', 'qty' => $qty, 'days' => $days, 'price' => 0, 'subtotal' => 0, 'notes' => ''];
         }
         $this->rab->total_consumption = $total_consumption;

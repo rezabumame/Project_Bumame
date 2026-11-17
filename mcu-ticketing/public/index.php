@@ -1,10 +1,10 @@
 <?php
 session_start();
 
-// Display errors for debugging (disable in production)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Raw PHP errors are hidden from users; ErrorHandler shows a readable alert and logs the details.
+require_once __DIR__ . '/../helpers/ErrorHandler.php';
+ErrorHandler::register();
+ob_start();
 
 include_once '../config/autoload.php';
 
