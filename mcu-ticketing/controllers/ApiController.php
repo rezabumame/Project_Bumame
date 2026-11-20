@@ -42,6 +42,9 @@ class ApiController extends BaseController {
                 case 'invoices':
                     $this->export_invoices();
                     break;
+                case 'vendors':
+                    $this->export_vendors();
+                    break;
                 default:
                     $this->jsonResponse(['status' => 'error', 'message' => 'Invalid data type requested'], 400);
             }
@@ -295,5 +298,132 @@ class ApiController extends BaseController {
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $this->jsonResponse(['status' => 'success', 'data' => $data]);
+    }
+
+    /**
+     * One row per project x pemeriksaan vendor: requested exam, assigned vendor,
+     * RAB vendor amount (pengajuan) and realized vendor amount.
+     * RAB/realization vendor items are matched to requirements by item name (= exam_type).
+     */
+    private function export_vendors() {
+        $projects = $this->db->query(
+            "SELECT p.project_id, p.nama_project, p.company_name, p.tanggal_mcu, p.status_project, p.status_vendor,
+                    sp.sales_name, u_korlap.full_name AS korlap_name
+             FROM projects p
+             LEFT JOIN sales_persons sp ON p.sales_person_id = sp.id
+             LEFT JOIN users u_korlap ON p.korlap_id = u_korlap.user_id
+             WHERE p.status_vendor IN ('requested', 'assigned')
+                OR EXISTS (SELECT 1 FROM project_vendor_requirements pvr WHERE pvr.project_id = p.project_id)
+                OR EXISTS (SELECT 1 FROM rabs r JOIN rab_items ri ON ri.rab_id = r.id
+                           WHERE r.project_id = p.project_id AND ri.category = 'vendor')
+             ORDER BY p.created_at DESC"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$projects) {
+            $this->jsonResponse(['status' => 'success', 'data' => []]);
+        }
+
+        $requirements = $this->db->query(
+            "SELECT project_id, exam_type, participant_count, assigned_vendor_name, notes
+             FROM project_vendor_requirements ORDER BY id"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $rabItems = $this->db->query(
+            "SELECT r.project_id, r.rab_number, ri.item_name, ri.notes, ri.subtotal
+             FROM rab_items ri
+             JOIN rabs r ON ri.rab_id = r.id
+             WHERE ri.category = 'vendor' AND r.status NOT IN ('draft', 'rejected', 'cancelled')"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $realItems = $this->db->query(
+            "SELECT rr.project_id, rri.item_name, rri.notes, rri.subtotal
+             FROM rab_realization_items rri
+             JOIN rab_realizations rr ON rri.realization_id = rr.id
+             WHERE rri.category = 'vendor' AND rr.status != 'rejected'"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        // rows[project_id][normalized item name] = aggregated values
+        $rows = [];
+        $key = function ($name) { return strtolower(trim((string) $name)); };
+        $touch = function ($pid, $name) use (&$rows, $key) {
+            $k = $key($name);
+            if (!isset($rows[$pid][$k])) {
+                $rows[$pid][$k] = [
+                    'pemeriksaan' => trim((string) $name) !== '' ? trim((string) $name) : '-',
+                    'peserta' => null,
+                    'vendors' => [],
+                    'rab_numbers' => [],
+                    'pengajuan' => 0.0,
+                    'realisasi' => 0.0,
+                ];
+            }
+            return $k;
+        };
+
+        foreach ($requirements as $r) {
+            $k = $touch($r['project_id'], $r['exam_type']);
+            $rows[$r['project_id']][$k]['peserta'] += (int) $r['participant_count'];
+            if (!empty($r['assigned_vendor_name'])) {
+                $rows[$r['project_id']][$k]['vendors'][] = trim($r['assigned_vendor_name']);
+            }
+        }
+        foreach ($rabItems as $r) {
+            $k = $touch($r['project_id'], $r['item_name']);
+            $rows[$r['project_id']][$k]['pengajuan'] += (float) $r['subtotal'];
+            $rows[$r['project_id']][$k]['rab_numbers'][] = $r['rab_number'];
+            if (!empty($r['notes'])) {
+                $rows[$r['project_id']][$k]['vendors'][] = trim($r['notes']);
+            }
+        }
+        foreach ($realItems as $r) {
+            $k = $touch($r['project_id'], $r['item_name']);
+            $rows[$r['project_id']][$k]['realisasi'] += (float) $r['subtotal'];
+        }
+
+        $helperPath = dirname(__DIR__) . '/helpers/DateHelper.php';
+        if (file_exists($helperPath)) {
+            require_once $helperPath;
+        }
+
+        $statusVendorLabel = [
+            'pending' => 'Belum diproses',
+            'requested' => 'Menunggu vendor',
+            'assigned' => 'Vendor sudah ditentukan',
+            'no_vendor_needed' => 'Tidak perlu vendor',
+        ];
+
+        $finalData = [];
+        foreach ($projects as $p) {
+            $items = $rows[$p['project_id']] ?? ['-' => [
+                'pemeriksaan' => '-', 'peserta' => null, 'vendors' => [],
+                'rab_numbers' => [], 'pengajuan' => 0.0, 'realisasi' => 0.0,
+            ]];
+
+            $mcuDate = class_exists('DateHelper')
+                ? DateHelper::formatSmartDateIndonesian($p['tanggal_mcu'])
+                : $p['tanggal_mcu'];
+
+            foreach ($items as $it) {
+                $vendors = array_values(array_unique(array_filter($it['vendors'])));
+                $finalData[] = [
+                    'Project ID' => $p['project_id'],
+                    'Nama Project' => $p['nama_project'],
+                    'Company' => $p['company_name'],
+                    'MCU Date' => $mcuDate,
+                    'Sales' => $p['sales_name'],
+                    'Korlap' => $p['korlap_name'],
+                    'Status Vendor' => $statusVendorLabel[$p['status_vendor']] ?? $p['status_vendor'],
+                    'Pemeriksaan' => $it['pemeriksaan'],
+                    'Jumlah Peserta' => $it['peserta'],
+                    'Nama Vendor' => $vendors ? implode(', ', $vendors) : '-',
+                    'No RAB' => implode(', ', array_values(array_unique($it['rab_numbers']))) ?: '-',
+                    'Pengajuan Vendor' => $it['pengajuan'],
+                    'Realisasi Vendor' => $it['realisasi'],
+                    'Selisih' => $it['pengajuan'] - $it['realisasi'],
+                ];
+            }
+        }
+
+        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
     }
 }
