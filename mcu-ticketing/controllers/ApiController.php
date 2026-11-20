@@ -301,9 +301,9 @@ class ApiController extends BaseController {
     }
 
     /**
-     * One row per project x pemeriksaan vendor: requested exam, assigned vendor,
-     * RAB vendor amount (pengajuan) and realized vendor amount.
-     * RAB/realization vendor items are matched to requirements by item name (= exam_type).
+     * One row per project x pemeriksaan vendor.
+     * Pengajuan = participant_count from the vendor internal memo (project_vendor_requirements);
+     * Realisasi = vendor item qty in the RAB. RAB items are matched to requirements by item name (= exam_type).
      */
     private function export_vendors() {
         $projects = $this->db->query(
@@ -329,17 +329,10 @@ class ApiController extends BaseController {
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $rabItems = $this->db->query(
-            "SELECT r.project_id, r.rab_number, ri.item_name, ri.notes, ri.subtotal
+            "SELECT r.project_id, r.rab_number, ri.item_name, ri.notes, ri.qty
              FROM rab_items ri
              JOIN rabs r ON ri.rab_id = r.id
              WHERE ri.category = 'vendor' AND r.status NOT IN ('draft', 'rejected', 'cancelled')"
-        )->fetchAll(PDO::FETCH_ASSOC);
-
-        $realItems = $this->db->query(
-            "SELECT rr.project_id, rri.item_name, rri.notes, rri.subtotal
-             FROM rab_realization_items rri
-             JOIN rab_realizations rr ON rri.realization_id = rr.id
-             WHERE rri.category = 'vendor' AND rr.status != 'rejected'"
         )->fetchAll(PDO::FETCH_ASSOC);
 
         // rows[project_id][normalized item name] = aggregated values
@@ -350,11 +343,11 @@ class ApiController extends BaseController {
             if (!isset($rows[$pid][$k])) {
                 $rows[$pid][$k] = [
                     'pemeriksaan' => trim((string) $name) !== '' ? trim((string) $name) : '-',
-                    'peserta' => null,
                     'vendors' => [],
+                    'remarks' => [],
                     'rab_numbers' => [],
-                    'pengajuan' => 0.0,
-                    'realisasi' => 0.0,
+                    'pengajuan' => 0,
+                    'realisasi' => 0,
                 ];
             }
             return $k;
@@ -362,22 +355,21 @@ class ApiController extends BaseController {
 
         foreach ($requirements as $r) {
             $k = $touch($r['project_id'], $r['exam_type']);
-            $rows[$r['project_id']][$k]['peserta'] += (int) $r['participant_count'];
+            $rows[$r['project_id']][$k]['pengajuan'] += (int) $r['participant_count'];
             if (!empty($r['assigned_vendor_name'])) {
                 $rows[$r['project_id']][$k]['vendors'][] = trim($r['assigned_vendor_name']);
+            }
+            if (!empty($r['notes'])) {
+                $rows[$r['project_id']][$k]['remarks'][] = trim($r['notes']);
             }
         }
         foreach ($rabItems as $r) {
             $k = $touch($r['project_id'], $r['item_name']);
-            $rows[$r['project_id']][$k]['pengajuan'] += (float) $r['subtotal'];
+            $rows[$r['project_id']][$k]['realisasi'] += (int) $r['qty'];
             $rows[$r['project_id']][$k]['rab_numbers'][] = $r['rab_number'];
             if (!empty($r['notes'])) {
-                $rows[$r['project_id']][$k]['vendors'][] = trim($r['notes']);
+                $rows[$r['project_id']][$k]['remarks'][] = trim($r['notes']);
             }
-        }
-        foreach ($realItems as $r) {
-            $k = $touch($r['project_id'], $r['item_name']);
-            $rows[$r['project_id']][$k]['realisasi'] += (float) $r['subtotal'];
         }
 
         $helperPath = dirname(__DIR__) . '/helpers/DateHelper.php';
@@ -395,8 +387,8 @@ class ApiController extends BaseController {
         $finalData = [];
         foreach ($projects as $p) {
             $items = $rows[$p['project_id']] ?? ['-' => [
-                'pemeriksaan' => '-', 'peserta' => null, 'vendors' => [],
-                'rab_numbers' => [], 'pengajuan' => 0.0, 'realisasi' => 0.0,
+                'pemeriksaan' => '-', 'vendors' => [], 'remarks' => [],
+                'rab_numbers' => [], 'pengajuan' => 0, 'realisasi' => 0,
             ]];
 
             $mcuDate = class_exists('DateHelper')
@@ -414,16 +406,26 @@ class ApiController extends BaseController {
                     'Korlap' => $p['korlap_name'],
                     'Status Vendor' => $statusVendorLabel[$p['status_vendor']] ?? $p['status_vendor'],
                     'Pemeriksaan' => $it['pemeriksaan'],
-                    'Jumlah Peserta' => $it['peserta'],
+                    'Catatan' => implode(', ', $this->uniqueCaseInsensitive($it['remarks'])) ?: '-',
                     'Nama Vendor' => $vendors ? implode(', ', $vendors) : '-',
+                    'Jumlah Pengajuan' => $it['pengajuan'],
+                    'Jumlah Realisasi (RAB)' => $it['realisasi'],
                     'No RAB' => implode(', ', array_values(array_unique($it['rab_numbers']))) ?: '-',
-                    'Pengajuan Vendor' => $it['pengajuan'],
-                    'Realisasi Vendor' => $it['realisasi'],
-                    'Selisih' => $it['pengajuan'] - $it['realisasi'],
                 ];
             }
         }
 
         $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
+    }
+
+    private function uniqueCaseInsensitive(array $values) {
+        $out = [];
+        foreach ($values as $v) {
+            $v = trim((string) $v);
+            if ($v !== '' && !isset($out[strtolower($v)])) {
+                $out[strtolower($v)] = $v;
+            }
+        }
+        return array_values($out);
     }
 }
