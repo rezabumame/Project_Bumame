@@ -45,6 +45,9 @@ class ApiController extends BaseController {
                 case 'vendors':
                     $this->export_vendors();
                     break;
+                case 'vendors_daily':
+                    $this->export_vendors_daily();
+                    break;
                 default:
                     $this->jsonResponse(['status' => 'error', 'message' => 'Invalid data type requested'], 400);
             }
@@ -303,9 +306,107 @@ class ApiController extends BaseController {
     /**
      * One row per project x pemeriksaan vendor.
      * Pengajuan = participant_count from the vendor internal memo (project_vendor_requirements);
-     * Realisasi = vendor item qty in the RAB. RAB items are matched to requirements by item name (= exam_type).
+     * Realisasi = vendor item qty in the RAB.
      */
     private function export_vendors() {
+        list($projects, $exams) = $this->loadVendorData();
+
+        $finalData = [];
+        foreach ($projects as $p) {
+            $mcuDate = DateHelper::formatSmartDateIndonesian($p['tanggal_mcu']);
+
+            foreach ($exams[$p['project_id']] ?? [$this->emptyExam('-')] as $ex) {
+                $realisasi = 0;
+                $rabNumbers = [];
+                foreach ($ex['rab_lines'] as $line) {
+                    $realisasi += $line['qty'];
+                    $rabNumbers[] = $line['rab_number'];
+                }
+
+                $finalData[] = $this->projectColumns($p) + [
+                    'MCU Date' => $mcuDate,
+                ] + $this->examColumns($ex) + [
+                    'Jumlah Pengajuan' => $ex['pengajuan'],
+                    'Jumlah Realisasi (RAB)' => $realisasi,
+                    'No RAB' => implode(', ', array_unique($rabNumbers)) ?: '-',
+                ];
+            }
+        }
+
+        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
+    }
+
+    /**
+     * Project -> hari MCU -> pemeriksaan vendor.
+     * Per-day quantities are not stored, so totals are split evenly:
+     * Pengajuan over the project's MCU dates, each RAB's qty over that RAB's selected dates.
+     */
+    private function export_vendors_daily() {
+        list($projects, $exams) = $this->loadVendorData();
+
+        $finalData = [];
+        foreach ($projects as $p) {
+            $projectDates = $this->normalizeDates(DateHelper::parseDateArray($p['tanggal_mcu']));
+            $projectExams = $exams[$p['project_id']] ?? [$this->emptyExam('-')];
+
+            // perDay[date][examKey] = ['pengajuan' => int, 'realisasi' => int, 'rab_numbers' => []]
+            $perDay = [];
+            foreach ($projectDates as $d) {
+                $perDay[$d] = [];
+            }
+
+            foreach ($projectExams as $k => $ex) {
+                $pengajuanDates = $projectDates ?: ['-'];
+                foreach ($this->splitEvenly($ex['pengajuan'], $pengajuanDates) as $d => $qty) {
+                    $perDay[$d][$k]['pengajuan'] = ($perDay[$d][$k]['pengajuan'] ?? 0) + $qty;
+                }
+
+                foreach ($ex['rab_lines'] as $line) {
+                    $lineDates = $line['dates'] ?: ($projectDates ?: ['-']);
+                    foreach ($this->splitEvenly($line['qty'], $lineDates) as $d => $qty) {
+                        $perDay[$d][$k]['realisasi'] = ($perDay[$d][$k]['realisasi'] ?? 0) + $qty;
+                        $perDay[$d][$k]['rab_numbers'][] = $line['rab_number'];
+                    }
+                }
+            }
+
+            if (!$perDay) {
+                $perDay['-'] = [];
+            }
+            uksort($perDay, function ($a, $b) {
+                if ($a === '-') return 1;
+                if ($b === '-') return -1;
+                return strcmp($a, $b);
+            });
+
+            $dayNo = 0;
+            foreach ($perDay as $date => $dayExams) {
+                $dayNo++;
+                foreach ($projectExams as $k => $ex) {
+                    $cell = $dayExams[$k] ?? [];
+                    $finalData[] = $this->projectColumns($p) + [
+                        'Hari Ke' => $date === '-' ? '-' : $dayNo,
+                        'Tanggal MCU' => $date === '-' ? '-' : DateHelper::formatIndonesianDate($date),
+                    ] + $this->examColumns($ex) + [
+                        'Jumlah Pengajuan' => $cell['pengajuan'] ?? 0,
+                        'Jumlah Realisasi (RAB)' => $cell['realisasi'] ?? 0,
+                        'No RAB' => implode(', ', array_unique($cell['rab_numbers'] ?? [])) ?: '-',
+                    ];
+                }
+            }
+        }
+
+        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
+    }
+
+    /**
+     * Loads projects that need a vendor and groups vendor data per project and pemeriksaan.
+     * RAB vendor items are matched to memo requirements by item name (= exam_type).
+     * Returns [projects, exams[project_id][exam key]].
+     */
+    private function loadVendorData() {
+        require_once dirname(__DIR__) . '/helpers/DateHelper.php';
+
         $projects = $this->db->query(
             "SELECT p.project_id, p.nama_project, p.company_name, p.tanggal_mcu, p.status_project, p.status_vendor,
                     sp.sales_name, u_korlap.full_name AS korlap_name
@@ -320,7 +421,7 @@ class ApiController extends BaseController {
         )->fetchAll(PDO::FETCH_ASSOC);
 
         if (!$projects) {
-            $this->jsonResponse(['status' => 'success', 'data' => []]);
+            return [[], []];
         }
 
         $requirements = $this->db->query(
@@ -329,93 +430,106 @@ class ApiController extends BaseController {
         )->fetchAll(PDO::FETCH_ASSOC);
 
         $rabItems = $this->db->query(
-            "SELECT r.project_id, r.rab_number, ri.item_name, ri.notes, ri.qty
+            "SELECT r.project_id, r.rab_number, r.selected_dates, ri.item_name, ri.notes, ri.qty
              FROM rab_items ri
              JOIN rabs r ON ri.rab_id = r.id
-             WHERE ri.category = 'vendor' AND r.status NOT IN ('draft', 'rejected', 'cancelled')"
+             WHERE ri.category = 'vendor' AND r.status NOT IN ('draft', 'rejected', 'cancelled')
+             ORDER BY r.id"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        // rows[project_id][normalized item name] = aggregated values
-        $rows = [];
-        $key = function ($name) { return strtolower(trim((string) $name)); };
-        $touch = function ($pid, $name) use (&$rows, $key) {
-            $k = $key($name);
-            if (!isset($rows[$pid][$k])) {
-                $rows[$pid][$k] = [
-                    'pemeriksaan' => trim((string) $name) !== '' ? trim((string) $name) : '-',
-                    'vendors' => [],
-                    'remarks' => [],
-                    'rab_numbers' => [],
-                    'pengajuan' => 0,
-                    'realisasi' => 0,
-                ];
-            }
-            return $k;
-        };
-
+        $exams = [];
         foreach ($requirements as $r) {
-            $k = $touch($r['project_id'], $r['exam_type']);
-            $rows[$r['project_id']][$k]['pengajuan'] += (int) $r['participant_count'];
+            $k = strtolower(trim((string) $r['exam_type']));
+            $exams[$r['project_id']][$k] = $exams[$r['project_id']][$k] ?? $this->emptyExam($r['exam_type']);
+            $exams[$r['project_id']][$k]['pengajuan'] += (int) $r['participant_count'];
             if (!empty($r['assigned_vendor_name'])) {
-                $rows[$r['project_id']][$k]['vendors'][] = trim($r['assigned_vendor_name']);
+                $exams[$r['project_id']][$k]['vendors'][] = $r['assigned_vendor_name'];
             }
             if (!empty($r['notes'])) {
-                $rows[$r['project_id']][$k]['remarks'][] = trim($r['notes']);
+                $exams[$r['project_id']][$k]['remarks'][] = $r['notes'];
             }
         }
         foreach ($rabItems as $r) {
-            $k = $touch($r['project_id'], $r['item_name']);
-            $rows[$r['project_id']][$k]['realisasi'] += (int) $r['qty'];
-            $rows[$r['project_id']][$k]['rab_numbers'][] = $r['rab_number'];
+            $k = strtolower(trim((string) $r['item_name']));
+            $exams[$r['project_id']][$k] = $exams[$r['project_id']][$k] ?? $this->emptyExam($r['item_name']);
+            $exams[$r['project_id']][$k]['rab_lines'][] = [
+                'rab_number' => $r['rab_number'],
+                'qty' => (int) $r['qty'],
+                'dates' => $this->normalizeDates(DateHelper::parseDateArray($r['selected_dates'])),
+            ];
             if (!empty($r['notes'])) {
-                $rows[$r['project_id']][$k]['remarks'][] = trim($r['notes']);
+                $exams[$r['project_id']][$k]['remarks'][] = $r['notes'];
             }
         }
 
-        $helperPath = dirname(__DIR__) . '/helpers/DateHelper.php';
-        if (file_exists($helperPath)) {
-            require_once $helperPath;
-        }
+        return [$projects, $exams];
+    }
 
+    private function emptyExam($name) {
+        $name = trim((string) $name);
+        return [
+            'pemeriksaan' => $name !== '' ? $name : '-',
+            'vendors' => [],
+            'remarks' => [],
+            'pengajuan' => 0,
+            'rab_lines' => [],
+        ];
+    }
+
+    private function projectColumns(array $p) {
         $statusVendorLabel = [
             'pending' => 'Belum diproses',
             'requested' => 'Menunggu vendor',
             'assigned' => 'Vendor sudah ditentukan',
             'no_vendor_needed' => 'Tidak perlu vendor',
         ];
+        return [
+            'Project ID' => $p['project_id'],
+            'Nama Project' => $p['nama_project'],
+            'Company' => $p['company_name'],
+            'Sales' => $p['sales_name'],
+            'Korlap' => $p['korlap_name'],
+            'Status Vendor' => $statusVendorLabel[$p['status_vendor']] ?? $p['status_vendor'],
+        ];
+    }
 
-        $finalData = [];
-        foreach ($projects as $p) {
-            $items = $rows[$p['project_id']] ?? ['-' => [
-                'pemeriksaan' => '-', 'vendors' => [], 'remarks' => [],
-                'rab_numbers' => [], 'pengajuan' => 0, 'realisasi' => 0,
-            ]];
+    private function examColumns(array $ex) {
+        $vendors = $this->uniqueCaseInsensitive($ex['vendors']);
+        // The RAB form pre-fills item notes with the assigned vendor name; keep that out of Catatan.
+        $vendorKeys = array_map('strtolower', $vendors);
+        $remarks = array_filter($this->uniqueCaseInsensitive($ex['remarks']), function ($r) use ($vendorKeys) {
+            return !in_array(strtolower($r), $vendorKeys, true);
+        });
+        return [
+            'Pemeriksaan' => $ex['pemeriksaan'],
+            'Catatan' => implode(', ', $remarks) ?: '-',
+            'Nama Vendor' => implode(', ', $vendors) ?: '-',
+        ];
+    }
 
-            $mcuDate = class_exists('DateHelper')
-                ? DateHelper::formatSmartDateIndonesian($p['tanggal_mcu'])
-                : $p['tanggal_mcu'];
+    /** Splits an integer total over the given keys; earlier keys absorb the remainder (55 over 2 -> 28, 27). */
+    private function splitEvenly($total, array $keys) {
+        $n = count($keys);
+        $base = intdiv($total, $n);
+        $rest = $total - $base * $n;
+        $out = [];
+        foreach (array_values($keys) as $i => $key) {
+            $out[$key] = $base + ($i < $rest ? 1 : 0);
+        }
+        return $out;
+    }
 
-            foreach ($items as $it) {
-                $vendors = array_values(array_unique(array_filter($it['vendors'])));
-                $finalData[] = [
-                    'Project ID' => $p['project_id'],
-                    'Nama Project' => $p['nama_project'],
-                    'Company' => $p['company_name'],
-                    'MCU Date' => $mcuDate,
-                    'Sales' => $p['sales_name'],
-                    'Korlap' => $p['korlap_name'],
-                    'Status Vendor' => $statusVendorLabel[$p['status_vendor']] ?? $p['status_vendor'],
-                    'Pemeriksaan' => $it['pemeriksaan'],
-                    'Catatan' => implode(', ', $this->uniqueCaseInsensitive($it['remarks'])) ?: '-',
-                    'Nama Vendor' => $vendors ? implode(', ', $vendors) : '-',
-                    'Jumlah Pengajuan' => $it['pengajuan'],
-                    'Jumlah Realisasi (RAB)' => $it['realisasi'],
-                    'No RAB' => implode(', ', array_values(array_unique($it['rab_numbers']))) ?: '-',
-                ];
+    private function normalizeDates(array $dates) {
+        $out = [];
+        foreach ($dates as $d) {
+            $t = strtotime(trim((string) $d));
+            if ($t) {
+                $out[date('Y-m-d', $t)] = true;
             }
         }
-
-        $this->jsonResponse(['status' => 'success', 'data' => $finalData]);
+        $out = array_keys($out);
+        sort($out);
+        return $out;
     }
 
     private function uniqueCaseInsensitive(array $values) {
